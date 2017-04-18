@@ -1,9 +1,16 @@
+/**********************************************************************************
+* Embedded red-black binary tree of nodes with parent pointers
+* Copyright (C) 2012-2017 Michael M. Builov, https://github.com/mbuilov/collections
+**********************************************************************************/
+
 /* rbtest.cpp */
 
 #ifdef _MSC_VER
 #pragma warning (push)
 #pragma warning (disable:4350)
 #pragma warning (disable:4548)
+#pragma warning (disable:4987)
+#pragma warning (disable:4365)
 #endif
 
 #include <stdio.h>
@@ -19,7 +26,7 @@
 #ifdef _DEBUG
 #define ASSERT(x) assert(x)
 #else
-#define ASSERT(x)
+#define ASSERT(x) ((void)0)
 #endif
 
 #include "prbtree.h"
@@ -28,6 +35,14 @@
 #define __MUL(n)    1e##n
 #define _MUL(n)    __MUL(n)
 #define MULTIPLIER ((unsigned)_MUL(ORDER))
+
+// cl
+// PRBTREE: mt/md - 0m4,010s/0m5,780s
+// STDMAP:  mt/md - 0m4,380s/0m6,190s
+
+// gcc
+// PRBTREE: 0m1,840s 0m1,825s 0m0,015s
+// STDMAP:  0m1,930s 0m1,918s 0m0,015s
 
 //#define USE_STDMAP
 #define RBTREE_CHECK
@@ -196,10 +211,11 @@ static unsigned check_tree(struct _btree_node *tree, int parent_is_red)
 			/* compute number of black nodes */
 			unsigned bc_left  = check_tree(tree->btree_left,  PRB_BLACK_COLOR != PRB_GET_COLOR(_prbtree_node_from_btree_node(tree)));
 			unsigned bc_right = check_tree(tree->btree_right, PRB_BLACK_COLOR != PRB_GET_COLOR(_prbtree_node_from_btree_node(tree)));
-			if (bc_left != bc_right)
+			if (bc_left != bc_right) {
 				fprintf(out, "key = {%d,%d,%d}, bc_left = %u, bc_right = %u!\n",
 					_node_to_A(tree)->key.a, _node_to_A(tree)->key.b, _node_to_A(tree)->key.c,
 					bc_left, bc_right);
+			}
 			ASSERT(bc_left == bc_right);
 			return bc_left + (PRB_BLACK_COLOR == PRB_GET_COLOR(_prbtree_node_from_btree_node(tree)));
 		}

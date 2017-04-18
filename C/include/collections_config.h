@@ -9,8 +9,8 @@
 
 /* collections_config.h */
 
-/* define external functions needed for collections library */
+/* define external functions needed to build collections library */
 
-#include <stdlib.h>
+#include <stdlib.h> /* for size_t */
 
 #endif /* COLLECTIONS_CONFIG_H_INCLUDED */
