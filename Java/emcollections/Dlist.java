@@ -1,10 +1,10 @@
 /**********************************************************************************
-* Doubly-linked list
+* Embedded doubly-linked list
 * Copyright (C) 2012-2017 Michael M. Builov, https://github.com/mbuilov/collections
-* Licensed under Apache License v2.0, see LICENSE.TXT
+* Licensed under LGPL version 3 or any later version, see COPYING
 **********************************************************************************/
 
-package collections;
+package emcollections;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -16,15 +16,16 @@ import java.util.NoSuchElementException;
     ------------------------------------------------------------------------
    /     entryN             dlist             entry0            entryN-1    \
    \     ------            -------            ------             ------     /
-    ---> |next| --> <null> |first| ---------> |next| --> ... --> |next| >---
-    ---< |prev| <--------- |last | <null> <-- |prev| <-- ... <-- |prev| <---
+    ---> |next| --> <null> |first|----------> |next|---> ... --> |next|-----
+    -----|prev| <----------|last | <null> <---|prev| <-- ... <---|prev| <---
    /     |data|            -------            |data|             |data|     \
    \     ------                               ------             ------     /
     ------------------------------------------------------------------------
 */
 
-/* Note: one object may encapsulate multiple list entries - to place one object into many lists,
-  for example an object of class 'Apple' may be placed to 'fruits' and 'food' lists simultaneously:
+/* Embedded doubly-linked list:
+  one object may encapsulate multiple list entries - to reference it from multiple lists,
+  for example an object of class 'Apple' may be referenced to 'fruits' and 'food' lists simultaneously:
 
   class Apple {
     Apple fruit_next;
@@ -228,9 +229,10 @@ public class Dlist {
 		/* search entries in the list */
 		@SuppressWarnings("unchecked")
 		@Override public boolean listContainsAll(E first/*null?*/, Collection<?> c) {
-			for (Object e : c)
+			for (Object e : c) {
 				if (!listContains(first, (E)e))
 					return false;
+			}
 			return true;
 		}
 

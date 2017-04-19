@@ -6,7 +6,7 @@ distclean:
 	$(call RM,$(BUILD))
 else
 
-TO_MAKE := C
+TO_MAKE := C Java
 
 ifdef OS_LINUX
 

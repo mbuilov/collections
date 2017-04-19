@@ -1,25 +1,18 @@
 /**********************************************************************************
-* Simple binary tree of nodes with parent pointers
+* Embedded binary tree of nodes with parent pointers
 * Copyright (C) 2012-2017 Michael M. Builov, https://github.com/mbuilov/collections
-* Licensed under Apache License v2.0, see LICENSE.TXT
+* Licensed under LGPL version 3 or any later version, see COPYING
 **********************************************************************************/
 
-package com.itr.collections;
+package emcollections;
 
-import com.itr.collections.Btree.BtreeCallback;
-import com.itr.collections.Btree.BtreeComparator;
-import com.itr.collections.Btree.BtreeKeyExtractorInt;
-import com.itr.collections.Btree.BtreeKeyExtractorLong;
-import com.itr.collections.Btree.BtreeKeyExtractorObject;
-import com.itr.collections.Btree.BtreeNodeAccessor;
-import com.itr.collections.Btree.BtreeNodeReadAccessor;
-import com.itr.collections.Btree.BtreeNodeReadAccessorImpl;
-import com.itr.collections.Btree.BtreeParent;
+import emcollections.Btree.*;
 import java.util.Collection;
 import java.util.ListIterator;
 import java.util.NoSuchElementException;
 
-/* binary tree with parent pointers */
+/* Embedded binary tree of nodes with parent pointers:
+  one object may encapsulate multiple tree nodes - to reference it from multiple trees */
 public class Ptree {
 
 	/* accessor to tree node 'left', 'right' and 'parent' fields */
@@ -201,7 +194,7 @@ public class Ptree {
 			protected long idx = 0;
 			protected E next;
 			protected E prev = null;
-			protected PtreeIteratorBase(E first/*null?*/)    {next = first;}
+			protected PtreeIteratorBase(E first/*null?*/) {next = first;}
 			@Override public int nextIndex()       {return idx < Integer.MAX_VALUE ? (int)idx : Integer.MAX_VALUE;}
 			@Override public int previousIndex()   {return nextIndex() - 1;}
 			@Override public boolean hasNext()     {return next != null;}

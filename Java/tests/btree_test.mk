@@ -1,6 +1,11 @@
+include $(dir $(lastword $(MAKEFILE_LIST)))../../top.mk
 include $(MTOP)/java.mk
+include $(MTOP)/exts/jtest.mk
+
 JAR      := BtreeTest
-JARS     := collections
-JSRC     := com/itr/collections/BtreeTest.java com/itr/collections/TreeTest.java
-MANIFEST := BtreeTest/MANIFEST.MF
+JARS     := $(EMCOLLECTIONS_JAR_NAME)
+JSRC     := BtreeTest.java TreeTest.java
+
+$(call DO_TEST_JAR,BtreeTest)
+
 $(DEFINE_TARGETS)

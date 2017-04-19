@@ -1,14 +1,15 @@
 /**********************************************************************************
-* Simple binary tree: structure and methods
+* Embedded binary tree
 * Copyright (C) 2012-2017 Michael M. Builov, https://github.com/mbuilov/collections
-* Licensed under Apache License v2.0, see LICENSE.TXT
+* Licensed under LGPL version 3 or any later version, see COPYING
 **********************************************************************************/
 
-package collections;
+package emcollections;
 
 import java.util.Collection;
 
-/* simple binary tree */
+/* Embedded binary tree:
+  one object may encapsulate multiple tree nodes - to reference it from multiple trees */
 public class Btree {
 
 	/* parameterized tree node comparator
@@ -219,9 +220,10 @@ public class Btree {
 		/* recursively search nodes in the tree */
 		@SuppressWarnings("unchecked")
 		@Override public boolean treeContainsAll(E tree/*null?*/, Collection<?> c) {
-			for (Object e : c)
+			for (Object e : c) {
 				if (!treeContains(tree, (E)e))
 					return false;
+			}
 			return true;
 		}
 

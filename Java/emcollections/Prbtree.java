@@ -1,24 +1,19 @@
 /**********************************************************************************
-* Red-black binary tree of nodes with parent pointers
+* Embedded red-back binary tree of nodes with parent pointers
 * Copyright (C) 2012-2017 Michael M. Builov, https://github.com/mbuilov/collections
-* Licensed under Apache License v2.0, see LICENSE.TXT
+* Licensed under LGPL version 3 or any later version, see COPYING
 **********************************************************************************/
 
-package com.itr.collections;
+package emcollections;
 
-import com.itr.collections.Btree.BtreeCallback;
-import com.itr.collections.Btree.BtreeComparator;
-import com.itr.collections.Btree.BtreeKeyExtractorInt;
-import com.itr.collections.Btree.BtreeKeyExtractorLong;
-import com.itr.collections.Btree.BtreeKeyExtractorObject;
-import com.itr.collections.Ptree.BtreeRootAccessor;
-import com.itr.collections.Ptree.PtreeModifier;
-import com.itr.collections.Ptree.PtreeNodeAccessor;
-import com.itr.collections.Ptree.PtreeNodeAccessorImpl;
+import emcollections.Btree.*;
+import emcollections.Ptree.*;
 import java.util.Collection;
 import java.util.ListIterator;
 
-/* red-black binary tree with parent pointers, implementation details see in prbtree.c */
+/* Embedded red-back binary tree of nodes with parent pointers:
+  one object may encapsulate multiple tree nodes - to reference it from multiple trees */
+/* Note: implementation details see in prbtree.c */
 public class Prbtree {
 
 	public static interface PrbtreeNodeAccessor<E> extends PtreeNodeAccessor<E> {
