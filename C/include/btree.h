@@ -15,6 +15,9 @@
 extern "C" {
 #endif
 
+/* Embedded binary tree:
+  one object may encapsulate multiple tree nodes - to reference it from multiple trees */
+
 struct _btree_node {
 	struct _btree_node *leaves[2]; /* left, right */
 };
@@ -197,7 +200,7 @@ struct _btree_object {
 	char __c; /* object pointer may be arbitrary aligned */
 };
 
-/* iterate over the tree calling callback for each node,
+/* iterate over unordered tree calling callback for each node,
   returns node on which callback has returned 0 */
 /* int callback(tree, obj) - returns 0 to stop iteration */
 A_Nonnull_arg(2)
@@ -286,15 +289,15 @@ static inline const struct _btree_node *_btree_last(A_In const struct _btree_nod
 	return tree; /* !=NULL */
 }
 
-/* walk over left branch of same-key subtree */
-/* for example, walk over nodes (b,1) and (b,2) of (b,*) subtree:
+/* walk over left branch of unordered same-key subtree of ordered tree */
+/* for example, walk over nodes (1,b) and (1,a) of (1,*) subtree of ordered by integer keys tree:
 
-                     b,3
-         a,4                     c,3
-   a,2         b,1         c,1         d,2
-a,1   a,3   a,5   b,2   b,4   c,2   d,1   d,3
+                     1,d
+         0,c                     2,a
+   0,d         1,b         2,b         3,a
+0,b   0,e   0,a   1,a   1,c   2,c   3,c   3,b
 
-  where comparator() callback - compares high parts of keys (a, b, c and d) */
+  where comparator() callback - compares integer keys */
 A_Nonnull_all_args A_Check_return A_Ret_maybenull
 static inline const struct _btree_node *_btree_walk_sub_recursive_left(
 	A_In const struct _btree_node *tree/*!=NULL*/,
@@ -324,15 +327,15 @@ static inline const struct _btree_node *_btree_walk_sub_recursive_left(
 	}
 }
 
-/* walk over right branch of same-key subtree */
-/* for example, walk over node (b,4) of (b,*) subtree:
+/* walk over right branch of unordered same-key subtree of ordered tree */
+/* for example, walk over node (1,c) of (1,*) subtree of ordered by integer keys tree:
 
-                     b,3
-         a,4                     c,3
-   a,2         b,1         c,1         d,2
-a,1   a,3   a,5   b,2   b,4   c,2   d,1   d,3
+                     1,d
+         0,c                     2,a
+   0,d         1,b         2,b         3,a
+0,b   0,e   0,a   1,a   1,c   2,c   3,c   3,b
 
-  where comparator() callback - compares high parts of keys (a, b, c and d) */
+  where comparator() callback - compares integer keys */
 A_Nonnull_all_args A_Check_return A_Ret_maybenull
 static inline const struct _btree_node *_btree_walk_sub_recursive_right(
 	A_In const struct _btree_node *tree/*!=NULL*/,
@@ -362,18 +365,18 @@ static inline const struct _btree_node *_btree_walk_sub_recursive_right(
 	}
 }
 
-/* walk over same-key subtree,
+/* walk over unordered same-key subtree of ordered tree,
   walking stops if processor callback returns 0 for processed node
   - that node is returned as result of walking */
-/* tree - result of previous _btree_search() */
-/* for example, walk over nodes (b,3), (b,1), (b,2) and (b,4) of (b,*) subtree:
+/* assume tree - result of previous _btree_search() */
+/* for example, walk over nodes (1,d), (1,b), (1,a) and (1,c) of (1,*) subtree of ordered by integer keys tree:
 
-                     b,3
-         a,4                     c,3
-   a,2         b,1         c,1         d,2
-a,1   a,3   a,5   b,2   b,4   c,2   d,1   d,3
+                     1,d
+         0,c                     2,a
+   0,d         1,b         2,b         3,a
+0,b   0,e   0,a   1,a   1,c   2,c   3,c   3,b
 
-  where comparator() callback - compares high parts of keys (a, b, c and d) */
+  where comparator() callback - compares integer keys */
 A_Nonnull_all_args A_Check_return A_Ret_maybenull
 static inline const struct _btree_node *_btree_walk_sub_recursive(
 	A_In const struct _btree_node *tree/*!=NULL*/,
@@ -396,7 +399,7 @@ static inline const struct _btree_node *_btree_walk_sub_recursive(
 	return _btree_walk_sub_recursive_right(tree, key, comparator, obj, callback);
 }
 
-/* walk over left branch of same-key subtree in forward direction */
+/* walk over left branch of unordered same-key subtree of ordered tree in forward direction */
 A_Nonnull_all_args A_Check_return A_Ret_maybenull
 static inline const struct _btree_node *_btree_walk_sub_recursive_forward_left(
 	A_In const struct _btree_node *tree/*!=NULL*/,
@@ -425,7 +428,7 @@ static inline const struct _btree_node *_btree_walk_sub_recursive_forward_left(
 	return _btree_walk_recursive_forward(tree->btree_right, obj, callback);
 }
 
-/* walk over right branch of same-key subtree in forward direction */
+/* walk over right branch of unordered same-key subtree of ordered tree in forward direction */
 A_Nonnull_all_args A_Check_return A_Ret_maybenull
 static inline const struct _btree_node *_btree_walk_sub_recursive_forward_right(
 	A_In const struct _btree_node *tree/*!=NULL*/,
@@ -455,10 +458,10 @@ static inline const struct _btree_node *_btree_walk_sub_recursive_forward_right(
 	}
 }
 
-/* walk over same-key subtree in forward direction,
+/* walk over unordered same-key subtree of ordered tree in forward direction,
   walking stops if processor callback returns 0 for processed node
   - that node is returned as result of walking */
-/* tree - result of previous _btree_search() */
+/* assume tree - result of previous _btree_search() */
 A_Nonnull_all_args A_Check_return A_Ret_maybenull
 static inline const struct _btree_node *_btree_walk_sub_recursive_forward(
 	A_In const struct _btree_node *tree/*!=NULL*/,
@@ -481,7 +484,7 @@ static inline const struct _btree_node *_btree_walk_sub_recursive_forward(
 	return _btree_walk_sub_recursive_forward_right(tree, key, comparator, obj, callback);
 }
 
-/* walk over right branch of same-key subtree in backward direction */
+/* walk over right branch of unordered same-key subtree of ordered tree in backward direction */
 A_Nonnull_all_args A_Check_return A_Ret_maybenull
 static inline const struct _btree_node *_btree_walk_sub_recursive_backward_right(
 	A_In const struct _btree_node *tree/*!=NULL*/,
@@ -510,7 +513,7 @@ static inline const struct _btree_node *_btree_walk_sub_recursive_backward_right
 	return _btree_walk_recursive_backward(tree->btree_left, obj, callback);
 }
 
-/* walk over left branch of same-key subtree in backward direction */
+/* walk over left branch of unordered same-key subtree of ordered tree in backward direction */
 A_Nonnull_all_args A_Check_return A_Ret_maybenull
 static inline const struct _btree_node *_btree_walk_sub_recursive_backward_left(
 	A_In const struct _btree_node *tree/*!=NULL*/,
@@ -540,10 +543,10 @@ static inline const struct _btree_node *_btree_walk_sub_recursive_backward_left(
 	}
 }
 
-/* walk over same-key subtree in backward direction,
+/* walk over unordered same-key subtree of ordered tree in backward direction,
   walking stops if processor callback returns 0 for processed node
   - that node is returned as result of walking */
-/* tree - result of previous _btree_search() */
+/* assume tree - result of previous _btree_search() */
 A_Nonnull_all_args A_Check_return A_Ret_maybenull
 static inline const struct _btree_node *_btree_walk_sub_recursive_backward(
 	A_In const struct _btree_node *tree/*!=NULL*/,
@@ -566,7 +569,7 @@ static inline const struct _btree_node *_btree_walk_sub_recursive_backward(
 	return _btree_walk_sub_recursive_backward_left(tree, key, comparator, obj, callback);
 }
 
-/* find leaf parent of to be inserted node in same-key sub tree */
+/* find leaf parent of to be inserted node in same-key sub-tree */
 A_Nonnull_all_args A_Check_return
 static inline int _btree_find_leaf(
 	A_In struct _btree_node *p,
