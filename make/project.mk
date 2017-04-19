@@ -9,6 +9,8 @@ APPDEFS :=
 
 PROJECT_USE_DIR := $(TOP)/make/use
 
+JLINT := 1
+
 ifeq (WINXX,$(OS))
 PREDEFINES += _ALLOW_KEYWORD_MACROS _ALLOW_RTCc_IN_STL inline=__inline
 WIN_APP_FLAGS := /X /GF /Wall /EHsc
@@ -112,23 +114,26 @@ endif
 
 # default value for MODVER
 # major.minor.patch
-PRODUCT_VER := 0.0.0
+PRODUCT_VER := 0.1.0
 
 # version of prbtree library
-PRBTREE_VER := 0.0.1
+PRBTREE_VER := 0.1.0
 
 # version info for a dll
 VENDOR_NAME      := Michael M. Builov
 VENDOR_URL       := https://github.com/mbuilov/collections
-COLLECTIONS_NAME := Embedded Collections library
-PRBTREE_NAME     := Red-black tree with parent pointers
+COLLECTIONS_DESC := Embedded Collections library
+PRBTREE_DESC     := Red-black tree with parent pointers
 VENDOR_COPYRIGHT := Copyright (C) 2008-2017 $(VENDOR_NAME), $(VENDOR_URL)
 
 # licence for generated pkgconfig .pc file
 PRODUCT_LICENCE  := LGPL version 3 or any later version
 
-# library name
+# prbtree library name
 PRBTREE_LIB_NAME ?= prbtree
+
+# name of embedded collections jar
+EMCOLLECTIONS_JAR_NAME ?= emcollections
 
 # variants of built static library
 #  LINUX:

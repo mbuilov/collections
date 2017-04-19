@@ -8,7 +8,7 @@ ifdef OS_WINXX
 # $(PRODUCT_NAMES_H) - also used in $(MTOP)/WINXX/cres.mk
 # $(PRODUCT_NAME)    - used in $(MTOP)/WINXX/cres.mk
 PRODUCT_NAMES_H := prbtree_vers.h
-PRODUCT_NAME    := $(PRBTREE_NAME)
+PRODUCT_NAME    := $(PRBTREE_DESC)
 TO_MAKE += ../version.mk
 endif
 
