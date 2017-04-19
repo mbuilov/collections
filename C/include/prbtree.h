@@ -20,6 +20,9 @@
 extern "C" {
 #endif
 
+/* Embedded binary tree:
+  one object may encapsulate multiple tree nodes - to reference it from multiple trees */
+
 /* NOTE: address of any object of this structure must be aligned on at least 2 bytes:
   lowest bit of parent_color pointer encodes node color */
 struct _prbtree_node {
