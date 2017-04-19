@@ -20,15 +20,16 @@ extern "C" {
     ----------------------------------------------------------
    /     entryN      dlist      entry0            entryN-1    \
    \     ------     -------     ------             ------     /
-    ---> |next| --> |first| --> |next| --> ... --> |next| >---
-    ---< |prev| <-- |last | <-- |prev| <-- ... <-- |prev| <---
+    ---> |next|---> |first|---> |next|---> ... --> |next|-----
+    -----|prev| <---|last | <---|prev| <-- ... <---|prev| <---
    /     |data|     -------     |data|             |data|     \
    \     ------                 ------             ------     /
     ----------------------------------------------------------
 */
 
-/* Note: one object may encapsulate multiple list entries - to place one object into many lists,
-  for example an object of class 'apple' may be placed to 'fruits' and 'food' lists simultaneously:
+/* Embedded doubly-linked list:
+  one object may encapsulate multiple list entries - to reference it from multiple lists,
+  for example an object of class 'apple' may be referenced from 'fruits' and 'food' lists simultaneously:
 
   struct apple {
     struct dlist_entry fruit_entry;
