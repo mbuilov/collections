@@ -26,7 +26,9 @@ LIB := $(if $(NO_STATIC),,$(PRBTREE_LIB_NAME) $(PRBTREE_LIB_VARIANTS))
 
 LIBRARY_NAME := prbtree
 LIBRARY_HDIR :=
-LIBRARY_HEADERS := include/btree.h include/prbtree.h
+LIBRARY_HEADERS := $(addprefix ../include/,\
+  btree.h\
+  prbtree.h)
 
 define PRBTREE_PC_COMMENT
 Author:  $(VENDOR_NAME)
