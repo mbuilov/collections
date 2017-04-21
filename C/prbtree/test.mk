@@ -37,9 +37,7 @@ endef
 # $x - r-lib, r-dll, s-lib, ...
 EXPAND_TEST_TEMPLATE = $(foreach v,$(firstword $(subst -, ,$x)),$(if $(filter %-lib,$x),$(TEST_LIB_TEMPLATE),$(TEST_DLL_TEMPLATE)))
 
-$(foreach x,$(wordlist 2,999999,$(TEST_LIB_VARIANTS) $(TEST_DLL_VARIANTS)),$(eval \
+$(foreach x,$(TEST_LIB_VARIANTS) $(TEST_DLL_VARIANTS),$(eval \
   $(EXPAND_TEST_TEMPLATE))$(call MAKE_CONTINUE,SRC INCLUDE RPATH USE))
-
-$(foreach x,$(firstword $(TEST_LIB_VARIANTS) $(TEST_DLL_VARIANTS)),$(eval $(EXPAND_TEST_TEMPLATE)))
 
 $(DEFINE_TARGETS)
