@@ -91,8 +91,8 @@ struct dlist {
 };
 
 /* first/last entry of the list */
-#define dlist_first e.first
-#define dlist_last  e.last
+#define dlist_first e.next
+#define dlist_last  e.prev
 
 /* initialize doubly-linked list */
 #ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
@@ -191,20 +191,20 @@ A_At(dlist, A_In)
 A_Ret_range(==,dlist)
 A_Ret_never_null
 #endif
-static inline struct dlist *dlist_check_non_circular(const struct dlist *dlist)
+static inline struct dlist *dlist_const_cast_(
+	const struct dlist *dlist)
 {
-	DLIST_ASSERT(dlist);
-	DLIST_ASSERT(!dlist->dlist_first || !dlist->dlist_first->prev);
-	DLIST_ASSERT(!dlist->dlist_last || !dlist->dlist_last->next);
-	DLIST_ASSERT(!dlist->dlist_first == !dlist->dlist_last);
-	DLIST_ASSERT_PTRS(&dlist->e != dlist->dlist_first);
-	DLIST_ASSERT_PTRS(&dlist->e != dlist->dlist_last);
 #ifdef __cplusplus
 	return const_cast<struct dlist*>(dlist);
-#elif defined CCASTS_H_INCLUDED /* include "ccasts.h" */
-	return CONST_CAST(struct dlist, dlist);
 #else
+#if defined(__GNUC__) && (__GNUC__ > 4 || (4 == __GNUC__ && __GNUC_MINOR__ >= 2))
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wcast-qual" /* casting away qualifiers */
+#endif
 	return (struct dlist*)dlist;
+#if defined(__GNUC__) && (__GNUC__ > 4 || (4 == __GNUC__ && __GNUC_MINOR__ >= 2))
+#pragma GCC diagnostic pop
+#endif
 #endif
 }
 
@@ -214,19 +214,32 @@ A_At(dlist, A_In)
 A_Ret_range(==,dlist)
 A_Ret_never_null
 #endif
-static inline struct dlist *dlist_check_circular(const struct dlist *dlist)
+static inline struct dlist *dlist_check_non_circular(
+	const struct dlist *dlist)
+{
+	DLIST_ASSERT(dlist);
+	DLIST_ASSERT(!dlist->dlist_first || !dlist->dlist_first->prev);
+	DLIST_ASSERT(!dlist->dlist_last || !dlist->dlist_last->next);
+	DLIST_ASSERT(!dlist->dlist_first == !dlist->dlist_last);
+	DLIST_ASSERT_PTRS(&dlist->e != dlist->dlist_first);
+	DLIST_ASSERT_PTRS(&dlist->e != dlist->dlist_last);
+	return dlist_const_cast_(dlist);
+}
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Nonnull_all_args
+A_At(dlist, A_In)
+A_Ret_range(==,dlist)
+A_Ret_never_null
+#endif
+static inline struct dlist *dlist_check_circular(
+	const struct dlist *dlist)
 {
 	DLIST_ASSERT(dlist);
 	DLIST_ASSERT(dlist->dlist_first && &dlist->e == dlist->dlist_first->prev);
 	DLIST_ASSERT(dlist->dlist_last && &dlist->e == dlist->dlist_last->next);
 	DLIST_ASSERT_PTRS((&dlist->e == dlist->dlist_first) == (&dlist->e == dlist->dlist_last));
-#ifdef __cplusplus
-	return const_cast<struct dlist*>(dlist);
-#elif defined CCASTS_H_INCLUDED /* include "ccasts.h" */
-	return CONST_CAST(struct dlist, dlist);
-#else
-	return (struct dlist*)dlist;
-#endif
+	return dlist_const_cast_(dlist);
 }
 
 /* make dlist circular */
@@ -282,7 +295,9 @@ A_Nonnull_all_args
 A_At(dlist, A_In)
 A_At(c, A_In)
 #endif
-static inline void dlist_entry_check_non_circular(const struct dlist *dlist, const struct dlist_entry *c)
+static inline void dlist_entry_check_non_circular(
+	const struct dlist *dlist,
+	const struct dlist_entry *c)
 {
 	(void)c;
 	DLIST_ASSERT(c);
@@ -295,11 +310,20 @@ A_Nonnull_all_args
 A_At(s, A_In)
 A_At(e, A_In)
 #endif
-static inline void dlist_check_sublist(const struct dlist_entry *s, const struct dlist_entry *e)
+static inline void dlist_check_sublist(
+	const struct dlist_entry *s,
+	const struct dlist_entry *e)
 {
 	(void)s;
 	(void)e;
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wpointer-bool-conversion"
+#endif
 	DLIST_ASSERT(s && e);
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
 	DLIST_ASSERT_PTRS(s == e || s->next);
 	DLIST_ASSERT_PTRS(s == e || e->prev);
 }
@@ -682,7 +706,14 @@ static inline struct dlist *dlist_restore_list(
 	struct dlist_entry *os,
 	struct dlist_entry *oe)
 {
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wpointer-bool-conversion"
+#endif
 	DLIST_ASSERT(dlist && os && oe);
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
 	/* must be no entries between os->prev and oe->next in the list */
 	DLIST_ASSERT((os->prev ? os->prev->next : dlist->dlist_first) == oe->next);
 	DLIST_ASSERT((oe->next ? oe->next->prev : dlist->dlist_last) == os->prev);
@@ -1077,13 +1108,13 @@ static inline void dlist_circular_remove_list(
 	dlist_entry_check_circular(os);
 	dlist_entry_check_circular(oe);
 	{
-		struct dlist_entry *n = e->next;
-		struct dlist_entry *p = s->prev;
+		struct dlist_entry *n = oe->next;
+		struct dlist_entry *p = os->prev;
 		/* n may be == p if removing all entries */
-		DLIST_ASSERT_PTRS(n != s);
-		DLIST_ASSERT_PTRS(n != e);
-		DLIST_ASSERT_PTRS(p != s);
-		DLIST_ASSERT_PTRS(p != e);
+		DLIST_ASSERT_PTRS(n != os);
+		DLIST_ASSERT_PTRS(n != oe);
+		DLIST_ASSERT_PTRS(p != os);
+		DLIST_ASSERT_PTRS(p != oe);
 		p->next = n;
 		n->prev = p;
 	}
@@ -1139,7 +1170,14 @@ static inline void dlist_circular_restore_list(
 	struct dlist_entry *os,
 	struct dlist_entry *oe)
 {
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wpointer-bool-conversion"
+#endif
 	DLIST_ASSERT(os && oe);
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
 	/* must be no entries between os->prev and oe->next in circular list */
 	DLIST_ASSERT(os->prev && os->prev->next == oe->next);
 	DLIST_ASSERT(oe->next && oe->next->prev == os->prev);
@@ -1270,7 +1308,7 @@ A_Ret_range(==,s)
 static inline struct dlist_entry *dlist_entry_link_list_before(
 	struct dlist_entry *A_Restrict h,
 	struct dlist_entry *s/*==e?*/,
-	struct dlist_entry *A_Restrict e)
+	struct dlist_entry *e)
 {
 	DLIST_ASSERT(h);
 	dlist_check_sublist(s, e);
@@ -1297,7 +1335,7 @@ A_Ret_range(==,e)
 #endif
 static inline struct dlist_entry *dlist_entry_link_list_after(
 	struct dlist_entry *A_Restrict t,
-	struct dlist_entry *A_Restrict s/*==e?*/,
+	struct dlist_entry *s/*==e?*/,
 	struct dlist_entry *e)
 {
 	DLIST_ASSERT(t);
