@@ -190,6 +190,7 @@ A_Nonnull_all_args
 A_At(dlist, A_In)
 A_Ret_range(==,dlist)
 A_Ret_never_null
+A_Check_return
 #endif
 static inline struct dlist *dlist_const_cast_(
 	const struct dlist *dlist)
@@ -706,14 +707,9 @@ static inline struct dlist *dlist_restore_list(
 	struct dlist_entry *os,
 	struct dlist_entry *oe)
 {
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wpointer-bool-conversion"
-#endif
-	DLIST_ASSERT(dlist && os && oe);
-#ifdef __clang__
-#pragma clang diagnostic pop
-#endif
+	DLIST_ASSERT(dlist);
+	DLIST_ASSERT(os);
+	DLIST_ASSERT(oe);
 	/* must be no entries between os->prev and oe->next in the list */
 	DLIST_ASSERT((os->prev ? os->prev->next : dlist->dlist_first) == oe->next);
 	DLIST_ASSERT((oe->next ? oe->next->prev : dlist->dlist_last) == os->prev);
@@ -1170,14 +1166,8 @@ static inline void dlist_circular_restore_list(
 	struct dlist_entry *os,
 	struct dlist_entry *oe)
 {
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wpointer-bool-conversion"
-#endif
-	DLIST_ASSERT(os && oe);
-#ifdef __clang__
-#pragma clang diagnostic pop
-#endif
+	DLIST_ASSERT(os);
+	DLIST_ASSERT(oe);
 	/* must be no entries between os->prev and oe->next in circular list */
 	DLIST_ASSERT(os->prev && os->prev->next == oe->next);
 	DLIST_ASSERT(oe->next && oe->next->prev == os->prev);
