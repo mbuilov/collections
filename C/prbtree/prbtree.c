@@ -1,6 +1,6 @@
 /**********************************************************************************
 * Embedded red-black binary tree of nodes with parent pointers
-* Copyright (C) 2012-2017 Michael M. Builov, https://github.com/mbuilov/collections
+* Copyright (C) 2012-2018 Michael M. Builov, https://github.com/mbuilov/collections
 * Licensed under LGPL version 3 or any later version, see COPYING
 **********************************************************************************/
 
@@ -9,7 +9,7 @@
 #include "collections_config.h"
 #include "prbtree.h"
 
-PRBTREE_EXPORTS void __prbtree_insert(
+PRBTREE_EXPORTS void prbtree_insert_(
 	A_In struct _prbtree *tree/*!=NULL*/,
 	A_In struct _prbtree_node *p/*!=NULL*/,
 	A_In struct _prbtree_node *e/*!=NULL*/)
@@ -98,7 +98,7 @@ PRBTREE_EXPORTS void __prbtree_insert(
 			if (t) /* NULL on first iteration, != on next iterations */
 				PRB_SET_PARENT_COLOR(t, g, PRB_BLACK_COLOR);
 			t = PRB_BLACK_NODE_PARENT(g); /* NULL? */
-			__prbtree_replace_at_parent(tree, t, g, p);
+			prbtree_replace_at_parent_(tree, t, g, p);
 			PRB_SET_PARENT_COLOR(p, t, PRB_BLACK_COLOR);
 			PRB_SET_PARENT_COLOR(g, p, PRB_RED_COLOR);
 			return; /* (final) */
@@ -409,7 +409,7 @@ static inline void __prbtree_remove(
 			{
 				struct _prbtree_node *g = PRB_BLACK_NODE_PARENT(p);
 				PRB_SET_PARENT_COLOR(t, g, PRB_BLACK_COLOR);
-				__prbtree_replace_at_parent(tree, g, p, t);
+				prbtree_replace_at_parent_(tree, g, p, t);
 			}
 			_p = _PRB_MAKE_PARENT_COLOR(a, t == a ? PRB_BLACK_COLOR : PRB_RED_COLOR);
 		}
