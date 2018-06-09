@@ -23,18 +23,16 @@
 #endif
 #endif /* !SAL_DEFS_H_INCLUDED */
 
+#ifndef DLIST_ASSERT
 #ifdef ASSERT
 #define DLIST_ASSERT(expr) ASSERT(expr)
 #else
 #define DLIST_ASSERT(expr) ((void)0)
 #endif
+#endif
 
-/* comparing pointers to different objects that are not members of the same array is UB according to C standard...
-  think of FAR pointers where high part of the pointer is not used in pointer comparison */
-#ifdef DLIST_ALLOW_ANY_PTR_CMP
+#ifndef DLIST_ASSERT_PTRS
 #define DLIST_ASSERT_PTRS(expr) DLIST_ASSERT(expr)
-#else
-#define DLIST_ASSERT_PTRS(expr) ((void)0)
 #endif
 
 #ifdef __cplusplus
@@ -150,8 +148,6 @@ static inline int dlist_is_empty(
 	return !dlist->dlist_first;
 }
 
-#ifdef DLIST_ALLOW_ANY_PTR_CMP
-
 /* get end of circular dlist */
 /* Note: dlist may be not valid/destroyed before the call */
 #ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
@@ -182,8 +178,6 @@ static inline int dlist_circular_is_empty(
 	DLIST_ASSERT(dlist->dlist_first);
 	return dlist_circular_end(dlist) == dlist->dlist_first;
 }
-
-#endif /* DLIST_ALLOW_ANY_PTR_CMP */
 
 #ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
 A_Nonnull_all_args
@@ -281,8 +275,9 @@ static inline struct dlist *dlist_make_uncircular(
 	{
 		struct dlist_entry *f = dlist->dlist_first;
 		struct dlist_entry *l = dlist->dlist_last;
-		/* note: if list is empty, then setting f->prev to NULL also resets dlist->dlist_last to NULL */
-		/* note: if list is empty, then setting l->next to NULL also resets dlist->dlist_first to NULL */
+		/* note: if list is empty, then:
+		  setting f->prev to NULL also resets dlist->dlist_last to NULL;
+		  setting l->next to NULL also resets dlist->dlist_first to NULL */
 		f->prev = NULL;
 		l->next = NULL;
 	}
@@ -317,14 +312,8 @@ static inline void dlist_check_sublist(
 {
 	(void)s;
 	(void)e;
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wpointer-bool-conversion"
-#endif
-	DLIST_ASSERT(s && e);
-#ifdef __clang__
-#pragma clang diagnostic pop
-#endif
+	DLIST_ASSERT(s);
+	DLIST_ASSERT(e);
 	DLIST_ASSERT_PTRS(s == e || s->next);
 	DLIST_ASSERT_PTRS(s == e || e->prev);
 }
@@ -1273,8 +1262,9 @@ static inline void dlist_circular_move(
 	DLIST_ASSERT_PTRS(dst != src);
 	src->dlist_first->prev = &dst->e;
 	src->dlist_last->next = &dst->e;
-	/* note: if src list is empty, setting src->dlist_first->prev to &dst->e will set src->dlist_last to &dst->e */
-	/* note: if src list is empty, setting src->dlist_last->next to &dst->e will set src->dlist_first to &dst->e */
+	/* note: if src list is empty, then:
+	  setting src->dlist_first->prev to &dst->e will set src->dlist_last to &dst->e;
+	  setting src->dlist_last->next to &dst->e will set src->dlist_first to &dst->e */
 	dst->dlist_first = src->dlist_first;
 	dst->dlist_last = src->dlist_last;
 }
@@ -1420,8 +1410,6 @@ static inline struct dlist_entry *dlist_entry_link_after(
 
 /* -------------- iterating over entries of circular dlist ------------ */
 
-#ifdef DLIST_ALLOW_ANY_PTR_CMP
-
 #define dlist_circular_iterate(dlist, e) \
 	for (e = dlist_check_circular(DLIST_CHECK_CONSTNESS(dlist, e))->dlist_first; \
 		dlist_circular_end(dlist) != e ? 1 : ((e = NULL), 0); e = e->next)
@@ -1439,8 +1427,6 @@ static inline struct dlist_entry *dlist_entry_link_after(
 #define dlist_circular_iterate_delete_backward(dlist, e, p) \
 	for (p = dlist_check_circular(DLIST_CHECK_CONSTNESS(dlist, p))->dlist_last; \
 		dlist_circular_end(dlist) != p ? ((e = p), (p = p->prev), 1) : ((e = NULL), 0);)
-
-#endif /* DLIST_ALLOW_ANY_PTR_CMP */
 
 #ifdef __cplusplus
 }
