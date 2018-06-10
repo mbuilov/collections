@@ -9,10 +9,12 @@
 
 /* btree.h */
 
+#ifndef BTREE_ASSERT
 #ifdef ASSERT
 #define BTREE_ASSERT(expr) ASSERT(expr)
 #else
 #define BTREE_ASSERT(expr) ((void)0)
+#endif
 #endif
 
 #ifdef __cplusplus
@@ -47,7 +49,7 @@ static inline int btree_key_int_diff_(
 	unsigned k)
 {
 #ifdef UBSAN_UNSIGNED_OVERFLOW
-	unsigned d = (a >= k) ? a - k : ~0u - (k - a) + 1u;
+	unsigned d = (a >= k) ? a - k : ((unsigned)-1 - (k - a)) + 1u;
 #else
 	unsigned d = a - k;
 #endif
@@ -123,11 +125,11 @@ static inline int btree_key_int_diff_(
 			BTREE_KEY_COMPARATOR6_((__VA_ARGS__))))
 
 #define BTREENARGS_SEQ_(a1,k1,a2,k2,a3,k3,a4,k4,a5,k5,a6,k6,a7,k7,N,M,...) N
-#define BTREENARGS_1(a) BTREENARGS_SEQ_ a
-#define BTREENARGS_(...) BTREENARGS_1((__VA_ARGS__,7,0,6,0,5,0,4,0,3,0,2,0,1,0,0))
+#define BTREENARGS_1(a)             BTREENARGS_SEQ_ a
+#define BTREENARGS_(...)            BTREENARGS_1((__VA_ARGS__,7,0,6,0,5,0,4,0,3,0,2,0,1,0,0))
 #define BTREE_KEY_COMPARATOR_2(N,a) BTREE_KEY_COMPARATOR##N a
 #define BTREE_KEY_COMPARATOR_1(N,a) BTREE_KEY_COMPARATOR_2(N,a)
-#define BTREE_KEY_COMPARATOR_(N,a) BTREE_KEY_COMPARATOR_1(N,a)
+#define BTREE_KEY_COMPARATOR_(N,a)  BTREE_KEY_COMPARATOR_1(N,a)
 
 /* helper macro to implement comparator callback passed to btree_search():
   BTREE_KEY_COMPARATOR(a1,k1,a2,k2,a3,k3)
@@ -180,8 +182,6 @@ typedef int (*btree_comparator_t)(
   returns NULL if node with given key was not found */
 /* int comparator(node, key) - returns (node - key) difference */
 #ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_arg(2)
-A_Nonnull_arg(3)
 A_At(tree, A_In_opt)
 A_At(key, A_When(tree, A_In))
 A_At(comparator, A_When(tree, A_In))
@@ -267,8 +267,6 @@ typedef int (*btree_walker_t)(
 /* walk over all nodes of unordered tree calling callback for each node,
   returns node on which callback has returned 0 */
 #ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_arg(2)
-A_Nonnull_arg(3)
 A_At(tree, A_In_opt)
 A_At(obj, A_When(tree, A_Inout))
 A_At(callback, A_When(tree, A_In))
@@ -292,8 +290,6 @@ static inline const struct btree_node *btree_walk_recursive(
 
 /* same as btree_walk_recursive(), but in forward direction, from the leftmost to the rightmost */
 #ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_arg(2)
-A_Nonnull_arg(3)
 A_At(tree, A_In_opt)
 A_At(obj, A_When(tree, A_Inout))
 A_At(callback, A_When(tree, A_In))
@@ -319,8 +315,6 @@ static inline const struct btree_node *btree_walk_recursive_forward(
 
 /* same as btree_walk_recursive(), but in backward direction, from the rightmost to the leftmost */
 #ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_arg(2)
-A_Nonnull_arg(3)
 A_At(tree, A_In_opt)
 A_At(obj, A_When(tree, A_Inout))
 A_At(callback, A_When(tree, A_In))
@@ -329,7 +323,7 @@ A_Check_return
 #endif
 static inline const struct btree_node *btree_walk_recursive_backward(
 	const struct btree_node *tree/*NULL?*/,
-	struct btree_object *obj/*!NULL if tree!=NULL*/,
+	struct btree_object *obj/*!=NULL if tree!=NULL*/,
 	btree_walker_t callback/*!=NULL if tree!=NULL*/)
 {
 	BTREE_ASSERT(!tree || obj);
@@ -386,13 +380,27 @@ static inline const struct btree_node *btree_last(
 	return tree; /* !=NULL */
 }
 
-#define BTREE_CHECK_WALK_PARAMS(tree, key, comparator, obj, callback) { \
-	BTREE_ASSERT(tree); \
-	BTREE_ASSERT(key); \
-	BTREE_ASSERT(comparator); \
-	BTREE_ASSERT(obj); \
-	BTREE_ASSERT(callback); \
+#define BTREE_SUB_WALK_CHECK_PARAMS(tree, key, comparator, obj, callback) { \
+	BTREE_ASSERT(tree);            \
+	BTREE_ASSERT(key);             \
+	BTREE_ASSERT(comparator);      \
+	BTREE_ASSERT(obj);             \
+	BTREE_ASSERT(callback);        \
 }
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+#define BTREE_SUB_WALK_ANNOTATIONS \
+	A_Nonnull_all_args             \
+	A_At(tree, A_In)               \
+	A_At(key, A_In)                \
+	A_At(comparator, A_In)         \
+	A_At(obj, A_Inout)             \
+	A_At(callback, A_In)           \
+	A_Ret_maybenull                \
+	A_Check_return
+#else
+#define BTREE_SUB_WALK_ANNOTATIONS
+#endif
 
 /* walk over left branch of unordered same-key subtree of ordered tree */
 /* for example, walk over nodes (1,b) and (1,a) of (1,*) subtree of ordered by integer keys tree:
@@ -403,16 +411,7 @@ static inline const struct btree_node *btree_last(
 0,b   0,e   0,a   1,a   1,c   2,c   3,c   3,b
 
   where comparator() callback - compares only integer parts of the keys */
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_all_args
-A_At(tree, A_In)
-A_At(key, A_In)
-A_At(comparator, A_In)
-A_At(obj, A_Inout)
-A_At(callback, A_In)
-A_Ret_maybenull
-A_Check_return
-#endif
+BTREE_SUB_WALK_ANNOTATIONS
 static inline const struct btree_node *btree_walk_sub_recursive_left(
 	const struct btree_node *tree/*!=NULL*/,
 	const struct btree_key *key/*!=NULL*/,
@@ -420,7 +419,7 @@ static inline const struct btree_node *btree_walk_sub_recursive_left(
 	struct btree_object *obj/*!=NULL*/,
 	btree_walker_t callback/*!=NULL*/)
 {
-	BTREE_CHECK_WALK_PARAMS(tree, key, comparator, obj, callback);
+	BTREE_SUB_WALK_CHECK_PARAMS(tree, key, comparator, obj, callback);
 	for (;;) {
 		for (tree = tree->btree_left;; tree = tree->btree_right) {
 			if (!tree)
@@ -447,16 +446,7 @@ static inline const struct btree_node *btree_walk_sub_recursive_left(
 0,b   0,e   0,a   1,a   1,c   2,c   3,c   3,b
 
   where comparator() callback - compares only integer parts of the keys */
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_all_args
-A_At(tree, A_In)
-A_At(key, A_In)
-A_At(comparator, A_In)
-A_At(obj, A_Inout)
-A_At(callback, A_In)
-A_Ret_maybenull
-A_Check_return
-#endif
+BTREE_SUB_WALK_ANNOTATIONS
 static inline const struct btree_node *btree_walk_sub_recursive_right(
 	const struct btree_node *tree/*!=NULL*/,
 	const struct btree_key *key/*!=NULL*/,
@@ -464,7 +454,7 @@ static inline const struct btree_node *btree_walk_sub_recursive_right(
 	struct btree_object *obj/*!=NULL*/,
 	btree_walker_t callback/*!=NULL*/)
 {
-	BTREE_CHECK_WALK_PARAMS(tree, key, comparator, obj, callback);
+	BTREE_SUB_WALK_CHECK_PARAMS(tree, key, comparator, obj, callback);
 	for (;;) {
 		for (tree = tree->btree_right;; tree = tree->btree_left) {
 			if (!tree)
@@ -494,16 +484,7 @@ static inline const struct btree_node *btree_walk_sub_recursive_right(
 0,b   0,e   0,a   1,a   1,c   2,c   3,c   3,b
 
   where comparator() callback - compares only integer parts of the keys */
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_all_args
-A_At(tree, A_In)
-A_At(key, A_In)
-A_At(comparator, A_In)
-A_At(obj, A_Inout)
-A_At(callback, A_In)
-A_Ret_maybenull
-A_Check_return
-#endif
+BTREE_SUB_WALK_ANNOTATIONS
 static inline const struct btree_node *btree_walk_sub_recursive(
 	const struct btree_node *tree/*!=NULL*/,
 	const struct btree_key *key/*!=NULL*/,
@@ -511,7 +492,7 @@ static inline const struct btree_node *btree_walk_sub_recursive(
 	struct btree_object *obj/*!=NULL*/,
 	btree_walker_t callback/*!=NULL*/)
 {
-	BTREE_CHECK_WALK_PARAMS(tree, key, comparator, obj, callback);
+	BTREE_SUB_WALK_CHECK_PARAMS(tree, key, comparator, obj, callback);
 	if (!callback(tree, obj))
 		return tree;
 	{
@@ -524,16 +505,7 @@ static inline const struct btree_node *btree_walk_sub_recursive(
 
 /* walk over left branch of unordered same-key subtree of ordered tree in forward direction */
 /* note: same as btree_walk_sub_recursive_left(), but in forward direction, from the leftmost to the rightmost */
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_all_args
-A_At(tree, A_In)
-A_At(key, A_In)
-A_At(comparator, A_In)
-A_At(obj, A_Inout)
-A_At(callback, A_In)
-A_Ret_maybenull
-A_Check_return
-#endif
+BTREE_SUB_WALK_ANNOTATIONS
 static inline const struct btree_node *btree_walk_sub_recursive_forward_left(
 	const struct btree_node *tree/*!=NULL*/,
 	const struct btree_key *key/*!=NULL*/,
@@ -541,7 +513,7 @@ static inline const struct btree_node *btree_walk_sub_recursive_forward_left(
 	struct btree_object *obj/*!=NULL*/,
 	btree_walker_t callback/*!=NULL*/)
 {
-	BTREE_CHECK_WALK_PARAMS(tree, key, comparator, obj, callback);
+	BTREE_SUB_WALK_CHECK_PARAMS(tree, key, comparator, obj, callback);
 	for (tree = tree->btree_left;; tree = tree->btree_right) {
 		if (!tree)
 			return tree; /* NULL */
@@ -560,16 +532,7 @@ static inline const struct btree_node *btree_walk_sub_recursive_forward_left(
 
 /* walk over right branch of unordered same-key subtree of ordered tree in forward direction */
 /* note: same as btree_walk_sub_recursive_right(), but in forward direction, from the leftmost to the rightmost */
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_all_args
-A_At(tree, A_In)
-A_At(key, A_In)
-A_At(comparator, A_In)
-A_At(obj, A_Inout)
-A_At(callback, A_In)
-A_Ret_maybenull
-A_Check_return
-#endif
+BTREE_SUB_WALK_ANNOTATIONS
 static inline const struct btree_node *btree_walk_sub_recursive_forward_right(
 	const struct btree_node *tree/*!=NULL*/,
 	const struct btree_key *key/*!=NULL*/,
@@ -577,7 +540,7 @@ static inline const struct btree_node *btree_walk_sub_recursive_forward_right(
 	struct btree_object *obj/*!=NULL*/,
 	btree_walker_t callback/*!=NULL*/)
 {
-	BTREE_CHECK_WALK_PARAMS(tree, key, comparator, obj, callback);
+	BTREE_SUB_WALK_CHECK_PARAMS(tree, key, comparator, obj, callback);
 	for (;;) {
 		for (tree = tree->btree_right;; tree = tree->btree_left) {
 			if (!tree)
@@ -600,16 +563,7 @@ static inline const struct btree_node *btree_walk_sub_recursive_forward_right(
   - that node is returned as result of walking */
 /* assume tree - result of previous btree_search() */
 /* note: same as btree_walk_sub_recursive(), but in forward direction, from the leftmost to the rightmost */
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_all_args
-A_At(tree, A_In)
-A_At(key, A_In)
-A_At(comparator, A_In)
-A_At(obj, A_Inout)
-A_At(callback, A_In)
-A_Ret_maybenull
-A_Check_return
-#endif
+BTREE_SUB_WALK_ANNOTATIONS
 static inline const struct btree_node *btree_walk_sub_recursive_forward(
 	const struct btree_node *tree/*!=NULL*/,
 	const struct btree_key *key/*!=NULL*/,
@@ -617,7 +571,7 @@ static inline const struct btree_node *btree_walk_sub_recursive_forward(
 	struct btree_object *obj/*!=NULL*/,
 	btree_walker_t callback/*!=NULL*/)
 {
-	BTREE_CHECK_WALK_PARAMS(tree, key, comparator, obj, callback);
+	BTREE_SUB_WALK_CHECK_PARAMS(tree, key, comparator, obj, callback);
 	{
 		const struct btree_node *n = btree_walk_sub_recursive_forward_left(tree, key, comparator, obj, callback);
 		if (n)
@@ -630,16 +584,7 @@ static inline const struct btree_node *btree_walk_sub_recursive_forward(
 
 /* walk over right branch of unordered same-key subtree of ordered tree in backward direction */
 /* note: same as btree_walk_sub_recursive_right(), but in backward direction, from the rightmost to the leftmost */
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_all_args
-A_At(tree, A_In)
-A_At(key, A_In)
-A_At(comparator, A_In)
-A_At(obj, A_Inout)
-A_At(callback, A_In)
-A_Ret_maybenull
-A_Check_return
-#endif
+BTREE_SUB_WALK_ANNOTATIONS
 static inline const struct btree_node *btree_walk_sub_recursive_backward_right(
 	const struct btree_node *tree/*!=NULL*/,
 	const struct btree_key *key/*!=NULL*/,
@@ -647,7 +592,7 @@ static inline const struct btree_node *btree_walk_sub_recursive_backward_right(
 	struct btree_object *obj/*!=NULL*/,
 	btree_walker_t callback/*!=NULL*/)
 {
-	BTREE_CHECK_WALK_PARAMS(tree, key, comparator, obj, callback);
+	BTREE_SUB_WALK_CHECK_PARAMS(tree, key, comparator, obj, callback);
 	for (tree = tree->btree_right;; tree = tree->btree_left) {
 		if (!tree)
 			return tree; /* NULL */
@@ -666,17 +611,7 @@ static inline const struct btree_node *btree_walk_sub_recursive_backward_right(
 
 /* walk over left branch of unordered same-key subtree of ordered tree in backward direction */
 /* note: same as btree_walk_sub_recursive_left(), but in backward direction, from the rightmost to the leftmost */
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_all_args
-A_At(tree, A_In)
-A_At(key, A_In)
-A_At(comparator, A_In)
-A_At(obj, A_Inout)
-A_At(callback, A_In)
-A_Ret_maybenull
-A_Check_return
-#endif
-A_Nonnull_all_args A_Check_return A_Ret_maybenull
+BTREE_SUB_WALK_ANNOTATIONS
 static inline const struct btree_node *btree_walk_sub_recursive_backward_left(
 	const struct btree_node *tree/*!=NULL*/,
 	const struct btree_key *key/*!=NULL*/,
@@ -684,7 +619,7 @@ static inline const struct btree_node *btree_walk_sub_recursive_backward_left(
 	struct btree_object *obj/*!=NULL*/,
 	btree_walker_t callback/*!=NULL*/)
 {
-	BTREE_CHECK_WALK_PARAMS(tree, key, comparator, obj, callback);
+	BTREE_SUB_WALK_CHECK_PARAMS(tree, key, comparator, obj, callback);
 	for (;;) {
 		for (tree = tree->btree_left;; tree = tree->btree_right) {
 			if (!tree)
@@ -707,16 +642,7 @@ static inline const struct btree_node *btree_walk_sub_recursive_backward_left(
   - that node is returned as result of walking */
 /* assume tree - result of previous btree_search() */
 /* note: same as btree_walk_sub_recursive(), but in backward direction, from the rightmost to the leftmost */
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_all_args
-A_At(tree, A_In)
-A_At(key, A_In)
-A_At(comparator, A_In)
-A_At(obj, A_Inout)
-A_At(callback, A_In)
-A_Ret_maybenull
-A_Check_return
-#endif
+BTREE_SUB_WALK_ANNOTATIONS
 static inline const struct btree_node *btree_walk_sub_recursive_backward(
 	const struct btree_node *tree/*!=NULL*/,
 	const struct btree_key *key/*!=NULL*/,
@@ -724,7 +650,7 @@ static inline const struct btree_node *btree_walk_sub_recursive_backward(
 	struct btree_object *obj/*!=NULL*/,
 	btree_walker_t callback/*!=NULL*/)
 {
-	BTREE_CHECK_WALK_PARAMS(tree, key, comparator, obj, callback);
+	BTREE_SUB_WALK_CHECK_PARAMS(tree, key, comparator, obj, callback);
 	{
 		const struct btree_node *n = btree_walk_sub_recursive_backward_right(tree, key, comparator, obj, callback);
 		if (n)
@@ -734,6 +660,9 @@ static inline const struct btree_node *btree_walk_sub_recursive_backward(
 		return tree;
 	return btree_walk_sub_recursive_backward_left(tree, key, comparator, obj, callback);
 }
+
+#undef BTREE_SUB_WALK_ANNOTATIONS
+#undef BTREE_SUB_WALK_CHECK_PARAMS
 
 /* find leaf parent of to be inserted node in the same-key sub-tree */
 /* returns:
@@ -774,19 +703,19 @@ static inline int btree_find_leaf(
 A_Nonnull_all_args
 A_At(parent, A_Inout)
 A_At(*parent, A_In_opt)
-A_At(key, A_When(*parent, A_In))
-A_At(comparator, A_When(*parent, A_In))
+A_At(key, A_In)
+A_At(comparator, A_In)
 A_Check_return
 #endif
 static inline int btree_search_parent(
-	struct btree_node **parent/*in:NULL?,out*/,
-	const struct btree_key *key/*!=NULL if *parent!=NULL*/,
-	btree_comparator_t comparator/*!=NULL if *parent!=NULL*/,
+	struct btree_node **parent/*in:*NULL?,out*/,
+	const struct btree_key *key/*!=NULL*/,
+	btree_comparator_t comparator/*!=NULL*/,
 	int leaf)
 {
 	BTREE_ASSERT(parent);
-	BTREE_ASSERT(!*parent || key);
-	BTREE_ASSERT(!*parent || comparator);
+	BTREE_ASSERT(key);
+	BTREE_ASSERT(comparator);
 	{
 		struct btree_node *p = *parent;
 		if (!p)
