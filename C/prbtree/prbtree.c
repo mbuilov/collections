@@ -9,15 +9,22 @@
 #include "collections_config.h"
 #include "prbtree.h"
 
-PRBTREE_EXPORTS void prbtree_insert_(
-	A_In struct _prbtree *tree/*!=NULL*/,
-	A_In struct _prbtree_node *p/*!=NULL*/,
-	A_In struct _prbtree_node *e/*!=NULL*/)
+/* node color is stored in the lowest bit of parent pointer */
+#define PRB_RED_COLOR   1u
+#define PRB_BLACK_COLOR 0u
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Use_decl_annotations
+#endif
+PRBTREE_EXPORTS void prbtree_rebalance(
+	struct prbtree *tree/*!=NULL*/,
+	struct prbtree_node *p/*!=NULL*/,
+	struct prbtree_node *e/*!=NULL*/)
 {
 	/* insert red node e */
-	PRB_SET_PARENT_COLOR(e, p, PRB_RED_COLOR);
-	while (PRB_BLACK_COLOR != PRB_GET_COLOR(p)) {
-		/* there are 4 cases with red parent: (inserted node marked as * - push it up splitting the parent if neccessary):
+	e->parent_color = prbtree_make_parent_color_(p, PRB_RED_COLOR);
+	while (PRB_BLACK_COLOR != prbtree_get_color_(p)) {
+		/* there are 4 cases with red parent: (inserted node marked as * - push it up splitting the parent if necessary):
 		1)
 		          -----------                 -----------------
 		          |      6,B|                 |      2,B      |
@@ -53,71 +60,71 @@ PRBTREE_EXPORTS void prbtree_insert_(
 		    ----- ----  ----- -----      -----              ----- -----
 		         [a][b]
 		*/
-		struct _prbtree_node *g = PRB_GET_PARENT(p); /* p is red */
-		struct _prbtree_node *t = g->prbtree_left;
+		struct prbtree_node *g = prbtree_get_parent(p); /* p is red */
+		struct prbtree_node *t = g->prbtree_left;
 		for (;;) {
 			if (p != t) {
-				if (t && PRB_BLACK_COLOR != PRB_GET_COLOR(t))
+				if (t && PRB_BLACK_COLOR != prbtree_get_color_(t))
 					break; /* case 3,4 */
 				/* cases 1,2 */
 				if (p->prbtree_left == e) {
 					/* case 2 */
 					t = e->prbtree_right;
-					if (t) /* NULL on first iteration, != on next iterations */
-						PRB_SET_PARENT_COLOR(t, p, PRB_BLACK_COLOR);
+					if (t) /* NULL on first iteration, != NULL on next iterations */
+						t->parent_color = prbtree_make_parent_color_(p, PRB_BLACK_COLOR);
 					p->prbtree_left = t;
-					PRB_SET_PARENT_COLOR(p, e, PRB_RED_COLOR);
+					p->parent_color = prbtree_make_parent_color_(e, PRB_RED_COLOR);
 					e->prbtree_right = p;
 					p = e;
 				}
 				/* case 1 */
 				t = p->prbtree_left;
-				g->prbtree_right = t;
 				p->prbtree_left = g;
+				g->prbtree_right = t;
 			}
 			else {
 				t = g->prbtree_right;
-				if (t && PRB_BLACK_COLOR != PRB_GET_COLOR(t))
+				if (t && PRB_BLACK_COLOR != prbtree_get_color_(t))
 					break; /* case 3,4 */
 				/* cases 1,2 */
 				if (p->prbtree_left != e) {
 					/* case 2 */
 					t = e->prbtree_left;
-					if (t) /* NULL on first iteration, != on next iterations */
-						PRB_SET_PARENT_COLOR(t, p, PRB_BLACK_COLOR);
+					if (t) /* NULL on first iteration, != NULL on next iterations */
+						t->parent_color = prbtree_make_parent_color_(p, PRB_BLACK_COLOR);
 					p->prbtree_right = t;
-					PRB_SET_PARENT_COLOR(p, e, PRB_RED_COLOR);
+					p->parent_color = prbtree_make_parent_color_(e, PRB_RED_COLOR);
 					e->prbtree_left = p;
 					p = e;
 				}
 				/* case 1 */
 				t = p->prbtree_right;
-				g->prbtree_left = t;
 				p->prbtree_right = g;
+				g->prbtree_left = t;
 			}
-			if (t) /* NULL on first iteration, != on next iterations */
-				PRB_SET_PARENT_COLOR(t, g, PRB_BLACK_COLOR);
-			t = PRB_BLACK_NODE_PARENT(g); /* NULL? */
-			prbtree_replace_at_parent_(tree, t, g, p);
-			PRB_SET_PARENT_COLOR(p, t, PRB_BLACK_COLOR);
-			PRB_SET_PARENT_COLOR(g, p, PRB_RED_COLOR);
+			if (t) /* NULL on first iteration, != NULL on next iterations */
+				t->parent_color = prbtree_make_parent_color_(g, PRB_BLACK_COLOR);
+			t = prbtree_black_node_parent_(g); /* NULL? */
+			*prbtree_slot_at_parent_(tree, t, g) = p;
+			p->parent_color = prbtree_make_parent_color_(t, PRB_BLACK_COLOR);
+			g->parent_color = prbtree_make_parent_color_(p, PRB_RED_COLOR);
 			return; /* (final) */
 		}
 		/* cases 3,4 */
-		PRB_SET_PARENT_COLOR(t, g, PRB_BLACK_COLOR); /* recolor t: red -> black */
-		PRB_SET_PARENT_COLOR(p, g, PRB_BLACK_COLOR); /* recolor p: red -> black */
-		p = PRB_BLACK_NODE_PARENT(g);
+		t->parent_color = prbtree_make_parent_color_(g, PRB_BLACK_COLOR); /* recolor t: red -> black */
+		p->parent_color = prbtree_make_parent_color_(g, PRB_BLACK_COLOR); /* recolor p: red -> black */
+		p = prbtree_black_node_parent_(g);
 		if (!p)
 			return;
-		PRB_SET_PARENT_COLOR(g, p, PRB_RED_COLOR); /* recolor g: black -> red */
+		g->parent_color = prbtree_make_parent_color_(p, PRB_RED_COLOR); /* recolor g: black -> red */
 		e = g;
 	}
 }
 
-static inline void __prbtree_remove(
-	A_In struct _prbtree *tree/*!=NULL*/,
-	A_In struct _prbtree_node *p/*!=NULL*/,
-	A_In struct _prbtree_node *e/*!=NULL*/)
+static inline void prbtree_remove_(
+	struct prbtree *tree/*!=NULL*/,
+	struct prbtree_node *p/*!=NULL*/,
+	struct prbtree_node *e/*!=NULL*/)
 {
 	/* after removing leaf black node, tree is disbalanced - balance the tree by moving black node from sibling side:
 
@@ -135,19 +142,19 @@ static inline void __prbtree_remove(
 	    ------ |7,R   |      ->      ------ |   8,R|     ->    |1,B*|
 	           --------                     --------           ------
 
-	3)      -----                        -----------                     -----
-	        |3,B|                        |   7,B   |                     |7,B|
-	    ------------------  rotate       |3,R   8,R|   recolor     --------------
-	    |1,B*| |   7,B   |    ->     ---------------     ->        |   4,B| |8,B|
-	    ------ |4,R   8,R|           |1,B*| |4,B|                  |3,R   | -----
-	           -----------           ------ -----              ------------
-	                                                           |1,B*|
-	                                                           ------
+	3)      -----                        ---------------                     -----
+	        |3,B|                        |     7,B     |                     |7,B|
+	    ------------------  rotate       |3,R       8,R|   recolor     --------------
+	    |1,B*| |   7,B   |    ->     -------------------     ->        |3,B   | |8,B|
+	    ------ |4,R   8,R|           |1,B*| |4,B|                      |   4,R| -----
+	           -----------           ------ -----                  ------------
+	                                                               |1,B*|
+	                                                               ------
 	4)      -----------                  -----------                     -----
 	        |3,B      |                  |      7,B|                     |7,B|
 	        |      7,R|     rotate       |3,R      |   recolor     ------------
-	    ----------------      ->     ----------------    ->        |   4,B| [x]
-	    |1,B*| |4,B| [x]             |1,B*| |4,B| [x]              |3,R   |
+	    ----------------      ->     ----------------    ->        |3,B   | [x]
+	    |1,B*| |4,B| [x]             |1,B*| |4,B| [x]              |   4,R|
 	    ------ -----                 ------ -----              ------------
 	                                                           |1,B*|
 	                                                           ------
@@ -164,8 +171,8 @@ static inline void __prbtree_remove(
 	        |3,B            |                 |            7,B|                           |7,B|                   |      7,B|
 	        |            7,R|   rotate        |3,R            |   rotate      ------------------   recolor        |5,R      |
 	    ----------------------    ->      ----------------------    ->        |      5,B   | [x]     ->     ------------------
-	    |1,B*| |   5,B   | [x]            |1,B*| |   5,B   | [x]              |3,R      6,R|                |   4,B| |6,B| [x]
-	    ------ |4,R   6,R|                ------ |4,R   6,R|              ------------------                |3,R   | -----
+	    |1,B*| |   5,B   | [x]            |1,B*| |   5,B   | [x]              |3,R      6,R|                |3,B   | |6,B| [x]
+	    ------ |4,R   6,R|                ------ |4,R   6,R|              ------------------                |   4,R| -----
 	           -----------                       -----------              |1,B*| |4,B|                   -----------
 	                                                                      ------ -----                   |1,B*|
 	                                                                                                     ------
@@ -257,43 +264,43 @@ static inline void __prbtree_remove(
 	                                                      --------                                          ------                               ------
 	*/
 	for (;;) {
-		struct _prbtree_node *a;
-		struct _prbtree_node *t = p->prbtree_left;
-		char *_p;
-		if (PRB_BLACK_COLOR == PRB_GET_COLOR(p)) {
+		struct prbtree_node *a;
+		struct prbtree_node *t = p->prbtree_left;
+		void *p_;
+		if (PRB_BLACK_COLOR == prbtree_get_color_(p)) {
 			if (e == t) {
 				t = p->prbtree_right;
 				a = t->prbtree_left;
 				/* parent is black: cases 1,2,3,4,5,6 */
-				if (PRB_BLACK_COLOR == PRB_GET_COLOR(t)) {
+				if (PRB_BLACK_COLOR == prbtree_get_color_(t)) {
 					/* t is black: cases 1,2,3 */
-					struct _prbtree_node *A_Restrict b = t->prbtree_right;
-					if (a && PRB_BLACK_COLOR != PRB_GET_COLOR(a)) { /* red on first iteration */
-						if (b && PRB_BLACK_COLOR != PRB_GET_COLOR(b)) { /* red on first iteration */
+					struct prbtree_node *b = t->prbtree_right;
+					if (a && PRB_BLACK_COLOR != prbtree_get_color_(a)) { /* red on first iteration */
+						if (b && PRB_BLACK_COLOR != prbtree_get_color_(b)) { /* red on first iteration */
 							/* case 3 */
-							PRB_SET_PARENT_COLOR(b, t, PRB_BLACK_COLOR);
-							PRB_SET_PARENT_COLOR(a, t, PRB_BLACK_COLOR);
+							b->parent_color = prbtree_make_parent_color_(t, PRB_BLACK_COLOR);
+							a->parent_color = prbtree_make_parent_color_(t, PRB_BLACK_COLOR);
 						}
 						else {
 							/* case 2 */
-							PRB_SET_PARENT_COLOR(t, a, PRB_BLACK_COLOR);
-							t->prbtree_left = a->prbtree_right;
 							if (a->prbtree_right) /* NULL on first iteration */
-								PRB_SET_PARENT_COLOR(a->prbtree_right, t, PRB_BLACK_COLOR);
+								a->prbtree_right->parent_color = prbtree_make_parent_color_(t, PRB_BLACK_COLOR);
+							t->prbtree_left = a->prbtree_right;
 							a->prbtree_right = t;
+							t->parent_color = prbtree_make_parent_color_(a, PRB_BLACK_COLOR);
 							t = a;
 						}
 					}
-					else if (b && PRB_BLACK_COLOR != PRB_GET_COLOR(b)) { /* red on first iteration */
+					else if (b && PRB_BLACK_COLOR != prbtree_get_color_(b)) { /* red on first iteration */
 						/* case 2 */
-						PRB_SET_PARENT_COLOR(b, t, PRB_BLACK_COLOR);
+						b->parent_color = prbtree_make_parent_color_(t, PRB_BLACK_COLOR); /* recolor: red -> black */
 						a = t;
 					}
 					else {
 						/* case 1 */
-						PRB_SET_PARENT_COLOR(t, p, PRB_RED_COLOR); /* recolor brother: black -> red */
+						t->parent_color = prbtree_make_parent_color_(p, PRB_RED_COLOR); /* recolor brother: black -> red */
 						e = p;
-						p = PRB_BLACK_NODE_PARENT(p);
+						p = prbtree_black_node_parent_(p);
 						if (!p)
 							return;
 						continue;
@@ -305,67 +312,67 @@ static inline void __prbtree_remove(
 					__assume(a);
 #endif
 					{
-						struct _prbtree_node *c = a->prbtree_left;
-						if (c && PRB_BLACK_COLOR != PRB_GET_COLOR(c)) { /* red on first iteration */
+						struct prbtree_node *c = a->prbtree_left;
+						if (c && PRB_BLACK_COLOR != prbtree_get_color_(c)) { /* red on first iteration */
 							/* cases 5,6 */
-							struct _prbtree_node *d = a->prbtree_right;
-							if (d && PRB_BLACK_COLOR != PRB_GET_COLOR(d)) { /* red on first iteration */
+							struct prbtree_node *d = a->prbtree_right;
+							if (d && PRB_BLACK_COLOR != prbtree_get_color_(d)) { /* red on first iteration */
 								/* case 6 */
-								PRB_SET_PARENT_COLOR(a, t, PRB_RED_COLOR);
-								PRB_SET_PARENT_COLOR(d, a, PRB_BLACK_COLOR);
-								PRB_SET_PARENT_COLOR(c, a, PRB_BLACK_COLOR);
+								a->parent_color = prbtree_make_parent_color_(t, PRB_RED_COLOR);
+								d->parent_color = prbtree_make_parent_color_(a, PRB_BLACK_COLOR);
+								c->parent_color = prbtree_make_parent_color_(a, PRB_BLACK_COLOR);
 							}
 							else {
 								/* case 5 */
-								t->prbtree_left = c;
 								if (c->prbtree_right) /* NULL on first iteration */
-									PRB_SET_PARENT_COLOR(c->prbtree_right, a, PRB_BLACK_COLOR);
+									c->prbtree_right->parent_color = prbtree_make_parent_color_(a, PRB_BLACK_COLOR);
 								a->prbtree_left = c->prbtree_right;
-								PRB_SET_PARENT_COLOR(a, c, PRB_RED_COLOR);
-								PRB_SET_PARENT_COLOR(c, t, PRB_BLACK_COLOR);
 								c->prbtree_right = a;
+								t->prbtree_left = c;
+								a->parent_color = prbtree_make_parent_color_(c, PRB_RED_COLOR);
+								c->parent_color = prbtree_make_parent_color_(t, PRB_BLACK_COLOR);
 							}
 							a = c;
 						}
 					}
 				}
 				if (a->prbtree_left) /* NULL on first iteration */
-					PRB_SET_PARENT_COLOR(a->prbtree_left, p, PRB_BLACK_COLOR);
+					a->prbtree_left->parent_color = prbtree_make_parent_color_(p, PRB_BLACK_COLOR);
 				p->prbtree_right = a->prbtree_left;
 				a->prbtree_left = p; /* cases 4,5 */
 			}
 			else {
 				a = t->prbtree_right;
 				/* parent is black: cases 1,2,3,4,5,6 */
-				if (PRB_BLACK_COLOR == PRB_GET_COLOR(t)) {
+				if (PRB_BLACK_COLOR == prbtree_get_color_(t)) {
 					/* t is black: cases 1,2,3 */
-					struct _prbtree_node *A_Restrict b = t->prbtree_left;
-					if (a && PRB_BLACK_COLOR != PRB_GET_COLOR(a)) { /* red on first iteration */
-						if (b && PRB_BLACK_COLOR != PRB_GET_COLOR(b)) { /* red on first iteration */
+					struct prbtree_node *b = t->prbtree_left;
+					if (a && PRB_BLACK_COLOR != prbtree_get_color_(a)) { /* red on first iteration */
+						if (b && PRB_BLACK_COLOR != prbtree_get_color_(b)) { /* red on first iteration */
 							/* case 3 */
-							PRB_SET_PARENT_COLOR(b, t, PRB_BLACK_COLOR);
-							PRB_SET_PARENT_COLOR(a, t, PRB_BLACK_COLOR);
+							b->parent_color = prbtree_make_parent_color_(t, PRB_BLACK_COLOR);
+							a->parent_color = prbtree_make_parent_color_(t, PRB_BLACK_COLOR);
 						}
 						else {
 							/* case 2 */
-							PRB_SET_PARENT_COLOR(t, a, PRB_BLACK_COLOR);
-							t->prbtree_right = a->prbtree_left;
 							if (a->prbtree_left) /* NULL on first iteration */
-								PRB_SET_PARENT_COLOR(a->prbtree_left, t, PRB_BLACK_COLOR);
+								a->prbtree_left->parent_color = prbtree_make_parent_color_(t, PRB_BLACK_COLOR);
+							t->prbtree_right = a->prbtree_left;
 							a->prbtree_left = t;
+							t->parent_color = prbtree_make_parent_color_(a, PRB_BLACK_COLOR);
 							t = a;
 						}
 					}
-					else if (b && PRB_BLACK_COLOR != PRB_GET_COLOR(b)) { /* red on first iteration */
+					else if (b && PRB_BLACK_COLOR != prbtree_get_color_(b)) { /* red on first iteration */
 						/* case 2 */
-						PRB_SET_PARENT_COLOR(b, t, PRB_BLACK_COLOR);
+						b->parent_color = prbtree_make_parent_color_(t, PRB_BLACK_COLOR); /* recolor: red -> black */
 						a = t;
 					}
 					else {
 						/* case 1 */
-						PRB_SET_PARENT_COLOR(t, p, PRB_RED_COLOR); /* recolor brother: black -> red */
+						t->parent_color = prbtree_make_parent_color_(p, PRB_RED_COLOR); /* recolor brother: black -> red */
 						e = p;
-						p = PRB_BLACK_NODE_PARENT(p);
+						p = prbtree_black_node_parent_(p);
 						if (!p)
 							return;
 						continue;
@@ -377,83 +384,83 @@ static inline void __prbtree_remove(
 					__assume(a);
 #endif
 					{
-						struct _prbtree_node *c = a->prbtree_right;
-						if (c && PRB_BLACK_COLOR != PRB_GET_COLOR(c)) {
+						struct prbtree_node *c = a->prbtree_right;
+						if (c && PRB_BLACK_COLOR != prbtree_get_color_(c)) { /* red on first iteration */
 							/* cases 5,6 */
-							struct _prbtree_node *d = a->prbtree_left;
-							if (d && PRB_BLACK_COLOR != PRB_GET_COLOR(d)) {
+							struct prbtree_node *d = a->prbtree_left;
+							if (d && PRB_BLACK_COLOR != prbtree_get_color_(d)) { /* red on first iteration */
 								/* case 6 */
-								PRB_SET_PARENT_COLOR(a, t, PRB_RED_COLOR);
-								PRB_SET_PARENT_COLOR(d, a, PRB_BLACK_COLOR);
-								PRB_SET_PARENT_COLOR(c, a, PRB_BLACK_COLOR);
+								a->parent_color = prbtree_make_parent_color_(t, PRB_RED_COLOR);
+								d->parent_color = prbtree_make_parent_color_(a, PRB_BLACK_COLOR);
+								c->parent_color = prbtree_make_parent_color_(a, PRB_BLACK_COLOR);
 							}
 							else {
 								/* case 5 */
-								t->prbtree_right = c;
 								if (c->prbtree_left) /* NULL on first iteration */
-									PRB_SET_PARENT_COLOR(c->prbtree_left, a, PRB_BLACK_COLOR);
+									c->prbtree_left->parent_color = prbtree_make_parent_color_(a, PRB_BLACK_COLOR);
 								a->prbtree_right = c->prbtree_left;
-								PRB_SET_PARENT_COLOR(a, c, PRB_RED_COLOR);
-								PRB_SET_PARENT_COLOR(c, t, PRB_BLACK_COLOR);
 								c->prbtree_left = a;
+								t->prbtree_right = c;
+								a->parent_color = prbtree_make_parent_color_(c, PRB_RED_COLOR);
+								c->parent_color = prbtree_make_parent_color_(t, PRB_BLACK_COLOR);
 							}
 							a = c;
 						}
 					}
 				}
 				if (a->prbtree_right) /* NULL on first iteration */
-					PRB_SET_PARENT_COLOR(a->prbtree_right, p, PRB_BLACK_COLOR);
+					a->prbtree_right->parent_color = prbtree_make_parent_color_(p, PRB_BLACK_COLOR);
 				p->prbtree_left = a->prbtree_right;
 				a->prbtree_right = p; /* cases 4,5 */
 			}
 			{
-				struct _prbtree_node *g = PRB_BLACK_NODE_PARENT(p);
-				PRB_SET_PARENT_COLOR(t, g, PRB_BLACK_COLOR);
-				prbtree_replace_at_parent_(tree, g, p, t);
+				struct prbtree_node *g = prbtree_black_node_parent_(p);
+				t->parent_color = prbtree_make_parent_color_(g, PRB_BLACK_COLOR);
+				*prbtree_slot_at_parent_(tree, g, p) = t;
 			}
-			_p = _PRB_MAKE_PARENT_COLOR(a, t == a ? PRB_BLACK_COLOR : PRB_RED_COLOR);
+			p_ = prbtree_make_parent_color_(a, t != a ? PRB_RED_COLOR : PRB_BLACK_COLOR);
 		}
 		else {
-			struct _prbtree_node *g = PRB_GET_PARENT(p);
+			struct prbtree_node *g = prbtree_get_parent(p);
 			if (e == t) {
 				t = p->prbtree_right;
 				a = t->prbtree_left;
 				{
 					/* parent is red: cases 4,5,6,7,8,9 (10:4,11:5,12:6,13:7,14:8,15:9) */
-					struct _prbtree_node *A_Restrict b = t->prbtree_right;
-					if (a && PRB_BLACK_COLOR != PRB_GET_COLOR(a)) {
+					struct prbtree_node *b = t->prbtree_right;
+					if (a && PRB_BLACK_COLOR != prbtree_get_color_(a)) {
 						/* cases 5,6,8,9 (11:5,12:6,14:8,15:9) */
-						if (b && PRB_BLACK_COLOR != PRB_GET_COLOR(b)) {
+						if (b && PRB_BLACK_COLOR != prbtree_get_color_(b)) {
 							/* cases 6,9 (12:6,15:9) */
-							PRB_SET_PARENT_COLOR(t, g, PRB_RED_COLOR);
-							PRB_SET_PARENT_COLOR(b, t, PRB_BLACK_COLOR);
-							PRB_SET_PARENT_COLOR(a, t, PRB_BLACK_COLOR);
+							t->parent_color = prbtree_make_parent_color_(g, PRB_RED_COLOR);
+							b->parent_color = prbtree_make_parent_color_(t, PRB_BLACK_COLOR);
+							a->parent_color = prbtree_make_parent_color_(t, PRB_BLACK_COLOR);
 						}
 						else {
 							/* cases 5,8 (11:5,14:8) */
-							PRB_SET_PARENT_COLOR(t, a, PRB_RED_COLOR);
-							t->prbtree_left = a->prbtree_right;
 							if (a->prbtree_right) /* NULL on first iteration */
-								PRB_SET_PARENT_COLOR(a->prbtree_right, t, PRB_BLACK_COLOR);
+								a->prbtree_right->parent_color = prbtree_make_parent_color_(t, PRB_BLACK_COLOR);
+							t->prbtree_left = a->prbtree_right;
 							a->prbtree_right = t;
-							PRB_SET_PARENT_COLOR(a, g, PRB_BLACK_COLOR);
+							t->parent_color = prbtree_make_parent_color_(a, PRB_RED_COLOR);
 							t = a;
+							a->parent_color = prbtree_make_parent_color_(g, PRB_BLACK_COLOR);
 						}
 					}
-					else if (b && PRB_BLACK_COLOR != PRB_GET_COLOR(b)) {
+					else if (b && PRB_BLACK_COLOR != prbtree_get_color_(b)) {
 						/* cases 5,8 (11:5,14:8) */
-						PRB_SET_PARENT_COLOR(t, g, PRB_BLACK_COLOR);
 						a = t;
+						a->parent_color = prbtree_make_parent_color_(g, PRB_BLACK_COLOR);
 					}
 					else {
 						/* cases 4,7 (10:4,13:7) */
-						PRB_SET_PARENT_COLOR(t, p, PRB_RED_COLOR);   /* recolor: black -> red */
-						PRB_SET_PARENT_COLOR(p, g, PRB_BLACK_COLOR); /* recolor: red -> black */
+						t->parent_color = prbtree_make_parent_color_(p, PRB_RED_COLOR);   /* recolor: black -> red */
+						p->parent_color = prbtree_make_parent_color_(g, PRB_BLACK_COLOR); /* recolor: red -> black */
 						return;
 					}
 				}
 				if (a->prbtree_left) /* NULL on first iteration */
-					PRB_SET_PARENT_COLOR(a->prbtree_left, p, PRB_BLACK_COLOR);
+					a->prbtree_left->parent_color = prbtree_make_parent_color_(p, PRB_BLACK_COLOR);
 				p->prbtree_right = a->prbtree_left;
 				a->prbtree_left = p;
 			}
@@ -461,40 +468,40 @@ static inline void __prbtree_remove(
 				a = t->prbtree_right;
 				{
 					/* parent is red: cases 4,5,6,7,8,9 (10:4,11:5,12:6,13:7,14:8,15:9) */
-					struct _prbtree_node *A_Restrict b = t->prbtree_left;
-					if (a && PRB_BLACK_COLOR != PRB_GET_COLOR(a)) {
+					struct prbtree_node *b = t->prbtree_left;
+					if (a && PRB_BLACK_COLOR != prbtree_get_color_(a)) {
 						/* cases 5,6,8,9 (11:5,12:6,14:8,15:9) */
-						if (b && PRB_BLACK_COLOR != PRB_GET_COLOR(b)) {
+						if (b && PRB_BLACK_COLOR != prbtree_get_color_(b)) {
 							/* cases 6,9 (12:6,15:9) */
-							PRB_SET_PARENT_COLOR(t, g, PRB_RED_COLOR);
-							PRB_SET_PARENT_COLOR(b, t, PRB_BLACK_COLOR);
-							PRB_SET_PARENT_COLOR(a, t, PRB_BLACK_COLOR);
+							t->parent_color = prbtree_make_parent_color_(g, PRB_RED_COLOR);
+							b->parent_color = prbtree_make_parent_color_(t, PRB_BLACK_COLOR);
+							a->parent_color = prbtree_make_parent_color_(t, PRB_BLACK_COLOR);
 						}
 						else {
 							/* cases 5,8 (11:5,14:8) */
-							PRB_SET_PARENT_COLOR(t, a, PRB_RED_COLOR);
-							t->prbtree_right = a->prbtree_left;
 							if (a->prbtree_left) /* NULL on first iteration */
-								PRB_SET_PARENT_COLOR(a->prbtree_left, t, PRB_BLACK_COLOR);
+								a->prbtree_left->parent_color = prbtree_make_parent_color_(t, PRB_BLACK_COLOR);
+							t->prbtree_right = a->prbtree_left;
 							a->prbtree_left = t;
-							PRB_SET_PARENT_COLOR(a, g, PRB_BLACK_COLOR);
+							t->parent_color = prbtree_make_parent_color_(a, PRB_RED_COLOR);
 							t = a;
+							a->parent_color = prbtree_make_parent_color_(g, PRB_BLACK_COLOR);
 						}
 					}
-					else if (b && PRB_BLACK_COLOR != PRB_GET_COLOR(b)) {
+					else if (b && PRB_BLACK_COLOR != prbtree_get_color_(b)) {
 						/* cases 5,8 (11:5,14:8) */
-						PRB_SET_PARENT_COLOR(t, g, PRB_BLACK_COLOR);
 						a = t;
+						a->parent_color = prbtree_make_parent_color_(g, PRB_BLACK_COLOR);
 					}
 					else {
 						/* cases 4,7 (10:4,13:7) */
-						PRB_SET_PARENT_COLOR(t, p, PRB_RED_COLOR);   /* recolor: black -> red */
-						PRB_SET_PARENT_COLOR(p, g, PRB_BLACK_COLOR); /* recolor: red -> black */
+						t->parent_color = prbtree_make_parent_color_(p, PRB_RED_COLOR);   /* recolor: black -> red */
+						p->parent_color = prbtree_make_parent_color_(g, PRB_BLACK_COLOR); /* recolor: red -> black */
 						return;
 					}
 				}
 				if (a->prbtree_right) /* NULL on first iteration */
-					PRB_SET_PARENT_COLOR(a->prbtree_right, p, PRB_BLACK_COLOR);
+					a->prbtree_right->parent_color = prbtree_make_parent_color_(p, PRB_BLACK_COLOR);
 				p->prbtree_left = a->prbtree_right;
 				a->prbtree_right = p;
 			}
@@ -502,25 +509,25 @@ static inline void __prbtree_remove(
 				g->prbtree_left = t; /* case 5,6 (11:5,12:6) */
 			else
 				g->prbtree_right = t; /* case 8,9 (14:8,15:9) */
-			_p = _PRB_MAKE_PARENT_COLOR(a, PRB_RED_COLOR);
+			p_ = prbtree_make_parent_color_(a, PRB_RED_COLOR);
 		}
-		_PRB_SET_PARENT_COLOR(p, _p);
+		p->parent_color = p_;
 		return;
 	}
 }
 
-PRBTREE_EXPORTS void _prbtree_remove(
-	A_In struct _prbtree *tree/*!=NULL*/,
-	A_In struct _prbtree_node *e/*!=NULL*/)
+PRBTREE_EXPORTS void prbtree_remove(
+	struct prbtree *tree/*!=NULL*/,
+	struct prbtree_node *e/*!=NULL*/)
 {
-	struct _prbtree_node *t = e->prbtree_right;
+	struct prbtree_node *t = e->prbtree_right;
 	if (t) {
 		if (t->prbtree_left) {
 			do {
 				t = t->prbtree_left;
 			} while (t->prbtree_left);
 			if (t->prbtree_right) {
-				/* t is black:
+				/* t is black (because tree is black-node balanced):
 						 -----                    -----
 						 |4,B|      rotate        |4,B|
 				  ---------------     ->       -----------
@@ -528,15 +535,15 @@ PRBTREE_EXPORTS void _prbtree_remove(
 				  |    3,R| -----          --------- -----
 				  ---------                |2,B*|
 										   ------           */
-				struct _prbtree_node *A_Restrict p = PRB_BLACK_NODE_PARENT(t);
-				struct _prbtree_node *A_Restrict r = t->prbtree_right;
-				PRB_SET_PARENT_COLOR(r, p, PRB_BLACK_COLOR); /* change parent & recolor node: red -> black */
+				struct prbtree_node *p = prbtree_black_node_parent_(t);
+				struct prbtree_node *r = t->prbtree_right;
+				r->parent_color = prbtree_make_parent_color_(p, PRB_BLACK_COLOR); /* change parent & recolor node: red -> black */
 				p->prbtree_left = r;
-				goto _replace;
+				goto replace_;
 			}
 		}
 		else if (t->prbtree_right) {
-			/* t is black:
+			/* t is black (because tree is black-node balanced):
 			    -----                      -----
 			    |1,B|          rotate      |1,B|
 			 ---------------     ->     ---------------
@@ -544,38 +551,38 @@ PRBTREE_EXPORTS void _prbtree_remove(
 			 ----- |    3,R|            ----- ---------
 			       ---------                  |2,B*|
 		                                      ------        */
-			struct _prbtree_node *A_Restrict r = t->prbtree_right;
-			PRB_SET_PARENT_COLOR(r, e, PRB_BLACK_COLOR); /* change parent & recolor node: red -> black */
+			struct prbtree_node *r = t->prbtree_right;
+			r->parent_color = prbtree_make_parent_color_(e, PRB_BLACK_COLOR); /* change parent & recolor node: red -> black */
 			e->prbtree_right = r;
-			goto _replace;
+			goto replace_;
 		}
 	}
 	else {
 		t = e->prbtree_left;
 		if (t) {
-			/* t is red:
+			/* t is red (because tree is black-node balanced):
 			 ---------
 			 |    3,B|
 			 |2,R*   |
 			 --------- */
-			e->prbtree_left = (struct _prbtree_node*)0;
-			goto _replace;
+			e->prbtree_left = (struct prbtree_node*)0;
+			goto replace_;
 		}
 		t = e;
 	}
 	{
-		/* remove t from parent */
-		struct _prbtree_node *A_Restrict p = PRB_GET_PARENT(t);
+		/* remove t (leaf) from parent */
+		struct prbtree_node *p = prbtree_get_parent(t);
 		if (!p) {
-			tree->root = (struct _prbtree_node*)0;
+			tree->root = (struct prbtree_node*)0;
 			return;
 		}
-		if (PRB_BLACK_COLOR == PRB_GET_COLOR(t))
-			__prbtree_remove(tree, p, t); /* t - leaf black node */
-		p->u.leaves[t != p->prbtree_left] = (struct _prbtree_node*)0;
+		if (PRB_BLACK_COLOR == prbtree_get_color_(t))
+			prbtree_remove_(tree, p, t); /* t - leaf black node */
+		p->u.leaves[t != p->prbtree_left] = (struct prbtree_node*)0;
 	}
 	if (t != e) {
-_replace:
-		_prbtree_replace(tree, e, t); /* replace e with t */
+replace_:
+		prbtree_replace(tree, e, t); /* replace e with t */
 	}
 }

@@ -31,6 +31,8 @@
 
 #include "prbtree.h"
 
+#define PRB_BLACK_COLOR 0u
+
 #define ORDER 2
 #define __MUL(n)    1e##n
 #define _MUL(n)    __MUL(n)
@@ -71,56 +73,56 @@ struct key_comp {
 #else
 union my_key {
 	tree_key_t k;
-	struct _btree_key _bk;
+	struct btree_key _bk;
 };
 #endif
 
 struct A {
 #ifndef USE_STDMAP
-	struct _prbtree_node n;
+	struct prbtree_node n;
 	tree_key_t key;
 #endif
 	char c;
 };
 
 #ifndef USE_STDMAP
-static inline const struct A *_const_node_to_A(const struct _btree_node *node)
+static inline const struct A *_const_node_to_A(const struct btree_node *node)
 {
 	union {
-		const struct _btree_node *n;
+		const struct btree_node *n;
 		const struct A *a;
 	} u = {node};
 	return u.a;
 }
 
-static inline struct A *_node_to_A(struct _btree_node *node)
+static inline struct A *_node_to_A(struct btree_node *node)
 {
 	union {
-		struct _btree_node *n;
+		struct btree_node *n;
 		struct A *a;
 	} u = {node};
 	return u.a;
 }
 
-static inline const union my_key *_key_to_my_key(const struct _btree_key *key)
+static inline const union my_key *_key_to_my_key(const struct btree_key *key)
 {
 	union {
-		const struct _btree_key *bk;
+		const struct btree_key *bk;
 		const union my_key *k;
 	} u = {key};
 	return u.k;
 }
 
-static inline const struct _btree_key *_key_to_btree_key(const tree_key_t *key)
+static inline const struct btree_key *_key_to_btree_key(const tree_key_t *key)
 {
 	union {
 		const tree_key_t *tk;
-		const struct _btree_key *bk;
+		const struct btree_key *bk;
 	} u = {key};
 	return u.bk;
 }
 
-static inline int key_comparator(const struct _btree_node *node, const struct _btree_key *key)
+static inline int key_comparator(const struct btree_node *node, const struct btree_key *key)
 {
 	const union my_key *k = _key_to_my_key(key);
 	const struct A *a = _const_node_to_A(node);
@@ -141,7 +143,7 @@ static void print_offs(unsigned offs)
  1   1   1   1
 1 1 1 1 1 1 1 1
 */
-static unsigned print_tree_line(const struct _btree_node *tree, unsigned l, unsigned n, unsigned offs, unsigned height, unsigned pos)
+static unsigned print_tree_line(const struct btree_node *tree, unsigned l, unsigned n, unsigned offs, unsigned height, unsigned pos)
 {
 	if (tree) {
 		if (l == n) {
@@ -150,8 +152,8 @@ static unsigned print_tree_line(const struct _btree_node *tree, unsigned l, unsi
 			const struct A *a = _const_node_to_A(tree);
 			print_offs(gap);
 			//pos += gap + fprintf(out, "{%d,%d,%d:%d:%x}",
-				//a->key.k.a, a->key.k.b, a->key.k.c, (int)PRB_GET_COLOR(&a->n), 0xFFFF & (uintptr_t)&a->n);
-			pos += gap + (unsigned)fprintf(out, "{%u:%x}", PRB_GET_COLOR(&a->n),
+				//a->key.k.a, a->key.k.b, a->key.k.c, (int)prbtree_get_color_(&a->n), 0xFFFF & (uintptr_t)&a->n);
+			pos += gap + (unsigned)fprintf(out, "{%u:%x}", prbtree_get_color_(&a->n),
 				(unsigned)(0xFFFFu & ((const char*)&a->n - (const char*)0)));
 		}
 		else {
@@ -162,7 +164,7 @@ static unsigned print_tree_line(const struct _btree_node *tree, unsigned l, unsi
 	return pos;
 }
 
-static unsigned print_tree(const struct _btree_node *tree)
+static unsigned print_tree(const struct btree_node *tree)
 {
 	if (tree) {
 		unsigned height = (unsigned)_btree_height(tree);
@@ -181,43 +183,43 @@ static unsigned print_tree(const struct _btree_node *tree)
 #ifdef RBTREE_CHECK
 #ifndef _DEBUG
 #ifdef __GNUC__
-__attribute__ ((pure))
+/*__attribute__ ((pure))*/
 #endif
 #endif
-static void check_right_order(const struct _btree_node *left, const struct _btree_node *right)
+static void check_right_order(const struct btree_node *left, const struct btree_node *right)
 {
 	ASSERT(key_comparator(left, _key_to_btree_key(&_const_node_to_A(right)->key)) < 0);
 	ASSERT(key_comparator(right, _key_to_btree_key(&_const_node_to_A(left)->key)) > 0);
 	(void)left, (void)right;
 }
-static unsigned check_tree(struct _btree_node *tree, int parent_is_red)
+static unsigned check_tree(struct btree_node *tree, int parent_is_red)
 {
 	if (tree) {
 		/* red parent must have black children */
-		ASSERT(!parent_is_red || PRB_BLACK_COLOR == PRB_GET_COLOR(_prbtree_node_from_btree_node(tree)));
+		ASSERT(!parent_is_red || PRB_BLACK_COLOR == prbtree_get_color_(prbtree_node_from_btree_node_(tree)));
 		/* red parent must have either both (black) children != NULL, ot both == NULL */
-		ASSERT(PRB_BLACK_COLOR == PRB_GET_COLOR(_prbtree_node_from_btree_node(tree)) || (!!tree->btree_left == !!tree->btree_right));
+		ASSERT(PRB_BLACK_COLOR == prbtree_get_color_(prbtree_node_from_btree_node_(tree)) || (!!tree->btree_left == !!tree->btree_right));
 		if (tree->btree_left) {
-			ASSERT(tree == &PRB_GET_PARENT(_prbtree_node_from_btree_node(tree->btree_left))->u.n);
+			ASSERT(tree == &PRB_GET_PARENT(prbtree_node_from_btree_node_(tree->btree_left))->u.n);
 			check_right_order(tree->btree_left, tree);
 		}
 		if (tree->btree_right) {
-			ASSERT(tree == &PRB_GET_PARENT(_prbtree_node_from_btree_node(tree->btree_right))->u.n);
+			ASSERT(tree == &PRB_GET_PARENT(prbtree_node_from_btree_node_(tree->btree_right))->u.n);
 			check_right_order(tree, tree->btree_right);
 		}
 		if (tree->btree_left && tree->btree_right)
 			check_right_order(tree->btree_left, tree->btree_right);
 		{
 			/* compute number of black nodes */
-			unsigned bc_left  = check_tree(tree->btree_left,  PRB_BLACK_COLOR != PRB_GET_COLOR(_prbtree_node_from_btree_node(tree)));
-			unsigned bc_right = check_tree(tree->btree_right, PRB_BLACK_COLOR != PRB_GET_COLOR(_prbtree_node_from_btree_node(tree)));
+			unsigned bc_left  = check_tree(tree->btree_left,  PRB_BLACK_COLOR != prbtree_get_color_(prbtree_node_from_btree_node_(tree)));
+			unsigned bc_right = check_tree(tree->btree_right, PRB_BLACK_COLOR != prbtree_get_color_(prbtree_node_from_btree_node_(tree)));
 			if (bc_left != bc_right) {
 				fprintf(out, "key = {%d,%d,%d}, bc_left = %u, bc_right = %u!\n",
 					_node_to_A(tree)->key.a, _node_to_A(tree)->key.b, _node_to_A(tree)->key.c,
 					bc_left, bc_right);
 			}
 			ASSERT(bc_left == bc_right);
-			return bc_left + (PRB_BLACK_COLOR == PRB_GET_COLOR(_prbtree_node_from_btree_node(tree)));
+			return bc_left + (PRB_BLACK_COLOR == prbtree_get_color_(prbtree_node_from_btree_node_(tree)));
 		}
 	}
 	(void)parent_is_red;
@@ -225,7 +227,7 @@ static unsigned check_tree(struct _btree_node *tree, int parent_is_red)
 }
 #endif /* RBTREE_CHECK */
 
-static void clear_tree(struct _btree_node *tree)
+static void clear_tree(struct btree_node *tree)
 {
 	if (tree) {
 		clear_tree(tree->btree_left);
@@ -236,7 +238,7 @@ static void clear_tree(struct _btree_node *tree)
 #endif /* !USE_STDMAP */
 
 #ifndef USE_STDMAP
-static inline int rb_insert(struct _prbtree *tree, const tree_key_t *key, unsigned count)
+static inline int rb_insert(struct prbtree *tree, const tree_key_t *key, unsigned count)
 {
 	struct A *a = (struct A*)malloc(sizeof(*a));
 	if (!a) {
@@ -245,7 +247,7 @@ static inline int rb_insert(struct _prbtree *tree, const tree_key_t *key, unsign
 #endif
 		return 0;
 	}
-	_prbtree_init_node(&a->n);
+	prbtree_init_node(&a->n);
 	a->key = *key;
 	a->c = 'a';
 	(void)count;
@@ -253,24 +255,24 @@ static inline int rb_insert(struct _prbtree *tree, const tree_key_t *key, unsign
 #ifdef RBTREE_PRINT
 		unsigned height = 0;
 #endif
-		struct _btree_node *parent = _btree_const_cast(_prbtree_node_to_btree_node(tree->root)); /* NULL? */
-		int parent_found = _btree_search_parent(&parent, _key_to_btree_key(&a->key), key_comparator, /*allow_duplicates:*/0);
+		struct btree_node *parent = btree_const_cast_(prbtree_node_to_btree_node_(tree->root)); /* NULL? */
+		int parent_found = btree_search_parent(&parent, _key_to_btree_key(&a->key), key_comparator, /*allow_duplicates:*/0);
 		if (parent_found) {
-			_prbtree_insert(tree, _prbtree_node_from_btree_node(parent/*NULL?*/), &a->n, parent_found);
+			prbtree_insert(tree, prbtree_node_from_btree_node_(parent/*NULL?*/), &a->n, parent_found);
 #ifdef RBTREE_PRINT
 			height = print_tree(&tree->root->u.n);
 #endif
 		}
 #ifdef RBTREE_CHECK
 		if (parent_found) {
-			ASSERT(!tree->root || PRB_BLACK_COLOR == PRB_GET_COLOR(tree->root)); /* root must be black */
-			check_tree(_prbtree_node_to_btree_node(tree->root), /*parent_is_red:*/1);
+			ASSERT(!tree->root || PRB_BLACK_COLOR == prbtree_get_color_(tree->root)); /* root must be black */
+			check_tree(prbtree_node_to_btree_node_(tree->root), /*parent_is_red:*/1);
 		}
 #endif
 		if (!parent_found) {
 #ifdef RBTREE_PRINT
 			fprintf(out, "------------------found existing! key={%d,%d,%d}, n={%u:%x}\n", key.a, key.b, key.c,
-				PRB_GET_COLOR(_prbtree_node_from_btree_node(parent)), (unsigned)(0xFFFFu & (uintptr_t)parent));
+				prbtree_get_color_(prbtree_node_from_btree_node_(parent)), (unsigned)(0xFFFFu & (uintptr_t)parent));
 #endif
 			free(a);
 			return 0;
@@ -278,46 +280,46 @@ static inline int rb_insert(struct _prbtree *tree, const tree_key_t *key, unsign
 		else {
 #ifdef RBTREE_PRINT
 			fprintf(out, "-------------height=%u, added key={%d,%d,%d}, n={%u:%x}, count=%u\n", height,
-				key.a, key.b, key.c, PRB_GET_COLOR(&a->n), (unsigned)(0xFFFFu & (uintptr_t)&a->n), count);
+				key.a, key.b, key.c, prbtree_get_color_(&a->n), (unsigned)(0xFFFFu & (uintptr_t)&a->n), count);
 #endif
 			return 1;
 		}
 	}
 }
 
-static inline int rb_remove(struct _prbtree *tree, const tree_key_t *key, unsigned count)
+static inline int rb_remove(struct prbtree *tree, const tree_key_t *key, unsigned count)
 {
 	(void)count;
 	{
 #ifdef RBTREE_PRINT
 		unsigned height = 0;
 #endif
-		struct _btree_node *n = _btree_const_cast(_btree_search(
-			_prbtree_node_to_btree_node(tree->root/*NULL?*/), _key_to_btree_key(key), key_comparator));
+		struct btree_node *n = btree_const_cast_(btree_search(
+			prbtree_node_to_btree_node_(tree->root/*NULL?*/), _key_to_btree_key(key), key_comparator));
 		if (n) {
 #ifdef RBTREE_PRINT
 			fprintf(out, "--------------------removing key={%d,%d,%d}, n={%u:%x}, count=%u\n", key.a, key.b, key.c,
-				PRB_GET_COLOR(_prbtree_node_from_btree_node(n)), (unsigned)(0xFFFFu & (uintptr_t)n), count);
+				prbtree_get_color_(prbtree_node_from_btree_node_(n)), (unsigned)(0xFFFFu & (uintptr_t)n), count);
 #endif
-			_prbtree_remove(tree, _prbtree_node_from_btree_node(n));
+			prbtree_remove(tree, prbtree_node_from_btree_node_(n));
 		}
 #ifdef RBTREE_PRINT
 #ifndef RBTREE_PRINT_REMOVE_NOT_FOUND
 		if (n)
 #endif
-			height = print_tree(_prbtree_node_to_btree_node(tree->root));
+			height = print_tree(prbtree_node_to_btree_node_(tree->root));
 #endif
 #ifdef RBTREE_CHECK
 		if (n) {
-			ASSERT(!tree->root || PRB_BLACK_COLOR == PRB_GET_COLOR(tree->root)); /* root must be black */
-			check_tree(_prbtree_node_to_btree_node(tree->root), /*parent_is_red:*/1);
+			ASSERT(!tree->root || PRB_BLACK_COLOR == prbtree_get_color_(tree->root)); /* root must be black */
+			check_tree(prbtree_node_to_btree_node_(tree->root), /*parent_is_red:*/1);
 		}
 #endif
 		if (n) {
 			struct A *a = _node_to_A(n);
 #ifdef RBTREE_PRINT
 			fprintf(out, "--------------------height=%u, removed key={%d,%d,%d}, n={%u:%x}, count=%u\n", height,
-				key.a, key.b, key.c, PRB_GET_COLOR(&a->n), (unsigned)(0xFFFFu & (uintptr_t)&a->n), count);
+				key.a, key.b, key.c, prbtree_get_color_(&a->n), (unsigned)(0xFFFFu & (uintptr_t)&a->n), count);
 #endif
 			free(a);
 			return 1;
@@ -350,8 +352,8 @@ int main(int argc, char *argv[])
 #ifdef USE_STDMAP
 	std::map<tree_key_t, struct A, key_comp> std_tree;
 #else
-	struct _prbtree tree;
-	_prbtree_init(&tree);
+	struct prbtree tree;
+	prbtree_init(&tree);
 #endif
 	srand(0);
 #ifdef USE_STDMAP
@@ -417,7 +419,7 @@ int main(int argc, char *argv[])
 			clear++;
 		}
 #ifndef USE_STDMAP
-		clear_tree(_prbtree_node_to_btree_node(tree.root));
+		clear_tree(prbtree_node_to_btree_node_(tree.root));
 #endif
 		fprintf(out, "max_count=%u\n", max_count);
 	}
