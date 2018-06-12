@@ -62,7 +62,7 @@ static inline int btree_key_int_diff_(
 		((sizeof(a) <= sizeof(int) ? \
 			btree_key_int_diff_((unsigned)(a), (unsigned)(k)) : \
 			(a) < (k) ? -1 : \
-			(a) > (k) ? 1 : 0))
+			(a) > (k) ? 1 : 0)))
 
 #define BTREE_KEY_COMPARATOR2(a,k,...) \
 	((int)(0*sizeof(int[1-2*(sizeof(a) != sizeof(k))])) + \
