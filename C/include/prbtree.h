@@ -94,7 +94,7 @@ A_Ret_range(==,n)
 static inline struct prbtree_node *prbtree_node_from_btree_node_(
 	const struct btree_node *n/*NULL?*/)
 {
-	void *p = btree_const_cast_(n/*NULL?*/);
+	void *p = btree_const_cast(n/*NULL?*/);
 	return (struct prbtree_node*)p;
 }
 
@@ -108,7 +108,7 @@ static inline struct btree_node *prbtree_node_to_btree_node_(
 	const struct prbtree_node *pn/*NULL?*/)
 {
 	const void *p = pn;
-	return btree_const_cast_((const struct btree_node*)p/*NULL?*/);
+	return btree_const_cast((const struct btree_node*)p/*NULL?*/);
 }
 
 /* tree - just a pointer to the root node */
