@@ -46,8 +46,8 @@ A_Use_decl_annotations
 #endif
 PRBTREE_EXPORTS void pcrbtree_rebalance(
 	struct pcrbtree *tree/*!=NULL*/,
-	struct pcrbtree_node *p/*!=NULL*/,
-	struct pcrbtree_node *e/*!=NULL*/,
+	struct pcrbtree_node *A_Restrict p/*!=NULL*/,
+	struct pcrbtree_node *A_Restrict e/*!=NULL*/,
 	int c)
 {
 	/* insert red node e */
@@ -91,8 +91,8 @@ PRBTREE_EXPORTS void pcrbtree_rebalance(
 		    ----- ----  ----- -----      -----              ----- -----
 		         [a][b]
 		*/
-		struct pcrbtree_node *g = pcrbtree_get_parent(p); /* p is red */
-		struct pcrbtree_node *t;
+		struct pcrbtree_node *A_Restrict g = pcrbtree_get_parent(p); /* p is red */
+		struct pcrbtree_node *A_Restrict t;
 		void *parent_color;
 		for (;;) {
 			if (pcrbtree_is_right_(p)) {
@@ -649,9 +649,9 @@ static inline void pcrbtree_remove_(
 
 PRBTREE_EXPORTS void pcrbtree_remove(
 	struct pcrbtree *tree/*!=NULL*/,
-	struct pcrbtree_node *e/*!=NULL*/)
+	struct pcrbtree_node *A_Restrict e/*!=NULL*/)
 {
-	struct pcrbtree_node *t = e->pcrbtree_right;
+	struct pcrbtree_node *A_Restrict t = e->pcrbtree_right;
 	if (t) {
 		if (t->pcrbtree_left) {
 			do {
@@ -659,15 +659,15 @@ PRBTREE_EXPORTS void pcrbtree_remove(
 			} while (t->pcrbtree_left);
 			if (t->pcrbtree_right) {
 				/* t is black (because tree is black-node balanced):
-						 -----                    -----
-						 |4,B|      rotate        |4,B|
+				         -----                    -----
+				         |4,B|      rotate        |4,B|
 				  ---------------     ->       -----------
 				  |2,B*   | |5,B|              |3,B| |5,B|
 				  |    3,R| -----          --------- -----
 				  ---------                |2,B*|
-										   ------           */
-				struct pcrbtree_node *p = pcrbtree_left_black_node_parent_(t);
-				struct pcrbtree_node *r = t->pcrbtree_right;
+				                           ------           */
+				struct pcrbtree_node *A_Restrict p = pcrbtree_left_black_node_parent_(t);
+				struct pcrbtree_node *A_Restrict r = t->pcrbtree_right;
 				/* change parent & recolor node: red -> black */
 				r->parent_color = pcrbtree_make_parent_color_(p, PCRB_LEFT_CHILD | PCRB_BLACK_COLOR);
 				p->pcrbtree_left = r;
@@ -682,8 +682,8 @@ PRBTREE_EXPORTS void pcrbtree_remove(
 			 |0,B| |2,B*   |            |0,B|     |3,B|
 			 ----- |    3,R|            ----- ---------
 			       ---------                  |2,B*|
-		                                      ------        */
-			struct pcrbtree_node *r = t->pcrbtree_right;
+			                                  ------        */
+			struct pcrbtree_node *A_Restrict r = t->pcrbtree_right;
 			/* change parent & recolor node: red -> black */
 			r->parent_color = pcrbtree_make_parent_color_(e, PCRB_RIGHT_CHILD | PCRB_BLACK_COLOR);
 			e->pcrbtree_right = r;
@@ -706,7 +706,7 @@ PRBTREE_EXPORTS void pcrbtree_remove(
 	}
 	{
 		/* remove t (leaf) from parent */
-		struct pcrbtree_node *p = pcrbtree_get_parent(t);
+		struct pcrbtree_node *A_Restrict p = pcrbtree_get_parent(t);
 		if (!p) {
 			tree->root = (struct pcrbtree_node*)0;
 			return;
