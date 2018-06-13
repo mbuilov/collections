@@ -183,7 +183,7 @@ A_Ret_range(0,1)
 A_Check_return
 #endif
 static inline unsigned prbtree_get_color_1(
-	const void *parent_color)
+	const void *parent_color/*NULL?*/)
 {
 #ifdef _MSC_VER
 #pragma warning(push)
