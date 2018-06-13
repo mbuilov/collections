@@ -528,13 +528,13 @@ PRBTREE_EXPORTS void prbtree_remove(
 			} while (t->prbtree_left);
 			if (t->prbtree_right) {
 				/* t is black (because tree is black-node balanced):
-						 -----                    -----
-						 |4,B|      rotate        |4,B|
+				         -----                    -----
+				         |4,B|      rotate        |4,B|
 				  ---------------     ->       -----------
 				  |2,B*   | |5,B|              |3,B| |5,B|
 				  |    3,R| -----          --------- -----
 				  ---------                |2,B*|
-										   ------           */
+				                           ------           */
 				struct prbtree_node *p = prbtree_black_node_parent_(t);
 				struct prbtree_node *r = t->prbtree_right;
 				r->parent_color = prbtree_make_parent_color_(p, PRB_BLACK_COLOR); /* change parent & recolor node: red -> black */
@@ -550,7 +550,7 @@ PRBTREE_EXPORTS void prbtree_remove(
 			 |0,B| |2,B*   |            |0,B|     |3,B|
 			 ----- |    3,R|            ----- ---------
 			       ---------                  |2,B*|
-		                                      ------        */
+			                                  ------        */
 			struct prbtree_node *r = t->prbtree_right;
 			r->parent_color = prbtree_make_parent_color_(e, PRB_BLACK_COLOR); /* change parent & recolor node: red -> black */
 			e->prbtree_right = r;
