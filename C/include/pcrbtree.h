@@ -330,7 +330,7 @@ A_At(p, A_Inout)
 A_At(e, A_Inout)
 #endif
 PCRBTREE_EXPORTS void pcrbtree_rebalance(
-	struct pcrbtree *tree/*!=NULL*/,
+	struct pcrbtree *A_Restrict tree/*!=NULL*/,
 	struct pcrbtree_node *A_Restrict p/*!=NULL*/,
 	struct pcrbtree_node *A_Restrict e/*!=NULL*/,
 	int c);
@@ -348,7 +348,7 @@ A_At(p, A_Inout_opt)
 A_At(e, A_Inout)
 #endif
 static inline void pcrbtree_insert(
-	struct pcrbtree *tree/*!=NULL*/,
+	struct pcrbtree *A_Restrict tree/*!=NULL*/,
 	struct pcrbtree_node *A_Restrict p/*NULL?*/,
 	struct pcrbtree_node *A_Restrict e/*!=NULL*/,
 	int c)
@@ -419,8 +419,8 @@ A_Ret_never_null
 A_Check_return
 #endif
 static inline struct pcrbtree_node **pcrbtree_slot_at_parent_(
-	struct pcrbtree *tree/*!=NULL*/,
-	struct pcrbtree_node *p/*NULL?*/,
+	struct pcrbtree *A_Restrict tree/*!=NULL*/,
+	struct pcrbtree_node *A_Restrict p/*NULL?*/,
 	int right)
 {
 	PCRBTREE_ASSERT(tree);
@@ -435,7 +435,7 @@ A_At(o, A_In)
 A_At(e, A_Out)
 #endif
 static inline void pcrbtree_replace(
-	struct pcrbtree *tree/*!=NULL*/,
+	struct pcrbtree *A_Restrict tree/*!=NULL*/,
 	const struct pcrbtree_node *A_Restrict o/*!=NULL*/,
 	struct pcrbtree_node *A_Restrict e/*!=NULL,out*/)
 {
@@ -460,7 +460,7 @@ A_At(tree, A_Inout)
 A_At(e, A_Inout)
 #endif
 PCRBTREE_EXPORTS void pcrbtree_remove(
-	struct pcrbtree *tree/*!=NULL*/,
+	struct pcrbtree *A_Restrict tree/*!=NULL*/,
 	struct pcrbtree_node *A_Restrict e/*!=NULL*/);
 
 /* non-recursive iteration over nodes of the tree */
