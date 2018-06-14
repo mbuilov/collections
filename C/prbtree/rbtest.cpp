@@ -23,13 +23,17 @@
 #pragma warning (pop)
 #endif
 
-#ifdef NDEBUG
-#define ASSERT(x) ((void)0)
-#else
+#ifndef NDEBUG
+#ifndef ASSERT
 #define ASSERT(x) assert(x)
+#endif
 #endif
 
 #include "prbtree.h"
+
+#ifndef ASSERT
+#define ASSERT(x) ((void)0)
+#endif
 
 #define PRB_BLACK_COLOR 0u
 
