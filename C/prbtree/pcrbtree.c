@@ -17,6 +17,32 @@
 #define PCRB_RED_COLOR   2u
 #define PCRB_BLACK_COLOR 0u
 
+#ifndef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L)
+#define A_Restrict restrict
+#elif defined(_MSC_VER) && (_MSC_VER >= 1600)
+#define A_Restrict __restrict
+#elif defined(__GNUC__) && (__GNUC__ >= 3)
+#define A_Restrict __restrict__
+#elif defined(__clang__)
+#define A_Restrict __restrict__
+#else
+#define A_Restrict
+#endif
+#endif /* !SAL_DEFS_H_INCLUDED */
+
+#ifndef PCRBTREE_ASSERT
+#ifdef ASSERT
+#define PCRBTREE_ASSERT(expr) ASSERT(expr)
+#else
+#define PCRBTREE_ASSERT(expr) ((void)0)
+#endif
+#endif
+
+#ifndef PCRBTREE_ASSERT_PTRS
+#define PCRBTREE_ASSERT_PTRS(expr) PCRBTREE_ASSERT(expr)
+#endif
+
 static inline void *pcrbtree_recolor_to_red(void *parent_color)
 {
 #ifdef _MSC_VER
@@ -44,7 +70,7 @@ static inline void *pcrbtree_recolor_to_black(void *parent_color)
 #ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
 A_Use_decl_annotations
 #endif
-PRBTREE_EXPORTS void pcrbtree_rebalance(
+PCRBTREE_EXPORTS void pcrbtree_rebalance(
 	struct pcrbtree *tree/*!=NULL*/,
 	struct pcrbtree_node *A_Restrict p/*!=NULL*/,
 	struct pcrbtree_node *A_Restrict e/*!=NULL*/,
@@ -52,6 +78,10 @@ PRBTREE_EXPORTS void pcrbtree_rebalance(
 {
 	/* insert red node e */
 	unsigned right = (unsigned)(c < 0);
+	PRBTREE_ASSERT(tree);
+	PRBTREE_ASSERT(p);
+	PRBTREE_ASSERT(e);
+	PRBTREE_ASSERT_PTRS(p != e);
 	p->u.leaves[right] = e;
 	e->parent_color = pcrbtree_make_parent_color_(p, right | PCRB_RED_COLOR);
 	while (PCRB_BLACK_COLOR != pcrbtree_get_color_(p)) {
@@ -92,11 +122,14 @@ PRBTREE_EXPORTS void pcrbtree_rebalance(
 		         [a][b]
 		*/
 		struct pcrbtree_node *A_Restrict g = pcrbtree_get_parent(p); /* p is red */
-		struct pcrbtree_node *A_Restrict t;
 		void *parent_color;
+		PRBTREE_ASSERT(g);
+		PRBTREE_ASSERT_PTRS(g != e);
+		PRBTREE_ASSERT_PTRS(g != p);
 		for (;;) {
+			struct pcrbtree_node *A_Restrict t;
 			if (pcrbtree_is_right_(p)) {
-				t = g->pcrbtree_left;
+				t = g->pcrbtree_left; /* may be NULL on first iteration */
 				if (t && PCRB_BLACK_COLOR != pcrbtree_get_color_(t)) {
 					t->parent_color = pcrbtree_make_parent_color_(g, PCRB_LEFT_CHILD | PCRB_BLACK_COLOR); /* recolor t: red -> black */
 					p->parent_color = pcrbtree_make_parent_color_(g, PCRB_RIGHT_CHILD | PCRB_BLACK_COLOR); /* recolor p: red -> black */
@@ -123,7 +156,7 @@ PRBTREE_EXPORTS void pcrbtree_rebalance(
 				g->parent_color = pcrbtree_make_parent_color_(p, PCRB_LEFT_CHILD | PCRB_RED_COLOR);
 			}
 			else {
-				t = g->pcrbtree_right;
+				t = g->pcrbtree_right; /* may be NULL on first iteration */
 				if (t && PCRB_BLACK_COLOR != pcrbtree_get_color_(t)) {
 					t->parent_color = pcrbtree_make_parent_color_(g, PCRB_RIGHT_CHILD | PCRB_BLACK_COLOR); /* recolor t: red -> black */
 					p->parent_color = pcrbtree_make_parent_color_(g, PCRB_LEFT_CHILD | PCRB_BLACK_COLOR); /* recolor p: red -> black */
@@ -647,7 +680,7 @@ static inline void pcrbtree_remove_(
 	}
 }
 
-PRBTREE_EXPORTS void pcrbtree_remove(
+PCRBTREE_EXPORTS void pcrbtree_remove(
 	struct pcrbtree *tree/*!=NULL*/,
 	struct pcrbtree_node *A_Restrict e/*!=NULL*/)
 {
