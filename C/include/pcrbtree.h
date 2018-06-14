@@ -333,8 +333,8 @@ A_At(e, A_Inout)
 #endif
 PCRBTREE_EXPORTS void pcrbtree_rebalance(
 	struct pcrbtree *tree/*!=NULL*/,
-	struct pcrbtree_node *p/*!=NULL*/,
-	struct pcrbtree_node *e/*!=NULL*/,
+	struct pcrbtree_node *A_Restrict p/*!=NULL*/,
+	struct pcrbtree_node *A_Restrict e/*!=NULL*/,
 	int c);
 
 /* insert new node into the tree,
@@ -461,7 +461,7 @@ A_At(e, A_Inout)
 #endif
 PCRBTREE_EXPORTS void pcrbtree_remove(
 	struct pcrbtree *tree/*!=NULL*/,
-	struct pcrbtree_node *e/*!=NULL*/);
+	struct pcrbtree_node *A_Restrict e/*!=NULL*/);
 
 /* non-recursive iteration over nodes of the tree */
 
