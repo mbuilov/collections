@@ -1432,9 +1432,6 @@ static inline struct dlist_entry *dlist_entry_link_after(
 }
 #endif
 
-#undef DLIST_ASSERT_PTRS
-#undef DLIST_ASSERT
-
 #ifndef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
 #undef A_Restrict
 #endif
