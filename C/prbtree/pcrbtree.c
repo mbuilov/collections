@@ -7,15 +7,28 @@
 /* pcrbtree.c */
 
 #include "collections_config.h"
+
+#ifndef ASSUME
+#if defined _MSC_VER
+#define ASSUME(cond) __assume(!!(cond))
+#elif defined __clang_analyzer__
+#define ASSUME(cond) ((void)(!(cond) ? __builtin_unreachable(), 0 : 1))
+#elif defined __clang__
+#define ASSUME(cond) __builtin_assume(!!(cond))
+#elif defined __INTEL_COMPILER
+#define ASSUME(cond) ((void)0) /* ICC compiles calls to __builtin_unreachable() as jumps somewhere... */
+#elif defined __GNUC__ && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 5))
+#define ASSUME(cond) ((void)(!(cond) ? __builtin_unreachable(), 0 : 1))
+#else
+#define ASSUME(cond) ((void)0) /* assume condition is always true */
+#endif
+#endif /* ASSUME */
+
+#ifndef ASSERT
+#define ASSERT(e) ASSUME(e)
+#endif
+
 #include "pcrbtree.h"
-
-/* node left/right child flag is stored in the lowest bit of parent pointer */
-#define PCRB_RIGHT_CHILD 1u
-#define PCRB_LEFT_CHILD  0u
-
-/* node color is stored in the second lower bit of parent pointer */
-#define PCRB_RED_COLOR   2u
-#define PCRB_BLACK_COLOR 0u
 
 #ifndef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
 #if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L)
@@ -31,17 +44,13 @@
 #endif
 #endif /* !SAL_DEFS_H_INCLUDED */
 
-#ifndef PCRBTREE_ASSERT
-#ifdef ASSERT
-#define PCRBTREE_ASSERT(expr) ASSERT(expr)
-#else
-#define PCRBTREE_ASSERT(expr) ((void)0)
-#endif
-#endif
+/* node left/right child flag is stored in the lowest bit of parent pointer */
+#define PCRB_RIGHT_CHILD 1u
+#define PCRB_LEFT_CHILD  0u
 
-#ifndef PCRBTREE_ASSERT_PTRS
-#define PCRBTREE_ASSERT_PTRS(expr) PCRBTREE_ASSERT(expr)
-#endif
+/* node color is stored in the second lower bit of parent pointer */
+#define PCRB_RED_COLOR   2u
+#define PCRB_BLACK_COLOR 0u
 
 static inline void *pcrbtree_recolor_to_red(void *parent_color)
 {
@@ -67,6 +76,9 @@ static inline void *pcrbtree_recolor_to_black(void *parent_color)
 #endif
 }
 
+#define pcrbtree_make_parent_color_right(p, c) pcrbtree_make_parent_color_1(p, c | PCRB_RIGHT_CHILD)
+#define pcrbtree_make_parent_color_left(p, c)  pcrbtree_make_parent_color_1(p, c | PCRB_LEFT_CHILD)
+
 #ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
 A_Use_decl_annotations
 #endif
@@ -78,12 +90,12 @@ PCRBTREE_EXPORTS void pcrbtree_rebalance(
 {
 	/* insert red node e */
 	unsigned right = (unsigned)(c < 0);
-	PRBTREE_ASSERT(tree);
-	PRBTREE_ASSERT(p);
-	PRBTREE_ASSERT(e);
-	PRBTREE_ASSERT_PTRS(p != e);
+	PCRBTREE_ASSERT(tree);
+	PCRBTREE_ASSERT(p);
+	PCRBTREE_ASSERT(e);
+	PCRBTREE_ASSERT_PTRS(p != e);
 	p->u.leaves[right] = e;
-	e->parent_color = pcrbtree_make_parent_color_(p, right | PCRB_RED_COLOR);
+	e->parent_color = pcrbtree_make_parent_color_1(p, right | PCRB_RED_COLOR);
 	while (PCRB_BLACK_COLOR != pcrbtree_get_color_(p)) {
 		/* there are 4 cases with red parent: (inserted node marked as * - push it up splitting the parent if necessary):
 		1)
@@ -123,69 +135,89 @@ PCRBTREE_EXPORTS void pcrbtree_rebalance(
 		*/
 		struct pcrbtree_node *A_Restrict g = pcrbtree_get_parent(p); /* p is red */
 		void *parent_color;
-		PRBTREE_ASSERT(g);
-		PRBTREE_ASSERT_PTRS(g != e);
-		PRBTREE_ASSERT_PTRS(g != p);
+		PCRBTREE_ASSERT(g);
+		PCRBTREE_ASSERT_PTRS(g != e);
+		PCRBTREE_ASSERT_PTRS(g != p);
 		for (;;) {
 			struct pcrbtree_node *A_Restrict t;
 			if (pcrbtree_is_right_(p)) {
 				t = g->pcrbtree_left; /* may be NULL on first iteration */
+				PCRBTREE_ASSERT_PTRS(t != e);
+				PCRBTREE_ASSERT_PTRS(t != g);
+				PCRBTREE_ASSERT_PTRS(t != p);
 				if (t && PCRB_BLACK_COLOR != pcrbtree_get_color_(t)) {
-					t->parent_color = pcrbtree_make_parent_color_(g, PCRB_LEFT_CHILD | PCRB_BLACK_COLOR); /* recolor t: red -> black */
-					p->parent_color = pcrbtree_make_parent_color_(g, PCRB_RIGHT_CHILD | PCRB_BLACK_COLOR); /* recolor p: red -> black */
+					t->parent_color = pcrbtree_make_parent_color_left(g, PCRB_BLACK_COLOR); /* recolor t: red -> black */
+					p->parent_color = pcrbtree_make_parent_color_right(g, PCRB_BLACK_COLOR); /* recolor p: red -> black */
 					break; /* case 3,4 */
 				}
 				/* cases 1,2 */
 				if (!pcrbtree_is_right_(e)) {
 					/* case 2 */
 					t = e->pcrbtree_right;
+					PCRBTREE_ASSERT_PTRS(t != e);
+					PCRBTREE_ASSERT_PTRS(t != g);
+					PCRBTREE_ASSERT_PTRS(t != p);
 					if (t) /* NULL on first iteration, != NULL on next iterations */
-						t->parent_color = pcrbtree_make_parent_color_(p, PCRB_LEFT_CHILD | PCRB_BLACK_COLOR);
+						t->parent_color = pcrbtree_make_parent_color_left(p, PCRB_BLACK_COLOR);
 					p->pcrbtree_left = t;
-					p->parent_color = pcrbtree_make_parent_color_(e, PCRB_RIGHT_CHILD | PCRB_RED_COLOR);
+					p->parent_color = pcrbtree_make_parent_color_right(e, PCRB_RED_COLOR);
 					e->pcrbtree_right = p;
 					p = e;
 				}
 				/* case 1 */
 				t = p->pcrbtree_left;
+				PCRBTREE_ASSERT_PTRS(t != e);
+				PCRBTREE_ASSERT_PTRS(t != g);
+				PCRBTREE_ASSERT_PTRS(t != p);
 				p->pcrbtree_left = g;
 				g->pcrbtree_right = t;
 				if (t) /* NULL on first iteration, != NULL on next iterations */
-					t->parent_color = pcrbtree_make_parent_color_(g, PCRB_RIGHT_CHILD | PCRB_BLACK_COLOR);
+					t->parent_color = pcrbtree_make_parent_color_right(g, PCRB_BLACK_COLOR);
 				parent_color = g->parent_color;
-				g->parent_color = pcrbtree_make_parent_color_(p, PCRB_LEFT_CHILD | PCRB_RED_COLOR);
+				g->parent_color = pcrbtree_make_parent_color_left(p, PCRB_RED_COLOR);
 			}
 			else {
 				t = g->pcrbtree_right; /* may be NULL on first iteration */
+				PCRBTREE_ASSERT_PTRS(t != e);
+				PCRBTREE_ASSERT_PTRS(t != g);
+				PCRBTREE_ASSERT_PTRS(t != p);
 				if (t && PCRB_BLACK_COLOR != pcrbtree_get_color_(t)) {
-					t->parent_color = pcrbtree_make_parent_color_(g, PCRB_RIGHT_CHILD | PCRB_BLACK_COLOR); /* recolor t: red -> black */
-					p->parent_color = pcrbtree_make_parent_color_(g, PCRB_LEFT_CHILD | PCRB_BLACK_COLOR); /* recolor p: red -> black */
+					t->parent_color = pcrbtree_make_parent_color_right(g, PCRB_BLACK_COLOR); /* recolor t: red -> black */
+					p->parent_color = pcrbtree_make_parent_color_left(g, PCRB_BLACK_COLOR); /* recolor p: red -> black */
 					break; /* case 3,4 */
 				}
 				/* cases 1,2 */
 				if (pcrbtree_is_right_(e)) {
 					/* case 2 */
 					t = e->pcrbtree_left;
+					PCRBTREE_ASSERT_PTRS(t != e);
+					PCRBTREE_ASSERT_PTRS(t != g);
+					PCRBTREE_ASSERT_PTRS(t != p);
 					if (t) /* NULL on first iteration, != NULL on next iterations */
-						t->parent_color = pcrbtree_make_parent_color_(p, PCRB_RIGHT_CHILD | PCRB_BLACK_COLOR);
+						t->parent_color = pcrbtree_make_parent_color_right(p, PCRB_BLACK_COLOR);
 					p->pcrbtree_right = t;
-					p->parent_color = pcrbtree_make_parent_color_(e, PCRB_LEFT_CHILD | PCRB_RED_COLOR);
+					p->parent_color = pcrbtree_make_parent_color_left(e, PCRB_RED_COLOR);
 					e->pcrbtree_left = p;
 					p = e;
 				}
 				/* case 1 */
 				t = p->pcrbtree_right;
+				PCRBTREE_ASSERT_PTRS(t != e);
+				PCRBTREE_ASSERT_PTRS(t != g);
+				PCRBTREE_ASSERT_PTRS(t != p);
 				p->pcrbtree_right = g;
 				g->pcrbtree_left = t;
 				if (t) /* NULL on first iteration, != NULL on next iterations */
-					t->parent_color = pcrbtree_make_parent_color_(g, PCRB_LEFT_CHILD | PCRB_BLACK_COLOR);
+					t->parent_color = pcrbtree_make_parent_color_left(g, PCRB_BLACK_COLOR);
 				parent_color = g->parent_color;
-				g->parent_color = pcrbtree_make_parent_color_(p, PCRB_RIGHT_CHILD | PCRB_RED_COLOR);
+				g->parent_color = pcrbtree_make_parent_color_right(p, PCRB_RED_COLOR);
 			}
 			right = pcrbtree_is_right_1(parent_color);
 			t = pcrbtree_get_parent_(parent_color); /* NULL? */
+			PCRBTREE_ASSERT_PTRS(t != g);
+			PCRBTREE_ASSERT_PTRS(t != p);
 			*pcrbtree_slot_at_parent_(tree, t, right) = p;
-			p->parent_color = pcrbtree_make_parent_color_(t, right | PCRB_BLACK_COLOR);
+			p->parent_color = pcrbtree_make_parent_color_1(t, right | PCRB_BLACK_COLOR);
 			return; /* (final) */
 		}
 		/* cases 3,4 */
@@ -194,6 +226,7 @@ PCRBTREE_EXPORTS void pcrbtree_rebalance(
 			return;
 		g->parent_color = pcrbtree_recolor_to_red(parent_color); /* recolor g: black -> red */
 		p = pcrbtree_get_parent_(parent_color);
+		PCRBTREE_ASSERT_PTRS(p != g);
 		e = g;
 	}
 }
@@ -203,14 +236,16 @@ static inline void *pcrbtree_replace_child(
 	void *parent_color,
 	struct pcrbtree_node *e/*!=NULL*/)
 {
+	PCRBTREE_ASSERT(tree);
+	PCRBTREE_ASSERT(e);
 	e->parent_color = parent_color;
 	*pcrbtree_slot_at_parent_(tree, pcrbtree_get_parent_(parent_color), pcrbtree_is_right_1(parent_color)) = e;
 }
 
 static inline void pcrbtree_remove_(
 	struct pcrbtree *tree/*!=NULL*/,
-	struct pcrbtree_node *p/*!=NULL*/,
-	struct pcrbtree_node *e/*!=NULL*/)
+	struct pcrbtree_node *A_Restrict p/*!=NULL*/,
+	struct pcrbtree_node *A_Restrict e/*!=NULL*/)
 {
 	/* after removing leaf black node, tree is disbalanced - balance the tree by moving black node from sibling side:
 
@@ -349,80 +384,91 @@ static inline void pcrbtree_remove_(
 	                 -----------                          |0,R   |                              --------    |4,B*|                               |4,B*|
 	                                                      --------                                          ------                               ------
 	*/
-	void *ec = e->parent_color;
+	PCRBTREE_ASSERT(tree);
+	PCRBTREE_ASSERT(p);
+	PCRBTREE_ASSERT(e);
+	PCRBTREE_ASSERT_PTRS(p != e);
 	for (;;) {
-		struct pcrbtree_node *a, *t;
-//		struct pcrbtree_node *t = p->pcrbtree_left;
-		void *p_;
 		void *pc = p->parent_color;
-		if (PCRB_BLACK_COLOR == pcrbtree_get_color_1(pc)) {
-			if (!pcrbtree_is_right_1(ec)) {
+		struct prbtree_node *A_Restrict t;
+		if (PCRB_BLACK_COLOR == pcrbtree_get_color_(p)) {
+			if (!pcrbtree_is_right_(e)) {
 				t = p->pcrbtree_right;
-				a = t->pcrbtree_left;
+				PCRBTREE_ASSERT(t);
+				PCRBTREE_ASSERT_PTRS(t != p);
+				PCRBTREE_ASSERT_PTRS(t != e);
+				e = t->pcrbtree_left; /* may be NULL on first iteration */
+				PCRBTREE_ASSERT_PTRS(e != p);
+				PCRBTREE_ASSERT_PTRS(e != t);
 				/* parent is black: cases 1,2,3,4,5,6 */
 				if (PCRB_BLACK_COLOR == pcrbtree_get_color_(t)) {
 					/* t is black: cases 1,2,3 */
-					struct pcrbtree_node *b = t->pcrbtree_right;
-					if (a && PCRB_BLACK_COLOR != pcrbtree_get_color_(a)) { /* red on first iteration */
+					struct pcrbtree_node *A_Restrict b = t->pcrbtree_right; /* may be NULL on first iteration */
+					PCRBTREE_ASSERT_PTRS(b != p);
+					PCRBTREE_ASSERT_PTRS(b != t);
+					if (e && PCRB_BLACK_COLOR != pcrbtree_get_color_(e)) { /* red on first iteration */
+						PCRBTREE_ASSERT_PTRS(b != e);
 						if (b && PCRB_BLACK_COLOR != pcrbtree_get_color_(b)) { /* red on first iteration */
 							/* case 3 */
-							b->parent_color = pcrbtree_make_parent_color_(t, PCRB_RIGHT_CHILD | PCRB_BLACK_COLOR);
-							a->parent_color = pcrbtree_make_parent_color_(t, PCRB_LEFT_CHILD | PCRB_BLACK_COLOR);
-							pcrbtree_replace_child(tree, pc, t);
-							p->parent_color = pcrbtree_make_parent_color_(a, PCRB_LEFT_CHILD | PCRB_RED_COLOR);
-				if (a->pcrbtree_left) /* NULL on first iteration */
-					a->pcrbtree_left->parent_color = pcrbtree_make_parent_color_(p, PCRB_RIGHT_CHILD | PCRB_BLACK_COLOR);
-				p->pcrbtree_right = a->pcrbtree_left;
-				a->pcrbtree_left = p; /* cases 4,5 */
-				return;
+							b->parent_color = pcrbtree_make_parent_color_right(t, PCRB_BLACK_COLOR);
+							e->parent_color = pcrbtree_make_parent_color_left(t, PCRB_BLACK_COLOR);
+							p->parent_color = pcrbtree_make_parent_color_left(e, PCRB_RED_COLOR);
+							t = e;
 						}
 						else {
 							/* case 2 */
-							if (a->pcrbtree_right) /* NULL on first iteration */
-								a->pcrbtree_right->parent_color = pcrbtree_make_parent_color_(t, PCRB_LEFT_CHILD | PCRB_BLACK_COLOR);
-							t->pcrbtree_left = a->pcrbtree_right;
-							a->pcrbtree_right = t;
-							t->parent_color = pcrbtree_make_parent_color_(a, PCRB_RIGHT_CHILD | PCRB_BLACK_COLOR);
-							pcrbtree_replace_child(tree, pc, a);
-							p->parent_color = pcrbtree_make_parent_color_(a, PCRB_LEFT_CHILD | PCRB_BLACK_COLOR);
-				if (a->pcrbtree_left) /* NULL on first iteration */
-					a->pcrbtree_left->parent_color = pcrbtree_make_parent_color_(p, PCRB_RIGHT_CHILD | PCRB_BLACK_COLOR);
-				p->pcrbtree_right = a->pcrbtree_left;
-				a->pcrbtree_left = p; /* cases 4,5 */
-				return;
+							b = e->pcrbtree_right; /* NULL on first iteration */
+							PCRBTREE_ASSERT_PTRS(b != p);
+							PCRBTREE_ASSERT_PTRS(b != t);
+							PCRBTREE_ASSERT_PTRS(b != e);
+							if (b)
+								b->parent_color = pcrbtree_make_parent_color_left(t, PCRB_BLACK_COLOR);
+							t->pcrbtree_left = b;
+							e->pcrbtree_right = t;
+							t->parent_color = pcrbtree_make_parent_color_right(e, PCRB_BLACK_COLOR);
+							p->parent_color = pcrbtree_make_parent_color_left(e, PCRB_BLACK_COLOR);
 						}
 					}
 					else if (b && PCRB_BLACK_COLOR != pcrbtree_get_color_(b)) { /* red on first iteration */
 						/* case 2 */
-						b->parent_color = pcrbtree_make_parent_color_(t, PCRB_RIGHT_CHILD | PCRB_BLACK_COLOR); /* recolor: red -> black */
-						a = t;
-						pcrbtree_replace_child(tree, pc, a);
-						p->parent_color = pcrbtree_make_parent_color_(a, PCRB_LEFT_CHILD | PCRB_BLACK_COLOR);
-				if (a->pcrbtree_left) /* NULL on first iteration */
-					a->pcrbtree_left->parent_color = pcrbtree_make_parent_color_(p, PCRB_RIGHT_CHILD | PCRB_BLACK_COLOR);
-				p->pcrbtree_right = a->pcrbtree_left;
-				a->pcrbtree_left = p; /* cases 4,5 */
-				return;
+						PCRBTREE_ASSERT_PTRS(b != e);
+						b->parent_color = pcrbtree_make_parent_color_right(t, PCRB_BLACK_COLOR); /* recolor: red -> black */
+						e = t;
+						p->parent_color = pcrbtree_make_parent_color_left(e, PCRB_BLACK_COLOR);
 					}
 					else {
 						/* case 1 */
-						/* recolor brother: black -> red */
-						t->parent_color = pcrbtree_make_parent_color_(p, PCRB_RIGHT_CHILD | PCRB_RED_COLOR);
 						e = p;
-						p = pcrbtree_get_parent_(p);
+						p = pcrbtree_get_parent_1(pc); /* may be NULL */
+						PCRBTREE_ASSERT_PTRS(p != e);
+						PCRBTREE_ASSERT_PTRS(p != t);
+						t->parent_color = pcrbtree_make_parent_color_right(e, PCRB_RED_COLOR); /* recolor brother: black -> red */
 						if (!p)
 							return;
-						ec = pc;
 						continue;
 					}
+					pcrbtree_replace_child(tree, pc, e);
+					b = e->pcrbtree_left; /* NULL on first iteration */
+					PCRBTREE_ASSERT_PTRS(b != p);
+					PCRBTREE_ASSERT_PTRS(b != t);
+					PCRBTREE_ASSERT_PTRS(b != e);
+					if (b) /* NULL on first iteration */
+						b->parent_color = pcrbtree_make_parent_color_right(p, PCRB_BLACK_COLOR);
+					p->pcrbtree_right = b;
+					e->pcrbtree_left = p; /* cases 4,5 */
+					return;
 				}
 				else {
 					/* cases 4,5,6 with black parent */
+					PCRBTREE_ASSERT(e);
 #ifdef _MSC_VER
-					__assume(a);
+					__assume(e);
 #endif
 					{
-						struct pcrbtree_node *c = a->pcrbtree_left;
+						struct pcrbtree_node *A_Restrict c = e->pcrbtree_left; /* may be NULL on first iteration */
+						PCRBTREE_ASSERT_PTRS(c != p);
+						PCRBTREE_ASSERT_PTRS(c != t);
+						PCRBTREE_ASSERT_PTRS(c != e);
 						if (c && PCRB_BLACK_COLOR != pcrbtree_get_color_(c)) { /* red on first iteration */
 							/* cases 5,6 */
 							struct pcrbtree_node *d = a->pcrbtree_right;
