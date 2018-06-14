@@ -127,6 +127,9 @@ PRBTREE_EXPORTS void prbtree_rebalance(
 				}
 				/* case 1 */
 				t = p->prbtree_left;
+				PRBTREE_ASSERT_PTRS(t != e);
+				PRBTREE_ASSERT_PTRS(t != g);
+				PRBTREE_ASSERT_PTRS(t != p);
 				p->prbtree_left = g;
 				g->prbtree_right = t;
 			}
@@ -153,11 +156,12 @@ PRBTREE_EXPORTS void prbtree_rebalance(
 				}
 				/* case 1 */
 				t = p->prbtree_right;
+				PRBTREE_ASSERT_PTRS(t != e);
+				PRBTREE_ASSERT_PTRS(t != g);
+				PRBTREE_ASSERT_PTRS(t != p);
 				p->prbtree_right = g;
 				g->prbtree_left = t;
 			}
-			PRBTREE_ASSERT_PTRS(t != g);
-			PRBTREE_ASSERT_PTRS(t != p);
 			if (t) /* NULL on first iteration, != NULL on next iterations */
 				t->parent_color = prbtree_make_parent_color_(g, PRB_BLACK_COLOR);
 			t = prbtree_black_node_parent_(g); /* NULL? */
@@ -169,7 +173,7 @@ PRBTREE_EXPORTS void prbtree_rebalance(
 			return; /* (final) */
 		}
 		/* cases 3,4 */
-		PRBTREE_ASSERT_PTRS(t != p);
+		PRBTREE_ASSERT_PTRS(t != p); /* note: duplicate check */
 		t->parent_color = prbtree_make_parent_color_(g, PRB_BLACK_COLOR); /* recolor t: red -> black */
 		p->parent_color = prbtree_make_parent_color_(g, PRB_BLACK_COLOR); /* recolor p: red -> black */
 		p = prbtree_black_node_parent_(g);
@@ -323,6 +327,7 @@ static inline void prbtree_remove_(
 	                 -----------                          |0,R   |                              --------    |4,B*|                               |4,B*|
 	                                                      --------                                          ------                               ------
 	*/
+	PRBTREE_ASSERT(tree);
 	PRBTREE_ASSERT(p);
 	PRBTREE_ASSERT(e);
 	PRBTREE_ASSERT_PTRS(p != e);
@@ -375,12 +380,13 @@ static inline void prbtree_remove_(
 					}
 					else {
 						/* case 1 */
-						t->parent_color = prbtree_make_parent_color_(p, PRB_RED_COLOR); /* recolor brother: black -> red */
 						e = p;
-						p = prbtree_black_node_parent_(p);
+						p = prbtree_black_node_parent_(p); /* may be NULL */
+						PRBTREE_ASSERT_PTRS(p != e);
+						PRBTREE_ASSERT_PTRS(p != t);
+						t->parent_color = prbtree_make_parent_color_(e, PRB_RED_COLOR); /* recolor brother: black -> red */
 						if (!p)
 							return;
-						PRBTREE_ASSERT_PTRS(p != e);
 						continue;
 					}
 				}
@@ -477,12 +483,13 @@ static inline void prbtree_remove_(
 					}
 					else {
 						/* case 1 */
-						t->parent_color = prbtree_make_parent_color_(p, PRB_RED_COLOR); /* recolor brother: black -> red */
 						e = p;
-						p = prbtree_black_node_parent_(p);
+						p = prbtree_black_node_parent_(p); /* may be NULL */
+						PRBTREE_ASSERT_PTRS(p != e);
+						PRBTREE_ASSERT_PTRS(p != t);
+						t->parent_color = prbtree_make_parent_color_(e, PRB_RED_COLOR); /* recolor brother: black -> red */
 						if (!p)
 							return;
-						PRBTREE_ASSERT_PTRS(p != e);
 						continue;
 					}
 				}
