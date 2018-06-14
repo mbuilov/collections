@@ -226,17 +226,15 @@ static inline struct prbtree_node *prbtree_black_node_parent_(
 }
 
 #ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_all_args
 A_Const_function
-A_At(p, A_In)
+A_At(p, A_In_opt)
 A_At(c, A_In_range(0,1))
 A_Check_return
 #endif
 static inline void *prbtree_make_parent_color_(
-	struct prbtree_node *p/*!=NULL*/,
+	struct prbtree_node *p/*NULL?*/,
 	unsigned c)
 {
-	PRBTREE_ASSERT(p);
 #ifdef _MSC_VER
 #pragma warning(push)
 #pragma warning(disable:4826) /* Conversion from 'const char *' to 'unsigned __int64' is sign-extended */
@@ -469,9 +467,6 @@ static inline struct prbtree_node *prbtree_prev(
 #ifdef __cplusplus
 }
 #endif
-
-#undef PRBTREE_ASSERT_PTRS
-#undef PRBTREE_ASSERT
 
 #ifndef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
 #undef A_Restrict
