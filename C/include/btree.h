@@ -795,6 +795,4 @@ static inline size_t btree_height(
 }
 #endif
 
-#undef BTREE_ASSERT
-
 #endif /* BTREE_H_INCLUDED */
