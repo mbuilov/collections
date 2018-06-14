@@ -255,8 +255,8 @@ A_At(e, A_Inout)
 #endif
 PRBTREE_EXPORTS void prbtree_rebalance(
 	struct prbtree *tree/*!=NULL*/,
-	struct prbtree_node *p/*!=NULL*/,
-	struct prbtree_node *e/*!=NULL*/);
+	struct prbtree_node *A_Restrict p/*!=NULL*/,
+	struct prbtree_node *A_Restrict e/*!=NULL*/);
 
 /* insert new node into the tree,
   c - result of btree_search_parent():
@@ -382,7 +382,7 @@ A_At(e, A_Inout)
 #endif
 PRBTREE_EXPORTS void prbtree_remove(
 	struct prbtree *tree/*!=NULL*/,
-	struct prbtree_node *e/*!=NULL*/);
+	struct prbtree_node *A_Restrict e/*!=NULL*/);
 
 /* non-recursive iteration over nodes of the tree */
 
