@@ -304,17 +304,15 @@ static inline struct pcrbtree_node *pcrbtree_left_black_node_parent_(
 }
 
 #ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_all_args
 A_Const_function
-A_At(p, A_In)
+A_At(p, A_In_opt)
 A_At(mask, A_In_range(0,3))
 A_Check_return
 #endif
-static inline void *pcrbtree_make_parent_color_(
-	struct pcrbtree_node *p/*!=NULL*/,
+static inline void *pcrbtree_make_parent_color_1(
+	struct pcrbtree_node *p/*NULL?*/,
 	unsigned mask)
 {
-	PCRBTREE_ASSERT(p);
 #ifdef _MSC_VER
 #pragma warning(push)
 #pragma warning(disable:4826) /* Conversion from 'const char *' to 'unsigned __int64' is sign-extended */
@@ -447,8 +445,10 @@ static inline void pcrbtree_replace(
 	PCRBTREE_ASSERT_PTRS(o != e);
 	{
 		void *parent_color = o->parent_color;
-		struct pcrbtree_node *p = pcrbtree_get_parent_(parent_color);
+		struct pcrbtree_node *A_Restrict p = pcrbtree_get_parent_(parent_color); /* NULL? */
 		int right = pcrbtree_is_right_1(parent_color);
+		PCRBTREE_ASSERT_PTRS(p != o);
+		PCRBTREE_ASSERT_PTRS(p != e);
 		pcrbtree_replace_(pcrbtree_slot_at_parent_(tree, p, right), o, e);
 	}
 }
@@ -548,9 +548,6 @@ static inline struct pcrbtree_node *pcrbtree_prev(
 #ifdef __cplusplus
 }
 #endif
-
-#undef PCRBTREE_ASSERT_PTRS
-#undef PCRBTREE_ASSERT
 
 #ifndef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
 #undef A_Restrict
