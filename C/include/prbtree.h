@@ -252,7 +252,7 @@ A_At(p, A_Inout)
 A_At(e, A_Inout)
 #endif
 PRBTREE_EXPORTS void prbtree_rebalance(
-	struct prbtree *tree/*!=NULL*/,
+	struct prbtree *A_Restrict tree/*!=NULL*/,
 	struct prbtree_node *A_Restrict p/*!=NULL*/,
 	struct prbtree_node *A_Restrict e/*!=NULL*/);
 
@@ -269,7 +269,7 @@ A_At(p, A_Inout_opt)
 A_At(e, A_Inout)
 #endif
 static inline void prbtree_insert(
-	struct prbtree *tree/*!=NULL*/,
+	struct prbtree *A_Restrict tree/*!=NULL*/,
 	struct prbtree_node *A_Restrict p/*NULL?*/,
 	struct prbtree_node *A_Restrict e/*!=NULL*/,
 	int c)
@@ -343,7 +343,7 @@ A_Ret_never_null
 A_Check_return
 #endif
 static inline struct prbtree_node **prbtree_slot_at_parent_(
-	struct prbtree *tree/*!=NULL*/,
+	struct prbtree *A_Restrict tree/*!=NULL*/,
 	struct prbtree_node *A_Restrict p/*NULL?*/,
 	const struct prbtree_node *A_Restrict o/*!=NULL*/)
 {
@@ -361,7 +361,7 @@ A_At(o, A_In)
 A_At(e, A_Out)
 #endif
 static inline void prbtree_replace(
-	struct prbtree *tree/*!=NULL*/,
+	struct prbtree *A_Restrict tree/*!=NULL*/,
 	const struct prbtree_node *A_Restrict o/*!=NULL*/,
 	struct prbtree_node *A_Restrict e/*!=NULL,out*/)
 {
@@ -379,7 +379,7 @@ A_At(tree, A_Inout)
 A_At(e, A_Inout)
 #endif
 PRBTREE_EXPORTS void prbtree_remove(
-	struct prbtree *tree/*!=NULL*/,
+	struct prbtree *A_Restrict tree/*!=NULL*/,
 	struct prbtree_node *A_Restrict e/*!=NULL*/);
 
 /* non-recursive iteration over nodes of the tree */
