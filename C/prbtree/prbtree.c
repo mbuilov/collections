@@ -52,7 +52,7 @@
 A_Use_decl_annotations
 #endif
 PRBTREE_EXPORTS void prbtree_rebalance(
-	struct prbtree *tree/*!=NULL*/,
+	struct prbtree *A_Restrict tree/*!=NULL*/,
 	struct prbtree_node *A_Restrict p/*!=NULL*/,
 	struct prbtree_node *A_Restrict e/*!=NULL*/)
 {
@@ -186,7 +186,7 @@ PRBTREE_EXPORTS void prbtree_rebalance(
 }
 
 static inline void prbtree_remove_(
-	struct prbtree *tree/*!=NULL*/,
+	struct prbtree *A_Restrict tree/*!=NULL*/,
 	struct prbtree_node *A_Restrict p/*!=NULL*/,
 	struct prbtree_node *A_Restrict e/*!=NULL*/)
 {
@@ -705,7 +705,7 @@ static inline void prbtree_remove_(
 A_Use_decl_annotations
 #endif
 PRBTREE_EXPORTS void prbtree_remove(
-	struct prbtree *tree/*!=NULL*/,
+	struct prbtree *A_Restrict tree/*!=NULL*/,
 	struct prbtree_node *A_Restrict e/*!=NULL*/)
 {
 	struct prbtree_node *A_Restrict t = e->prbtree_right;
