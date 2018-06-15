@@ -85,6 +85,11 @@ typedef int prbtree_node_check_alignment_t[1-2*(__alignof__(struct prbtree_node)
 typedef int prbtree_node_check_alignment_t[1-2*(__alignof(struct prbtree_node) < 2)];
 #endif
 
+static inline void prbtree_assert_ptr_(const void *p)
+{
+	PRBTREE_ASSERT(p);
+}
+
 #ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
 A_Const_function
 A_At(n, A_In_opt)
@@ -123,7 +128,7 @@ A_At(tree, A_Out)
 static inline void prbtree_init(
 	struct prbtree *tree/*!=NULL,out*/)
 {
-	PRBTREE_ASSERT(tree);
+	prbtree_assert_ptr_(tree);
 	tree->root = (struct prbtree_node*)0;
 }
 
@@ -166,7 +171,7 @@ A_Check_return
 static inline struct prbtree_node *prbtree_get_parent(
 	const struct prbtree_node *n/*!=NULL*/)
 {
-	PRBTREE_ASSERT(n);
+	prbtree_assert_ptr_(n);
 #ifdef _MSC_VER
 #pragma warning(push)
 #pragma warning(disable:4826) /* Conversion from 'const char *' to 'unsigned __int64' is sign-extended */
@@ -176,6 +181,8 @@ static inline struct prbtree_node *prbtree_get_parent(
 #pragma warning(pop)
 #endif
 }
+
+#define prbtree_get_color_2(parent_color) ((unsigned)(1llu & (unsigned long long)(parent_color)))
 
 #ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
 A_Const_function
@@ -189,7 +196,7 @@ static inline unsigned prbtree_get_color_1(
 #pragma warning(push)
 #pragma warning(disable:4826) /* Conversion from 'const char *' to 'unsigned __int64' is sign-extended */
 #endif
-	return (unsigned)(1llu & (unsigned long long)parent_color);
+	return prbtree_get_color_2(parent_color);
 #ifdef _MSC_VER
 #pragma warning(pop)
 #endif
@@ -205,7 +212,7 @@ A_Check_return
 static inline unsigned prbtree_get_color_(
 	const struct prbtree_node *n/*!=NULL*/)
 {
-	PRBTREE_ASSERT(n);
+	prbtree_assert_ptr_(n);
 	return prbtree_get_color_1(n->parent_color);
 }
 
@@ -220,8 +227,8 @@ A_Check_return
 static inline struct prbtree_node *prbtree_black_node_parent_(
 	struct prbtree_node *n/*!=NULL*/)
 {
-	PRBTREE_ASSERT(n);
-	PRBTREE_ASSERT(!prbtree_get_color_(n));
+	prbtree_assert_ptr_(n);
+	PRBTREE_ASSERT(!prbtree_get_color_2(n->parent_color));
 	return (struct prbtree_node*)n->parent_color;
 }
 
@@ -301,9 +308,9 @@ static inline void prbtree_replace_(
 	const struct prbtree_node *A_Restrict o/*!=NULL,in*/,
 	struct prbtree_node *A_Restrict e/*!=NULL,out*/)
 {
-	PRBTREE_ASSERT(n);
-	PRBTREE_ASSERT(o);
-	PRBTREE_ASSERT(e);
+	prbtree_assert_ptr_(n);
+	prbtree_assert_ptr_(o);
+	prbtree_assert_ptr_(e);
 	PRBTREE_ASSERT_PTRS(o != e);
 	{
 		struct prbtree_node **A_Restrict el = &e->prbtree_left;
@@ -347,8 +354,8 @@ static inline struct prbtree_node **prbtree_slot_at_parent_(
 	struct prbtree_node *A_Restrict p/*NULL?*/,
 	const struct prbtree_node *A_Restrict o/*!=NULL*/)
 {
-	PRBTREE_ASSERT(tree);
-	PRBTREE_ASSERT(o);
+	prbtree_assert_ptr_(tree);
+	prbtree_assert_ptr_(o);
 	PRBTREE_ASSERT_PTRS(p != o);
 	return p ? &p->u.leaves[o != p->u.leaves[0]] : &tree->root;
 }
@@ -365,9 +372,9 @@ static inline void prbtree_replace(
 	const struct prbtree_node *A_Restrict o/*!=NULL*/,
 	struct prbtree_node *A_Restrict e/*!=NULL,out*/)
 {
-	PRBTREE_ASSERT(tree);
-	PRBTREE_ASSERT(o);
-	PRBTREE_ASSERT(e);
+	prbtree_assert_ptr_(tree);
+	prbtree_assert_ptr_(o);
+	prbtree_assert_ptr_(e);
 	PRBTREE_ASSERT_PTRS(o != e);
 	prbtree_replace_(prbtree_slot_at_parent_(tree, prbtree_get_parent(o), o), o, e);
 }

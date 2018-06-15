@@ -57,9 +57,9 @@ PRBTREE_EXPORTS void prbtree_rebalance(
 	struct prbtree_node *A_Restrict e/*!=NULL*/)
 {
 	/* insert red node e */
-	PRBTREE_ASSERT(tree);
-	PRBTREE_ASSERT(p);
-	PRBTREE_ASSERT(e);
+	prbtree_assert_ptr_(tree);
+	prbtree_assert_ptr_(p);
+	prbtree_assert_ptr_(e);
 	PRBTREE_ASSERT_PTRS(p != e);
 	e->parent_color = prbtree_make_parent_color_(p, PRB_RED_COLOR);
 	while (PRB_BLACK_COLOR != prbtree_get_color_(p)) {
