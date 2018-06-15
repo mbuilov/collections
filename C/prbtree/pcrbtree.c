@@ -95,7 +95,8 @@ PCRBTREE_EXPORTS void pcrbtree_rebalance(
 	PCRBTREE_ASSERT(e);
 	PCRBTREE_ASSERT_PTRS(p != e);
 	p->u.leaves[is_right] = e;
-	e->parent_color = pcrbtree_make_parent_color_1(p, (is_right ? PCRB_RIGHT_CHILD : PCRB_LEFT_CHILD) | PCRB_RED_COLOR);
+	(void)sizeof(int[1-2*(PCRB_RIGHT_CHILD != 1 || PCRB_LEFT_CHILD != 0)]);
+	e->parent_color = pcrbtree_make_parent_color_1(p, is_right | PCRB_RED_COLOR);
 	while (PCRB_BLACK_COLOR != pcrbtree_get_color_(p)) {
 		/* there are 4 cases with red parent: (inserted node marked as * - push it up splitting the parent if necessary):
 		1)
@@ -217,7 +218,8 @@ PCRBTREE_EXPORTS void pcrbtree_rebalance(
 			PCRBTREE_ASSERT_PTRS(t != g);
 			PCRBTREE_ASSERT_PTRS(t != p);
 			*pcrbtree_slot_at_parent_(tree, t, is_right) = p;
-			p->parent_color = pcrbtree_make_parent_color_1(t, (is_right ? PCRB_RIGHT_CHILD : PCRB_LEFT_CHILD) | PCRB_BLACK_COLOR);
+			(void)sizeof(int[1-2*(PCRB_RIGHT_CHILD != 1 || PCRB_LEFT_CHILD != 0)]);
+			p->parent_color = pcrbtree_make_parent_color_1(t, is_right | PCRB_BLACK_COLOR);
 			return; /* (final) */
 		}
 		/* cases 3,4 */
