@@ -97,7 +97,7 @@ A_Ret_range(==,n)
 static inline struct pcrbtree_node *pcrbtree_node_from_btree_node_(
 	const struct btree_node *n/*NULL?*/)
 {
-	void *p = btree_const_cast_(n/*NULL?*/);
+	void *p = btree_const_cast(n/*NULL?*/);
 	return (struct pcrbtree_node*)p;
 }
 
@@ -111,7 +111,7 @@ static inline struct btree_node *pcrbtree_node_to_btree_node_(
 	const struct pcrbtree_node *pn/*NULL?*/)
 {
 	const void *p = pn;
-	return btree_const_cast_((const struct btree_node*)p/*NULL?*/);
+	return btree_const_cast((const struct btree_node*)p/*NULL?*/);
 }
 
 /* tree - just a pointer to the root node */
@@ -306,18 +306,18 @@ static inline struct pcrbtree_node *pcrbtree_left_black_node_parent_(
 #ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
 A_Const_function
 A_At(p, A_In_opt)
-A_At(mask, A_In_range(0,3))
+A_At(bits, A_In_range(0,3))
 A_Check_return
 #endif
 static inline void *pcrbtree_make_parent_color_1(
 	struct pcrbtree_node *p/*NULL?*/,
-	unsigned mask)
+	unsigned bits)
 {
 #ifdef _MSC_VER
 #pragma warning(push)
 #pragma warning(disable:4826) /* Conversion from 'const char *' to 'unsigned __int64' is sign-extended */
 #endif
-	return (void*)((unsigned long long)p | mask);
+	return (void*)((unsigned long long)p | bits);
 #ifdef _MSC_VER
 #pragma warning(pop)
 #endif
@@ -402,11 +402,11 @@ static inline void pcrbtree_replace_(
 		e->parent_color = p;
 		if (l) {
 			PCRBTREE_ASSERT_PTRS(l != r);
-			l->parent_color = pcrbtree_make_parent_color_(e, pcrbtree_get_bits_(l));
+			l->parent_color = pcrbtree_make_parent_color_1(e, pcrbtree_get_bits_(l));
 		}
 		if (r) {
 			PCRBTREE_ASSERT_PTRS(l != r);
-			r->parent_color = pcrbtree_make_parent_color_(e, pcrbtree_get_bits_(r));
+			r->parent_color = pcrbtree_make_parent_color_1(e, pcrbtree_get_bits_(r));
 		}
 	}
 }
