@@ -415,16 +415,17 @@ static inline void pcrbtree_replace_(
 A_Nonnull_arg(1)
 A_At(tree, A_Inout)
 A_At(p, A_Inout_opt)
+A_At(is_right, A_In_range(0,1))
 A_Ret_never_null
 A_Check_return
 #endif
 static inline struct pcrbtree_node **pcrbtree_slot_at_parent_(
 	struct pcrbtree *A_Restrict tree/*!=NULL*/,
 	struct pcrbtree_node *A_Restrict p/*NULL?*/,
-	int right)
+	unsigned is_right)
 {
 	PCRBTREE_ASSERT(tree);
-	return p ? &p->u.leaves[right] : &tree->root;
+	return p ? &p->u.leaves[is_right] : &tree->root;
 }
 
 /* replace old node in the tree with a new one */
@@ -446,10 +447,10 @@ static inline void pcrbtree_replace(
 	{
 		void *parent_color = o->parent_color;
 		struct pcrbtree_node *A_Restrict p = pcrbtree_get_parent_(parent_color); /* NULL? */
-		int right = pcrbtree_is_right_1(parent_color);
+		unsigned is_right = pcrbtree_is_right_1(parent_color);
 		PCRBTREE_ASSERT_PTRS(p != o);
 		PCRBTREE_ASSERT_PTRS(p != e);
-		pcrbtree_replace_(pcrbtree_slot_at_parent_(tree, p, right), o, e);
+		pcrbtree_replace_(pcrbtree_slot_at_parent_(tree, p, is_right), o, e);
 	}
 }
 
