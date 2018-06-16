@@ -85,6 +85,7 @@ typedef int prbtree_node_check_alignment_t[1-2*(__alignof__(struct prbtree_node)
 typedef int prbtree_node_check_alignment_t[1-2*(__alignof(struct prbtree_node) < 2)];
 #endif
 
+/* check that pointer is not NULL */
 static inline void prbtree_assert_ptr_(const void *p)
 {
 	PRBTREE_ASSERT(p);
@@ -155,6 +156,7 @@ A_Pre_satisfies(!e->parent_color)
 static inline void prbtree_check_new_node(
 	const struct prbtree_node *e/*!=NULL*/)
 {
+	prbtree_assert_ptr_(e);
 	PRBTREE_ASSERT(!e->prbtree_left);
 	PRBTREE_ASSERT(!e->prbtree_right);
 	PRBTREE_ASSERT(!e->parent_color);
