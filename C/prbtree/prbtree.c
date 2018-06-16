@@ -101,7 +101,7 @@ PRBTREE_EXPORTS void prbtree_rebalance(
 		*/
 		struct prbtree_node *A_Restrict g = prbtree_get_parent(p); /* p is red */
 		struct prbtree_node *A_Restrict t;
-		PRBTREE_ASSERT(g);
+		prbtree_assert_ptr_(g);
 		PRBTREE_ASSERT_PTRS(g != e);
 		PRBTREE_ASSERT_PTRS(g != p);
 		t = g->prbtree_left; /* may be NULL on first iteration */
@@ -327,19 +327,19 @@ static inline void prbtree_remove_(
 	                 -----------                          |0,R   |                              --------    |4,B*|                               |4,B*|
 	                                                      --------                                          ------                               ------
 	*/
-	PRBTREE_ASSERT(tree);
-	PRBTREE_ASSERT(p);
-	PRBTREE_ASSERT(e);
+	prbtree_assert_ptr_(tree);
+	prbtree_assert_ptr_(p);
+	prbtree_assert_ptr_(e);
 	PRBTREE_ASSERT_PTRS(p != e);
 	for (;;) {
 		void *p_;
 		struct prbtree_node *A_Restrict t = p->prbtree_left;
-		PRBTREE_ASSERT(t);
+		prbtree_assert_ptr_(t);
 		PRBTREE_ASSERT_PTRS(t != p);
 		if (PRB_BLACK_COLOR == prbtree_get_color_(p)) {
 			if (e == t) {
 				t = p->prbtree_right;
-				PRBTREE_ASSERT(t);
+				prbtree_assert_ptr_(t);
 				PRBTREE_ASSERT_PTRS(t != p);
 				PRBTREE_ASSERT_PTRS(t != e);
 				e = t->prbtree_left; /* may be NULL on first iteration */
@@ -392,7 +392,7 @@ static inline void prbtree_remove_(
 				}
 				else {
 					/* cases 4,5,6 with black parent */
-					PRBTREE_ASSERT(e);
+					prbtree_assert_ptr_(e);
 #ifdef _MSC_VER
 					__assume(e);
 #endif
@@ -495,7 +495,7 @@ static inline void prbtree_remove_(
 				}
 				else {
 					/* cases 4,5,6 with black parent */
-					PRBTREE_ASSERT(e);
+					prbtree_assert_ptr_(e);
 #ifdef _MSC_VER
 					__assume(e);
 #endif
@@ -559,13 +559,13 @@ static inline void prbtree_remove_(
 		}
 		else {
 			struct prbtree_node *A_Restrict g = prbtree_get_parent(p);
-			PRBTREE_ASSERT(g); /* p is red */
+			prbtree_assert_ptr_(g); /* p is red */
 			PRBTREE_ASSERT_PTRS(g != p);
 			PRBTREE_ASSERT_PTRS(g != t);
 			PRBTREE_ASSERT_PTRS(g != e);
 			if (e == t) {
 				t = p->prbtree_right;
-				PRBTREE_ASSERT(t);
+				prbtree_assert_ptr_(t);
 				PRBTREE_ASSERT_PTRS(t != p);
 				PRBTREE_ASSERT_PTRS(t != e);
 				PRBTREE_ASSERT_PTRS(t != g);
@@ -726,8 +726,8 @@ PRBTREE_EXPORTS void prbtree_remove(
 				                           ------           */
 				struct prbtree_node *A_Restrict p = prbtree_black_node_parent_(t);
 				struct prbtree_node *A_Restrict r = t->prbtree_right;
-				PRBTREE_ASSERT(p);
-				PRBTREE_ASSERT(r);
+				prbtree_assert_ptr_(p);
+				prbtree_assert_ptr_(r);
 				PRBTREE_ASSERT_PTRS(p != e);
 				PRBTREE_ASSERT_PTRS(p != t);
 				PRBTREE_ASSERT_PTRS(r != e);
@@ -748,7 +748,7 @@ PRBTREE_EXPORTS void prbtree_remove(
 			       ---------                  |2,B*|
 			                                  ------        */
 			struct prbtree_node *A_Restrict r = t->prbtree_right;
-			PRBTREE_ASSERT(r);
+			prbtree_assert_ptr_(r);
 			PRBTREE_ASSERT_PTRS(r != e);
 			PRBTREE_ASSERT_PTRS(r != t);
 			r->parent_color = prbtree_make_parent_color_(e, PRB_BLACK_COLOR); /* change parent & recolor node: red -> black */

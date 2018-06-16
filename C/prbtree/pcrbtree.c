@@ -90,9 +90,9 @@ PCRBTREE_EXPORTS void pcrbtree_rebalance(
 {
 	/* insert red node e */
 	unsigned is_right = (unsigned)(c < 0);
-	PCRBTREE_ASSERT(tree);
-	PCRBTREE_ASSERT(p);
-	PCRBTREE_ASSERT(e);
+	pcrbtree_assert_ptr_(tree);
+	pcrbtree_assert_ptr_(p);
+	pcrbtree_assert_ptr_(e);
 	PCRBTREE_ASSERT_PTRS(p != e);
 	p->u.leaves[is_right] = e;
 	(void)sizeof(int[1-2*(PCRB_RIGHT_CHILD != 1 || PCRB_LEFT_CHILD != 0)]);
@@ -136,7 +136,7 @@ PCRBTREE_EXPORTS void pcrbtree_rebalance(
 		*/
 		struct pcrbtree_node *A_Restrict g = pcrbtree_get_parent(p); /* p is red */
 		void *pc;
-		PCRBTREE_ASSERT(g);
+		pcrbtree_assert_ptr_(g);
 		PCRBTREE_ASSERT_PTRS(g != e);
 		PCRBTREE_ASSERT_PTRS(g != p);
 		for (;;) {
@@ -239,8 +239,8 @@ static inline void pcrbtree_replace_child(
 	struct pcrbtree_node *A_Restrict e/*!=NULL*/)
 {
 	struct pcrbtree_node *A_Restrict p = pcrbtree_get_parent_(pc); /* may be NULL */
-	PCRBTREE_ASSERT(tree);
-	PCRBTREE_ASSERT(e);
+	pcrbtree_assert_ptr_(tree);
+	pcrbtree_assert_ptr_(e);
 	PCRBTREE_ASSERT_PTRS(e != p);
 	e->parent_color = pc;
 	*pcrbtree_slot_at_parent_(tree, p, pcrbtree_is_right_1(pc)) = e;
@@ -389,9 +389,9 @@ static inline void pcrbtree_remove_(
 	                                                      --------                                          ------                               ------
 	*/
 	void *ec;
-	PCRBTREE_ASSERT(tree);
-	PCRBTREE_ASSERT(p);
-	PCRBTREE_ASSERT(e);
+	pcrbtree_assert_ptr_(tree);
+	pcrbtree_assert_ptr_(p);
+	pcrbtree_assert_ptr_(e);
 	PCRBTREE_ASSERT_PTRS(p != e);
 	ec = e->parent_color;
 	for (;;) {
@@ -399,7 +399,7 @@ static inline void pcrbtree_remove_(
 		if (PCRB_BLACK_COLOR == pcrbtree_get_color_1(pc)) {
 			if (!pcrbtree_is_right_1(ec)) {
 				struct pcrbtree_node *A_Restrict t = p->pcrbtree_right;
-				PCRBTREE_ASSERT(t);
+				pcrbtree_assert_ptr_(t);
 				PCRBTREE_ASSERT_PTRS(t != p);
 				PCRBTREE_ASSERT_PTRS(t != e);
 				e = t->pcrbtree_left; /* may be NULL on first iteration */
@@ -456,7 +456,7 @@ static inline void pcrbtree_remove_(
 				}
 				else {
 					/* cases 4,5,6 with black parent */
-					PCRBTREE_ASSERT(e);
+					pcrbtree_assert_ptr_(e);
 #ifdef _MSC_VER
 					__assume(e);
 #endif
@@ -509,7 +509,7 @@ static inline void pcrbtree_remove_(
 			}
 			else {
 				struct pcrbtree_node *A_Restrict t = p->pcrbtree_left;
-				PCRBTREE_ASSERT(t);
+				pcrbtree_assert_ptr_(t);
 				PCRBTREE_ASSERT_PTRS(t != p);
 				PCRBTREE_ASSERT_PTRS(t != e);
 				e = t->pcrbtree_right; /* may be NULL on first iteration */
@@ -566,7 +566,7 @@ static inline void pcrbtree_remove_(
 				}
 				else {
 					/* cases 4,5,6 with black parent */
-					PCRBTREE_ASSERT(e);
+					pcrbtree_assert_ptr_(e);
 #ifdef _MSC_VER
 					__assume(e);
 #endif
@@ -620,12 +620,12 @@ static inline void pcrbtree_remove_(
 		}
 		else {
 			struct pcrbtree_node *A_Restrict g = pcrbtree_get_parent_(pc);
-			PCRBTREE_ASSERT(g); /* p is red */
+			pcrbtree_assert_ptr_(g); /* p is red */
 			PCRBTREE_ASSERT_PTRS(g != p);
 			PCRBTREE_ASSERT_PTRS(g != e);
 			if (!pcrbtree_is_right_1(ec)) {
 				struct pcrbtree_node *A_Restrict t = p->pcrbtree_right;
-				PCRBTREE_ASSERT(t);
+				pcrbtree_assert_ptr_(t);
 				PCRBTREE_ASSERT_PTRS(t != p);
 				PCRBTREE_ASSERT_PTRS(t != e);
 				PCRBTREE_ASSERT_PTRS(t != g);
@@ -690,7 +690,7 @@ static inline void pcrbtree_remove_(
 			}
 			else {
 				struct pcrbtree_node *A_Restrict t = p->pcrbtree_left;
-				PCRBTREE_ASSERT(t);
+				pcrbtree_assert_ptr_(t);
 				PCRBTREE_ASSERT_PTRS(t != p);
 				PCRBTREE_ASSERT_PTRS(t != e);
 				PCRBTREE_ASSERT_PTRS(t != g);
@@ -783,8 +783,8 @@ PCRBTREE_EXPORTS void pcrbtree_remove(
 				                           ------           */
 				struct pcrbtree_node *A_Restrict p = pcrbtree_left_black_node_parent_(t);
 				struct pcrbtree_node *A_Restrict r = t->pcrbtree_right;
-				PCRBTREE_ASSERT(p);
-				PCRBTREE_ASSERT(r);
+				pcrbtree_assert_ptr_(p);
+				pcrbtree_assert_ptr_(r);
 				PCRBTREE_ASSERT_PTRS(p != e);
 				PCRBTREE_ASSERT_PTRS(p != t);
 				PCRBTREE_ASSERT_PTRS(r != e);
@@ -805,7 +805,7 @@ PCRBTREE_EXPORTS void pcrbtree_remove(
 			       ---------                  |2,B*|
 			                                  ------        */
 			struct pcrbtree_node *A_Restrict r = t->pcrbtree_right;
-			PCRBTREE_ASSERT(r);
+			pcrbtree_assert_ptr_(r);
 			PCRBTREE_ASSERT_PTRS(r != e);
 			PCRBTREE_ASSERT_PTRS(r != t);
 			r->parent_color = pcrbtree_make_parent_color_right(e, PCRB_BLACK_COLOR); /* change parent & recolor node: red -> black */

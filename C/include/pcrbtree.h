@@ -88,6 +88,12 @@ typedef int pcrbtree_node_check_alignment_t[1-2*(__alignof__(struct pcrbtree_nod
 typedef int pcrbtree_node_check_alignment_t[1-2*(__alignof(struct pcrbtree_node) < 4)];
 #endif
 
+/* check that pointer is not NULL */
+static inline void pcrbtree_assert_ptr_(const void *p)
+{
+	PCRBTREE_ASSERT(p);
+}
+
 #ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
 A_Const_function
 A_At(n, A_In_opt)
@@ -126,7 +132,7 @@ A_At(tree, A_Out)
 static inline void pcrbtree_init(
 	struct pcrbtree *tree/*!=NULL,out*/)
 {
-	PCRBTREE_ASSERT(tree);
+	pcrbtree_assert_ptr_(tree);
 	tree->root = (struct pcrbtree_node*)0;
 }
 
@@ -137,7 +143,7 @@ A_At(e, A_Out)
 static inline void pcrbtree_init_node(
 	struct pcrbtree_node *e/*!=NULL,out*/)
 {
-	PCRBTREE_ASSERT(e);
+	pcrbtree_assert_ptr_(e);
 	e->pcrbtree_left  = (struct pcrbtree_node*)0;
 	e->pcrbtree_right = (struct pcrbtree_node*)0;
 	e->parent_color   = (void*)0;
@@ -153,6 +159,7 @@ A_Pre_satisfies(!e->parent_color)
 static inline void pcrbtree_check_new_node(
 	const struct pcrbtree_node *e/*!=NULL*/)
 {
+	pcrbtree_assert_ptr_(e);
 	PCRBTREE_ASSERT(!e->pcrbtree_left);
 	PCRBTREE_ASSERT(!e->pcrbtree_right);
 	PCRBTREE_ASSERT(!e->parent_color);
@@ -176,6 +183,8 @@ static inline struct pcrbtree_node *pcrbtree_get_parent_(
 #pragma warning(pop)
 #endif
 }
+
+#define pcrbtree_get_bits_2(parent_color) ((unsigned)(3llu & (unsigned long long)parent_color))
 
 #ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
 A_Const_function
@@ -241,7 +250,7 @@ A_Check_return
 static inline struct pcrbtree_node *pcrbtree_get_parent(
 	const struct pcrbtree_node *n/*!=NULL*/)
 {
-	PCRBTREE_ASSERT(n);
+	pcrbtree_assert_ptr_(n);
 	return pcrbtree_get_parent_(n->parent_color);
 }
 
@@ -255,7 +264,7 @@ A_Check_return
 static inline unsigned pcrbtree_get_bits_(
 	const struct pcrbtree_node *n/*!=NULL*/)
 {
-	PCRBTREE_ASSERT(n);
+	pcrbtree_assert_ptr_(n);
 	return pcrbtree_get_bits_1(n->parent_color);
 }
 
@@ -269,7 +278,7 @@ A_Check_return
 static inline unsigned pcrbtree_is_right_(
 	const struct pcrbtree_node *n/*!=NULL*/)
 {
-	PCRBTREE_ASSERT(n);
+	pcrbtree_assert_ptr_(n);
 	return pcrbtree_is_right_1(n->parent_color);
 }
 
@@ -283,7 +292,7 @@ A_Check_return
 static inline unsigned pcrbtree_get_color_(
 	const struct pcrbtree_node *n/*!=NULL*/)
 {
-	PCRBTREE_ASSERT(n);
+	pcrbtree_assert_ptr_(n);
 	return pcrbtree_get_color_1(n->parent_color);
 }
 
@@ -298,8 +307,8 @@ A_Check_return
 static inline struct pcrbtree_node *pcrbtree_left_black_node_parent_(
 	struct pcrbtree_node *n/*!=NULL*/)
 {
-	PCRBTREE_ASSERT(n);
-	PCRBTREE_ASSERT(!pcrbtree_get_bits_(n));
+	pcrbtree_assert_ptr_(n);
+	PCRBTREE_ASSERT(!pcrbtree_get_bits_2(n->parent_color));
 	return (struct pcrbtree_node*)n->parent_color;
 }
 
@@ -353,8 +362,8 @@ static inline void pcrbtree_insert(
 	struct pcrbtree_node *A_Restrict e/*!=NULL*/,
 	int c)
 {
-	PCRBTREE_ASSERT(tree);
-	PCRBTREE_ASSERT(e);
+	pcrbtree_assert_ptr_(tree);
+	pcrbtree_assert_ptr_(e);
 	PCRBTREE_ASSERT_PTRS(p != e);
 	pcrbtree_check_new_node(e); /* new node must have NULL children and parent */
 	if (p) {
@@ -379,9 +388,9 @@ static inline void pcrbtree_replace_(
 	const struct pcrbtree_node *A_Restrict o/*!=NULL,in*/,
 	struct pcrbtree_node *A_Restrict e/*!=NULL,out*/)
 {
-	PCRBTREE_ASSERT(n);
-	PCRBTREE_ASSERT(o);
-	PCRBTREE_ASSERT(e);
+	pcrbtree_assert_ptr_(n);
+	pcrbtree_assert_ptr_(o);
+	pcrbtree_assert_ptr_(e);
 	PCRBTREE_ASSERT_PTRS(o != e);
 	{
 		struct pcrbtree_node **A_Restrict el = &e->pcrbtree_left;
@@ -424,7 +433,7 @@ static inline struct pcrbtree_node **pcrbtree_slot_at_parent_(
 	struct pcrbtree_node *A_Restrict p/*NULL?*/,
 	unsigned is_right)
 {
-	PCRBTREE_ASSERT(tree);
+	pcrbtree_assert_ptr_(tree);
 	return p ? &p->u.leaves[is_right] : &tree->root;
 }
 
@@ -440,9 +449,9 @@ static inline void pcrbtree_replace(
 	const struct pcrbtree_node *A_Restrict o/*!=NULL*/,
 	struct pcrbtree_node *A_Restrict e/*!=NULL,out*/)
 {
-	PCRBTREE_ASSERT(tree);
-	PCRBTREE_ASSERT(o);
-	PCRBTREE_ASSERT(e);
+	pcrbtree_assert_ptr_(tree);
+	pcrbtree_assert_ptr_(o);
+	pcrbtree_assert_ptr_(e);
 	PCRBTREE_ASSERT_PTRS(o != e);
 	{
 		void *parent_color = o->parent_color;
@@ -477,7 +486,7 @@ A_Check_return
 static inline struct pcrbtree_node *pcrbtree_right_parent(
 	const struct pcrbtree_node *current/*!=NULL*/)
 {
-	PCRBTREE_ASSERT(current);
+	pcrbtree_assert_ptr_(current);
 	for (;;) {
 		struct pcrbtree_node *p = pcrbtree_get_parent(current);
 		if (!p || !pcrbtree_is_right_(current))
@@ -497,7 +506,7 @@ A_Check_return
 static inline struct pcrbtree_node *pcrbtree_left_parent(
 	const struct pcrbtree_node *current/*!=NULL*/)
 {
-	PCRBTREE_ASSERT(current);
+	pcrbtree_assert_ptr_(current);
 	for (;;) {
 		struct pcrbtree_node *p = pcrbtree_get_parent(current);
 		if (!p || pcrbtree_is_right_(current))
@@ -517,7 +526,7 @@ A_Check_return
 static inline struct pcrbtree_node *pcrbtree_next(
 	const struct pcrbtree_node *current/*!=NULL*/)
 {
-	PCRBTREE_ASSERT(current);
+	pcrbtree_assert_ptr_(current);
 	{
 		const struct pcrbtree_node *n = current->pcrbtree_right;
 		if (n)
@@ -537,7 +546,7 @@ A_Check_return
 static inline struct pcrbtree_node *pcrbtree_prev(
 	const struct pcrbtree_node *current/*!=NULL*/)
 {
-	PCRBTREE_ASSERT(current);
+	pcrbtree_assert_ptr_(current);
 	{
 		const struct pcrbtree_node *p = current->pcrbtree_left;
 		if (p)
