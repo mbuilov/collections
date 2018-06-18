@@ -100,6 +100,7 @@ static inline void prbtree_assert_ptr_(const void *p)
 A_Const_function
 A_At(n, A_In_opt)
 A_Check_return
+A_Ret_maybenull
 A_Ret_range(==,n)
 #endif
 static inline struct prbtree_node *prbtree_node_from_btree_node_(
@@ -113,6 +114,7 @@ static inline struct prbtree_node *prbtree_node_from_btree_node_(
 A_Const_function
 A_At(pn, A_In_opt)
 A_Check_return
+A_Ret_maybenull
 A_Ret_range(==,pn)
 #endif
 static inline struct btree_node *prbtree_node_to_btree_node_(
