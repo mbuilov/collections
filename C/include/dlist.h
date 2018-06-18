@@ -1047,7 +1047,7 @@ A_At(e, A_Inout)
 A_Pre_satisfies(c != s)
 A_Pre_satisfies(c != e)
 A_Ret_never_null
-A_Ret_range(==,dlist)
+A_Ret_range(==,c)
 #endif
 static inline struct dlist_entry *dlist_circular_insert_list_before(
 	struct dlist_entry *A_Restrict c,
