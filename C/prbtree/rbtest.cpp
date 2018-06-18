@@ -369,9 +369,9 @@ int main(int argc, char *argv[])
 #ifdef USE_STDMAP
 	fprintf(out, "stdmap\n");
 #elif defined USE_PCRBTREE
-	fprintf(out, "crbtree\n");
+	fprintf(out, "pcrbtree\n");
 #else
-	fprintf(out, "rbtree\n");
+	fprintf(out, "prbtree\n");
 #endif
 	{
 		unsigned i = 0;
