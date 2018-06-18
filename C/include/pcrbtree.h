@@ -89,10 +89,15 @@ typedef int pcrbtree_node_check_alignment_t[1-2*(__alignof(struct pcrbtree_node)
 #endif
 
 /* check that pointer is not NULL */
+#ifdef _MSC_VER
+#define pcrbtree_assert_ptr_(p) PCRBTREE_ASSERT(p)
+#else
+/* do not declare 'p' as non-NULL, so gcc/clang will not complain about comparison of non-NULL pointer with 0 */
 static inline void pcrbtree_assert_ptr_(const void *p)
 {
 	PCRBTREE_ASSERT(p);
 }
+#endif
 
 #ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
 A_Const_function
@@ -109,7 +114,7 @@ static inline struct pcrbtree_node *pcrbtree_node_from_btree_node_(
 
 #ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
 A_Const_function
-A_At(n, A_In_opt)
+A_At(pn, A_In_opt)
 A_Check_return
 A_Ret_range(==,pn)
 #endif
@@ -177,13 +182,17 @@ static inline struct pcrbtree_node *pcrbtree_get_parent_(
 #ifdef _MSC_VER
 #pragma warning(push)
 #pragma warning(disable:4826) /* Conversion from 'const char *' to 'unsigned __int64' is sign-extended */
+#pragma warning(disable:4305) /* 'type cast': truncation from 'unsigned __int64' to 'void *' */
 #endif
-	return (struct pcrbtree_node*)(~3llu & (unsigned long long)parent_color);
+	return (struct pcrbtree_node*)(
+		(((1llu << (8*sizeof(void*) - 1)) | ~(~0llu << (8*sizeof(void*) - 1))) + 0*sizeof(int[1-2*(255 != (unsigned char)-1)])) &
+		~3llu & (unsigned long long)parent_color);
 #ifdef _MSC_VER
 #pragma warning(pop)
 #endif
 }
 
+/* clang complains about side-effects if pcrbtree_get_bits_1() is used in PCRBTREE_ASSERT(), so use this define */
 #define pcrbtree_get_bits_2(parent_color) ((unsigned)(3llu & (unsigned long long)parent_color))
 
 #ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
@@ -198,7 +207,7 @@ static inline unsigned pcrbtree_get_bits_1(
 #pragma warning(push)
 #pragma warning(disable:4826) /* Conversion from 'const char *' to 'unsigned __int64' is sign-extended */
 #endif
-	return (unsigned)(3llu & (unsigned long long)parent_color);
+	return pcrbtree_get_bits_2(parent_color);
 #ifdef _MSC_VER
 #pragma warning(pop)
 #endif
@@ -308,7 +317,14 @@ static inline struct pcrbtree_node *pcrbtree_left_black_node_parent_(
 	struct pcrbtree_node *n/*!=NULL*/)
 {
 	pcrbtree_assert_ptr_(n);
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable:4826) /* Conversion from 'const char *' to 'unsigned __int64' is sign-extended */
+#endif
 	PCRBTREE_ASSERT(!pcrbtree_get_bits_2(n->parent_color));
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 	return (struct pcrbtree_node*)n->parent_color;
 }
 
@@ -325,8 +341,13 @@ static inline void *pcrbtree_make_parent_color_1(
 #ifdef _MSC_VER
 #pragma warning(push)
 #pragma warning(disable:4826) /* Conversion from 'const char *' to 'unsigned __int64' is sign-extended */
+#pragma warning(disable:4305) /* 'type cast': truncation from 'unsigned __int64' to 'void *' */
 #endif
-	return (void*)((unsigned long long)p | bits);
+	PCRBTREE_ASSERT(bits <= 3);
+	PCRBTREE_ASSERT(!(3llu & (unsigned long long)p));
+	return (void*)(
+		(((1llu << (8*sizeof(void*) - 1)) | ~(~0llu << (8*sizeof(void*) - 1))) + 0*sizeof(int[1-2*(255 != (unsigned char)-1)])) &
+		((unsigned long long)p | bits));
 #ifdef _MSC_VER
 #pragma warning(pop)
 #endif

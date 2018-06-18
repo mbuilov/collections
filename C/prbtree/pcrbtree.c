@@ -57,8 +57,12 @@ static inline void *pcrbtree_recolor_to_red(void *parent_color)
 #ifdef _MSC_VER
 #pragma warning(push)
 #pragma warning(disable:4826) /* Conversion from 'const char *' to 'unsigned __int64' is sign-extended */
+#pragma warning(disable:4305) /* 'type cast': truncation from 'unsigned __int64' to 'void *' */
 #endif
-	return (void*)(2llu | (unsigned long long)parent_color);
+	PCRBTREE_ASSERT(!(2llu & (unsigned long long)parent_color));
+	return (void*)(
+		(((1llu << (8*sizeof(void*) - 1)) | ~(~0llu << (8*sizeof(void*) - 1))) + 0*sizeof(int[1-2*(255 != (unsigned char)-1)])) &
+		(2llu | (unsigned long long)parent_color));
 #ifdef _MSC_VER
 #pragma warning(pop)
 #endif
@@ -69,8 +73,12 @@ static inline void *pcrbtree_recolor_to_black(void *parent_color)
 #ifdef _MSC_VER
 #pragma warning(push)
 #pragma warning(disable:4826) /* Conversion from 'const char *' to 'unsigned __int64' is sign-extended */
+#pragma warning(disable:4305) /* 'type cast': truncation from 'unsigned __int64' to 'void *' */
 #endif
-	return (void*)(~2llu & (unsigned long long)parent_color);
+	PCRBTREE_ASSERT(2llu & (unsigned long long)parent_color);
+	return (void*)(
+		(((1llu << (8*sizeof(void*) - 1)) | ~(~0llu << (8*sizeof(void*) - 1))) + 0*sizeof(int[1-2*(255 != (unsigned char)-1)])) &
+		~2llu & (unsigned long long)parent_color);
 #ifdef _MSC_VER
 #pragma warning(pop)
 #endif
@@ -228,6 +236,7 @@ PCRBTREE_EXPORTS void pcrbtree_rebalance(
 			return;
 		g->parent_color = pcrbtree_recolor_to_red(pc); /* recolor g: black -> red */
 		p = pcrbtree_get_parent_(pc);
+		pcrbtree_assert_ptr_(p);
 		PCRBTREE_ASSERT_PTRS(p != g);
 		e = g;
 	}
@@ -661,14 +670,14 @@ static inline void pcrbtree_remove_(
 							e->pcrbtree_right = t;
 							t->parent_color = pcrbtree_make_parent_color_right(e, PCRB_RED_COLOR);
 							t = e;
-							e->parent_color = pcrbtree_recolor_to_black(pc);
+							e->parent_color = pcrbtree_recolor_to_black(pc); /* recolor: red -> black */
 						}
 					}
 					else if (b && PCRB_BLACK_COLOR != pcrbtree_get_color_(b)) {
 						/* cases 5,8 (11:5,14:8) */
 						PCRBTREE_ASSERT_PTRS(b != e);
 						e = t;
-						e->parent_color = pcrbtree_recolor_to_black(pc);
+						e->parent_color = pcrbtree_recolor_to_black(pc); /* recolor: red -> black */
 					}
 					else {
 						/* cases 4,7 (10:4,13:7) */
@@ -726,14 +735,14 @@ static inline void pcrbtree_remove_(
 							e->pcrbtree_left = t;
 							t->parent_color = pcrbtree_make_parent_color_left(e, PCRB_RED_COLOR);
 							t = e;
-							e->parent_color = pcrbtree_recolor_to_black(pc);
+							e->parent_color = pcrbtree_recolor_to_black(pc); /* recolor: red -> black */
 						}
 					}
 					else if (b && PCRB_BLACK_COLOR != pcrbtree_get_color_(b)) {
 						/* cases 5,8 (11:5,14:8) */
 						PCRBTREE_ASSERT_PTRS(b != e);
 						e = t;
-						e->parent_color = pcrbtree_recolor_to_black(pc);
+						e->parent_color = pcrbtree_recolor_to_black(pc); /* recolor: red -> black */
 					}
 					else {
 						/* cases 4,7 (10:4,13:7) */

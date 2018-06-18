@@ -86,10 +86,15 @@ typedef int prbtree_node_check_alignment_t[1-2*(__alignof(struct prbtree_node) <
 #endif
 
 /* check that pointer is not NULL */
+#ifdef _MSC_VER
+#define prbtree_assert_ptr_(p) PRBTREE_ASSERT(p)
+#else
+/* do not declare 'p' as non-NULL, so gcc/clang will not complain about comparison of non-NULL pointer with 0 */
 static inline void prbtree_assert_ptr_(const void *p)
 {
 	PRBTREE_ASSERT(p);
 }
+#endif
 
 #ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
 A_Const_function
@@ -106,7 +111,7 @@ static inline struct prbtree_node *prbtree_node_from_btree_node_(
 
 #ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
 A_Const_function
-A_At(n, A_In_opt)
+A_At(pn, A_In_opt)
 A_Check_return
 A_Ret_range(==,pn)
 #endif
@@ -140,7 +145,7 @@ A_At(e, A_Out)
 static inline void prbtree_init_node(
 	struct prbtree_node *e/*!=NULL,out*/)
 {
-	PRBTREE_ASSERT(e);
+	prbtree_assert_ptr_(e);
 	e->prbtree_left  = (struct prbtree_node*)0;
 	e->prbtree_right = (struct prbtree_node*)0;
 	e->parent_color  = (void*)0;
@@ -164,6 +169,27 @@ static inline void prbtree_check_new_node(
 }
 
 #ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Const_function
+A_Ret_maybenull
+A_Check_return
+#endif
+static inline struct prbtree_node *prbtree_get_parent_(
+	void *parent_color/*NULL?*/)
+{
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable:4826) /* Conversion from 'const char *' to 'unsigned __int64' is sign-extended */
+#pragma warning(disable:4305) /* 'type cast': truncation from 'unsigned __int64' to 'void *' */
+#endif
+	return (struct prbtree_node*)(
+		(((1llu << (8*sizeof(void*) - 1)) | ~(~0llu << (8*sizeof(void*) - 1))) + 0*sizeof(int[1-2*(255 != (unsigned char)-1)])) &
+		~1llu & (unsigned long long)parent_color);
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
+}
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
 A_Nonnull_all_args
 A_Const_function
 A_At(n, A_In)
@@ -174,16 +200,10 @@ static inline struct prbtree_node *prbtree_get_parent(
 	const struct prbtree_node *n/*!=NULL*/)
 {
 	prbtree_assert_ptr_(n);
-#ifdef _MSC_VER
-#pragma warning(push)
-#pragma warning(disable:4826) /* Conversion from 'const char *' to 'unsigned __int64' is sign-extended */
-#endif
-	return (struct prbtree_node*)(~1llu & (unsigned long long)n->parent_color);
-#ifdef _MSC_VER
-#pragma warning(pop)
-#endif
+	return prbtree_get_parent_(n->parent_color);
 }
 
+/* clang complains about side-effects if prbtree_get_color_1() is used in PRBTREE_ASSERT(), so use this define */
 #define prbtree_get_color_2(parent_color) ((unsigned)(1llu & (unsigned long long)(parent_color)))
 
 #ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
@@ -230,7 +250,14 @@ static inline struct prbtree_node *prbtree_black_node_parent_(
 	struct prbtree_node *n/*!=NULL*/)
 {
 	prbtree_assert_ptr_(n);
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable:4826) /* Conversion from 'const char *' to 'unsigned __int64' is sign-extended */
+#endif
 	PRBTREE_ASSERT(!prbtree_get_color_2(n->parent_color));
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 	return (struct prbtree_node*)n->parent_color;
 }
 
@@ -247,8 +274,13 @@ static inline void *prbtree_make_parent_color_(
 #ifdef _MSC_VER
 #pragma warning(push)
 #pragma warning(disable:4826) /* Conversion from 'const char *' to 'unsigned __int64' is sign-extended */
+#pragma warning(disable:4305) /* 'type cast': truncation from 'unsigned __int64' to 'void *' */
 #endif
-	return (void*)((unsigned long long)p | c);
+	PRBTREE_ASSERT(c <= 1);
+	PRBTREE_ASSERT(!(1llu & (unsigned long long)p));
+	return (void*)(
+		(((1llu << (8*sizeof(void*) - 1)) | ~(~0llu << (8*sizeof(void*) - 1))) + 0*sizeof(int[1-2*(255 != (unsigned char)-1)])) &
+		((unsigned long long)p | c));
 #ifdef _MSC_VER
 #pragma warning(pop)
 #endif
@@ -283,8 +315,8 @@ static inline void prbtree_insert(
 	struct prbtree_node *A_Restrict e/*!=NULL*/,
 	int c)
 {
-	PRBTREE_ASSERT(tree);
-	PRBTREE_ASSERT(e);
+	prbtree_assert_ptr_(tree);
+	prbtree_assert_ptr_(e);
 	PRBTREE_ASSERT_PTRS(p != e);
 	prbtree_check_new_node(e); /* new node must have NULL children and parent */
 	if (p) {
@@ -404,7 +436,7 @@ A_Check_return
 static inline struct prbtree_node *prbtree_right_parent(
 	const struct prbtree_node *current/*!=NULL*/)
 {
-	PRBTREE_ASSERT(current);
+	prbtree_assert_ptr_(current);
 	for (;;) {
 		struct prbtree_node *p = prbtree_get_parent(current);
 		if (!p || current == p->prbtree_left)
@@ -424,7 +456,7 @@ A_Check_return
 static inline struct prbtree_node *prbtree_left_parent(
 	const struct prbtree_node *current/*!=NULL*/)
 {
-	PRBTREE_ASSERT(current);
+	prbtree_assert_ptr_(current);
 	for (;;) {
 		struct prbtree_node *p = prbtree_get_parent(current);
 		if (!p || current == p->prbtree_right)
@@ -444,7 +476,7 @@ A_Check_return
 static inline struct prbtree_node *prbtree_next(
 	const struct prbtree_node *current/*!=NULL*/)
 {
-	PRBTREE_ASSERT(current);
+	prbtree_assert_ptr_(current);
 	{
 		const struct prbtree_node *n = current->prbtree_right;
 		if (n)
@@ -464,7 +496,7 @@ A_Check_return
 static inline struct prbtree_node *prbtree_prev(
 	const struct prbtree_node *current/*!=NULL*/)
 {
-	PRBTREE_ASSERT(current);
+	prbtree_assert_ptr_(current);
 	{
 		const struct prbtree_node *p = current->prbtree_left;
 		if (p)
