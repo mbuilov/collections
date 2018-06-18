@@ -92,6 +92,17 @@ struct dlist {
 #define dlist_first e.next
 #define dlist_last  e.prev
 
+/* check that pointer is not NULL */
+#ifdef _MSC_VER
+#define dlist_assert_ptr_(p) DLIST_ASSERT(p)
+#else
+/* do not declare 'p' as non-NULL, so gcc/clang will not complain about comparison of non-NULL pointer with 0 */
+static inline void dlist_assert_ptr_(const void *p)
+{
+	DLIST_ASSERT(p);
+}
+#endif
+
 /* initialize doubly-linked list */
 #ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
 A_Nonnull_all_args
@@ -102,7 +113,7 @@ A_Ret_range(==,dlist)
 static inline struct dlist *dlist_init(
 	struct dlist *dlist)
 {
-	DLIST_ASSERT(dlist);
+	dlist_assert_ptr_(dlist);
 	dlist->dlist_first = NULL;
 	dlist->dlist_last = NULL;
 	return dlist;
@@ -118,7 +129,7 @@ A_Ret_range(==,dlist)
 static inline struct dlist *dlist_circular_init(
 	struct dlist *dlist)
 {
-	DLIST_ASSERT(dlist);
+	dlist_assert_ptr_(dlist);
 	dlist->dlist_first = &dlist->e;
 	dlist->dlist_last = &dlist->e;
 	return dlist;
@@ -142,7 +153,7 @@ A_Check_return
 static inline int dlist_is_empty(
 	const struct dlist *dlist)
 {
-	DLIST_ASSERT(dlist);
+	dlist_assert_ptr_(dlist);
 	DLIST_ASSERT(!dlist->dlist_first || !dlist->dlist_first->prev);
 	DLIST_ASSERT_PTRS(&dlist->e != dlist->dlist_first);
 	return !dlist->dlist_first;
@@ -174,7 +185,7 @@ A_Check_return
 static inline int dlist_circular_is_empty(
 	const struct dlist *dlist)
 {
-	DLIST_ASSERT(dlist);
+	dlist_assert_ptr_(dlist);
 	DLIST_ASSERT(dlist->dlist_first);
 	return dlist_circular_end(dlist) == dlist->dlist_first;
 }
@@ -212,7 +223,7 @@ A_Ret_never_null
 static inline struct dlist *dlist_check_non_circular(
 	const struct dlist *dlist)
 {
-	DLIST_ASSERT(dlist);
+	dlist_assert_ptr_(dlist);
 	DLIST_ASSERT(!dlist->dlist_first || !dlist->dlist_first->prev);
 	DLIST_ASSERT(!dlist->dlist_last || !dlist->dlist_last->next);
 	DLIST_ASSERT(!dlist->dlist_first == !dlist->dlist_last);
@@ -230,7 +241,7 @@ A_Ret_never_null
 static inline struct dlist *dlist_check_circular(
 	const struct dlist *dlist)
 {
-	DLIST_ASSERT(dlist);
+	dlist_assert_ptr_(dlist);
 	DLIST_ASSERT(dlist->dlist_first && &dlist->e == dlist->dlist_first->prev);
 	DLIST_ASSERT(dlist->dlist_last && &dlist->e == dlist->dlist_last->next);
 	DLIST_ASSERT_PTRS((&dlist->e == dlist->dlist_first) == (&dlist->e == dlist->dlist_last));
@@ -296,7 +307,7 @@ static inline void dlist_entry_check_non_circular(
 	const struct dlist_entry *c)
 {
 	(void)c;
-	DLIST_ASSERT(c);
+	dlist_assert_ptr_(c);
 	DLIST_ASSERT_PTRS(&dlist->e != c->next);
 	DLIST_ASSERT_PTRS(&dlist->e != c->prev);
 }
@@ -312,8 +323,8 @@ static inline void dlist_check_sublist(
 {
 	(void)s;
 	(void)e;
-	DLIST_ASSERT(s);
-	DLIST_ASSERT(e);
+	dlist_assert_ptr_(s);
+	dlist_assert_ptr_(e);
 	DLIST_ASSERT_PTRS(s == e || s->next);
 	DLIST_ASSERT_PTRS(s == e || e->prev);
 }
@@ -523,7 +534,7 @@ static inline struct dlist *dlist_insert_list_after(
 	struct dlist_entry *s/*==e?*/,
 	struct dlist_entry *e)
 {
-	DLIST_ASSERT(dlist);
+	dlist_assert_ptr_(dlist);
 	DLIST_ASSERT_PTRS(&dlist->e != c);
 	dlist_insert_list_after_(dlist, c, s, e);
 	s->prev = c; /* if c == &dlist->e, s->prev should be NULL - use dlist_add_list_front() */
@@ -549,7 +560,7 @@ static inline struct dlist *dlist_insert_list_before(
 	struct dlist_entry *s/*==e?*/,
 	struct dlist_entry *e)
 {
-	DLIST_ASSERT(dlist);
+	dlist_assert_ptr_(dlist);
 	DLIST_ASSERT_PTRS(&dlist->e != c);
 	dlist_insert_list_before_(dlist, c, s, e);
 	e->next = c; /* if c == &dlist->e, e->next should be NULL - use dlist_add_list_back() */
@@ -696,9 +707,9 @@ static inline struct dlist *dlist_restore_list(
 	struct dlist_entry *os,
 	struct dlist_entry *oe)
 {
-	DLIST_ASSERT(dlist);
-	DLIST_ASSERT(os);
-	DLIST_ASSERT(oe);
+	dlist_assert_ptr_(dlist);
+	dlist_assert_ptr_(os);
+	dlist_assert_ptr_(oe);
 	/* must be no entries between os->prev and oe->next in the list */
 	DLIST_ASSERT((os->prev ? os->prev->next : dlist->dlist_first) == oe->next);
 	DLIST_ASSERT((oe->next ? oe->next->prev : dlist->dlist_last) == os->prev);
@@ -809,7 +820,7 @@ static inline void dlist_move(
 	const struct dlist *A_Restrict src)
 {
 	dlist_check_non_circular(src);
-	DLIST_ASSERT(dst);
+	dlist_assert_ptr_(dst);
 	DLIST_ASSERT_PTRS(dst != src);
 	dst->dlist_first = src->dlist_first;
 	dst->dlist_last = src->dlist_last;
@@ -824,7 +835,7 @@ A_At(c, A_In)
 static inline void dlist_entry_check_circular(const struct dlist_entry *c)
 {
 	(void)c;
-	DLIST_ASSERT(c);
+	dlist_assert_ptr_(c);
 	DLIST_ASSERT(c->next && c->prev);
 }
 
@@ -1155,8 +1166,8 @@ static inline void dlist_circular_restore_list(
 	struct dlist_entry *os,
 	struct dlist_entry *oe)
 {
-	DLIST_ASSERT(os);
-	DLIST_ASSERT(oe);
+	dlist_assert_ptr_(os);
+	dlist_assert_ptr_(oe);
 	/* must be no entries between os->prev and oe->next in circular list */
 	DLIST_ASSERT(os->prev && os->prev->next == oe->next);
 	DLIST_ASSERT(oe->next && oe->next->prev == os->prev);
@@ -1258,7 +1269,7 @@ static inline void dlist_circular_move(
 	struct dlist *A_Restrict src)
 {
 	dlist_check_circular(src);
-	DLIST_ASSERT(dst);
+	dlist_assert_ptr_(dst);
 	DLIST_ASSERT_PTRS(dst != src);
 	src->dlist_first->prev = &dst->e;
 	src->dlist_last->next = &dst->e;
@@ -1290,7 +1301,7 @@ static inline struct dlist_entry *dlist_entry_link_list_before(
 	struct dlist_entry *s/*==e?*/,
 	struct dlist_entry *e)
 {
-	DLIST_ASSERT(h);
+	dlist_assert_ptr_(h);
 	dlist_check_sublist(s, e);
 	DLIST_ASSERT_PTRS(s != h);
 	DLIST_ASSERT_PTRS(e != h);
@@ -1318,7 +1329,7 @@ static inline struct dlist_entry *dlist_entry_link_list_after(
 	struct dlist_entry *s/*==e?*/,
 	struct dlist_entry *e)
 {
-	DLIST_ASSERT(t);
+	dlist_assert_ptr_(t);
 	dlist_check_sublist(s, e);
 	DLIST_ASSERT_PTRS(s != t);
 	DLIST_ASSERT_PTRS(e != t);
