@@ -304,6 +304,11 @@ PRBTREE_EXPORTS void prbtree_rebalance(
   c  < 0: parent key  < e's key, insert e at right of the parent;
   c >= 0: parent key >= e's key, insert e at left of the parent */
 /* if p is NULL, assume the tree is empty - e becomes the root node */
+#if 0 /* example */
+  struct btree_node *parent = prbtree_node_to_btree_node_(tree->root); /* NULL? */
+  int c = btree_search_parent(&parent, key, key_comparator, allow_duplicates);
+  prbtree_insert(tree, prbtree_node_from_btree_node_(parent), node, c);
+#endif
 #ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
 A_Nonnull_arg(1)
 A_Nonnull_arg(3)
