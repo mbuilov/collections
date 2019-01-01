@@ -1,6 +1,6 @@
 /**********************************************************************************
 * Embedded red-black binary tree of nodes with parent pointers
-* Copyright (C) 2018 Michael M. Builov, https://github.com/mbuilov/collections
+* Copyright (C) 2018-2019 Michael M. Builov, https://github.com/mbuilov/collections
 * Licensed under LGPL version 3 or any later version, see COPYING
 **********************************************************************************/
 
@@ -58,6 +58,10 @@ static inline void *pcrbtree_recolor_to_red(void *parent_color)
 #pragma warning(push)
 #pragma warning(disable:4826) /* Conversion from 'const char *' to 'unsigned __int64' is sign-extended */
 #pragma warning(disable:4305) /* 'type cast': truncation from 'unsigned __int64' to 'void *' */
+#elif !defined __cplusplus && defined __GNUC__ && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 1))
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpointer-to-int-cast" /* warning: cast from pointer to integer of different size */
+#pragma GCC diagnostic ignored "-Wint-to-pointer-cast" /* warning: cast from pointer to integer of different size */
 #endif
 	PCRBTREE_ASSERT(!(2llu & (unsigned long long)parent_color));
 	return (void*)(
@@ -65,6 +69,8 @@ static inline void *pcrbtree_recolor_to_red(void *parent_color)
 		(2llu | (unsigned long long)parent_color));
 #ifdef _MSC_VER
 #pragma warning(pop)
+#elif !defined __cplusplus && defined __GNUC__ && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 1))
+#pragma GCC diagnostic pop
 #endif
 }
 
@@ -74,6 +80,10 @@ static inline void *pcrbtree_recolor_to_black(void *parent_color)
 #pragma warning(push)
 #pragma warning(disable:4826) /* Conversion from 'const char *' to 'unsigned __int64' is sign-extended */
 #pragma warning(disable:4305) /* 'type cast': truncation from 'unsigned __int64' to 'void *' */
+#elif !defined __cplusplus && defined __GNUC__ && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 1))
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpointer-to-int-cast" /* warning: cast from pointer to integer of different size */
+#pragma GCC diagnostic ignored "-Wint-to-pointer-cast" /* warning: cast from pointer to integer of different size */
 #endif
 	PCRBTREE_ASSERT(2llu & (unsigned long long)parent_color);
 	return (void*)(
@@ -81,6 +91,8 @@ static inline void *pcrbtree_recolor_to_black(void *parent_color)
 		~2llu & (unsigned long long)parent_color);
 #ifdef _MSC_VER
 #pragma warning(pop)
+#elif !defined __cplusplus && defined __GNUC__ && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 1))
+#pragma GCC diagnostic pop
 #endif
 }
 
