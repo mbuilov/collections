@@ -3,7 +3,7 @@
 
 /**********************************************************************************
 * Embedded binary tree
-* Copyright (C) 2012-2018 Michael M. Builov, https://github.com/mbuilov/collections
+* Copyright (C) 2012-2019 Michael M. Builov, https://github.com/mbuilov/collections
 * Licensed under LGPL version 3 or any later version, see COPYING
 **********************************************************************************/
 
@@ -31,6 +31,17 @@ struct btree_node {
 /* left/right leaves */
 #define btree_left  leaves[0]
 #define btree_right leaves[1]
+
+/* check that pointer is not NULL */
+#ifdef _MSC_VER
+#define btree_assert_ptr_(p)     BTREE_ASSERT(p)
+#else
+/* do not declare 'p' as non-NULL, so gcc/clang will not complain about comparison of non-NULL pointer with 0 */
+static inline void btree_assert_ptr_(const void *p)
+{
+	BTREE_ASSERT(p);
+}
+#endif
 
 #define BTREE_KEY_COMPARATOR1_(a) BTREE_KEY_COMPARATOR1 a
 #define BTREE_KEY_COMPARATOR2_(a) BTREE_KEY_COMPARATOR2 a
@@ -141,6 +152,8 @@ static inline int btree_key_int_diff_(
 
 #ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
 A_Const_function
+A_When(n, A_Ret_notnull)
+A_When(!n, A_Ret_null)
 A_Ret_range(==,n)
 A_Check_return
 #endif
@@ -176,6 +189,17 @@ typedef int btree_comparator(
 typedef int btree_comparator(
 	const struct btree_node *node/*!=NULL*/,
 	const struct btree_key *key/*!=NULL*/);
+#endif
+
+/* check that pointer is not NULL */
+#ifdef _MSC_VER
+#define btree_assert_comparator_(p) BTREE_ASSERT(p)
+#else
+/* do not declare 'p' as non-NULL, so gcc/clang will not complain about comparison of non-NULL pointer with 0 */
+static inline void btree_assert_comparator_(btree_comparator *p)
+{
+	BTREE_ASSERT(p);
+}
 #endif
 
 /* search node in the tree ordered by keys,
@@ -264,6 +288,17 @@ typedef int btree_walker(
 	struct btree_object *obj/*!=NULL*/);
 #endif
 
+/* check that pointer is not NULL */
+#ifdef _MSC_VER
+#define btree_assert_walker_(p) BTREE_ASSERT(p)
+#else
+/* do not declare 'p' as non-NULL, so gcc/clang will not complain about comparison of non-NULL pointer with 0 */
+static inline void btree_assert_walker_(btree_walker *p)
+{
+	BTREE_ASSERT(p);
+}
+#endif
+
 /* walk over all nodes of unordered tree calling callback for each node,
   returns node on which callback has returned 0 */
 #ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
@@ -349,7 +384,7 @@ A_Check_return
 static inline struct btree_node *btree_first(
 	const struct btree_node *tree/*!=NULL*/)
 {
-	BTREE_ASSERT(tree);
+	btree_assert_ptr_(tree);
 	for (;;) {
 		const struct btree_node *l = tree->btree_left;
 		if (!l)
@@ -370,7 +405,7 @@ A_Check_return
 static inline struct btree_node *btree_last(
 	const struct btree_node *tree/*!=NULL*/)
 {
-	BTREE_ASSERT(tree);
+	btree_assert_ptr_(tree);
 	for (;;) {
 		const struct btree_node *r = tree->btree_right;
 		if (!r)
@@ -381,11 +416,11 @@ static inline struct btree_node *btree_last(
 }
 
 #define BTREE_SUB_WALK_CHECK_PARAMS(tree, key, comparator, obj, callback) { \
-	BTREE_ASSERT(tree);            \
-	BTREE_ASSERT(key);             \
-	BTREE_ASSERT(comparator);      \
-	BTREE_ASSERT(obj);             \
-	BTREE_ASSERT(callback);        \
+	btree_assert_ptr_(tree);              \
+	btree_assert_ptr_(key);               \
+	btree_assert_comparator_(comparator); \
+	btree_assert_ptr_(obj);               \
+	btree_assert_walker_(callback);       \
 }
 
 #ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
@@ -678,8 +713,8 @@ static inline int btree_find_leaf(
 	struct btree_node *p/*!=NULL*/,
 	struct btree_node **parent/*out:!=NULL*/)
 {
-	BTREE_ASSERT(p);
-	BTREE_ASSERT(parent);
+	btree_assert_ptr_(p);
+	btree_assert_ptr_(parent);
 	if (p->btree_right) {
 		struct btree_node *left = p->btree_left;
 		if (!left) {
@@ -713,9 +748,9 @@ static inline int btree_search_parent(
 	btree_comparator *comparator/*!=NULL*/,
 	int leaf)
 {
-	BTREE_ASSERT(parent);
-	BTREE_ASSERT(key);
-	BTREE_ASSERT(comparator);
+	btree_assert_ptr_(parent);
+	btree_assert_ptr_(key);
+	btree_assert_comparator_(comparator);
 	{
 		struct btree_node *p = *parent;
 		if (!p)
