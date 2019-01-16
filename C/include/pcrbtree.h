@@ -103,7 +103,8 @@ static inline void pcrbtree_assert_ptr_(const void *p)
 A_Const_function
 A_At(n, A_In_opt)
 A_Check_return
-A_Ret_maybenull
+A_When(n, A_Ret_notnull)
+A_When(!n, A_Ret_null)
 A_Ret_range(==,n)
 #endif
 static inline struct pcrbtree_node *pcrbtree_node_from_btree_node_(
@@ -117,7 +118,8 @@ static inline struct pcrbtree_node *pcrbtree_node_from_btree_node_(
 A_Const_function
 A_At(pn, A_In_opt)
 A_Check_return
-A_Ret_maybenull
+A_When(pn, A_Ret_notnull)
+A_When(!pn, A_Ret_null)
 A_Ret_range(==,pn)
 #endif
 static inline struct btree_node *pcrbtree_node_to_btree_node_(
