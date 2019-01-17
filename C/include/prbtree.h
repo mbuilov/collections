@@ -90,6 +90,10 @@ typedef int prbtree_node_check_alignment_t[1-2*(__alignof(struct prbtree_node) <
 #define prbtree_assert_ptr_(p) PRBTREE_ASSERT(p)
 #else
 /* do not declare 'p' as non-NULL, so gcc/clang will not complain about comparison of non-NULL pointer with 0 */
+#if (defined(__GNUC__) && (__GNUC__ >= 4)) || \
+  (defined(__clang__) && (__clang_major__ > 3 || (3 == __clang_major__  && __clang_minor__ >= 7)))
+__attribute__ ((pure))
+#endif
 static inline void prbtree_assert_ptr_(const void *p)
 {
 	PRBTREE_ASSERT(p);
@@ -161,6 +165,10 @@ A_At(e, A_In)
 A_Pre_satisfies(!e->prbtree_left)
 A_Pre_satisfies(!e->prbtree_right)
 A_Pre_satisfies(!e->parent_color)
+#endif
+#if (defined(__GNUC__) && (__GNUC__ >= 4)) || \
+  (defined(__clang__) && (__clang_major__ > 3 || (3 == __clang_major__  && __clang_minor__ >= 7)))
+__attribute__ ((pure))
 #endif
 static inline void prbtree_check_new_node(
 	const struct prbtree_node *e/*!=NULL*/)
@@ -413,6 +421,10 @@ A_At(p, A_Inout_opt)
 A_At(o, A_In)
 A_Ret_never_null
 A_Check_return
+#endif
+#if (defined(__GNUC__) && (__GNUC__ >= 4)) || \
+  (defined(__clang__) && (__clang_major__ > 3 || (3 == __clang_major__  && __clang_minor__ >= 7)))
+__attribute__ ((pure))
 #endif
 static inline struct prbtree_node **prbtree_slot_at_parent_(
 	struct prbtree *A_Restrict tree/*!=NULL*/,

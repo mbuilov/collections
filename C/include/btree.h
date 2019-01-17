@@ -37,6 +37,10 @@ struct btree_node {
 #define btree_assert_ptr_(p)     BTREE_ASSERT(p)
 #else
 /* do not declare 'p' as non-NULL, so gcc/clang will not complain about comparison of non-NULL pointer with 0 */
+#if (defined(__GNUC__) && (__GNUC__ >= 4)) || \
+  (defined(__clang__) && (__clang_major__ > 3 || (3 == __clang_major__  && __clang_minor__ >= 7)))
+__attribute__ ((pure))
+#endif
 static inline void btree_assert_ptr_(const void *p)
 {
 	BTREE_ASSERT(p);
@@ -196,6 +200,10 @@ typedef int btree_comparator(
 #define btree_assert_comparator_(p) BTREE_ASSERT(p)
 #else
 /* do not declare 'p' as non-NULL, so gcc/clang will not complain about comparison of non-NULL pointer with 0 */
+#if (defined(__GNUC__) && (__GNUC__ >= 4)) || \
+  (defined(__clang__) && (__clang_major__ > 3 || (3 == __clang_major__  && __clang_minor__ >= 7)))
+__attribute__ ((pure))
+#endif
 static inline void btree_assert_comparator_(btree_comparator *p)
 {
 	BTREE_ASSERT(p);
@@ -293,6 +301,10 @@ typedef int btree_walker(
 #define btree_assert_walker_(p) BTREE_ASSERT(p)
 #else
 /* do not declare 'p' as non-NULL, so gcc/clang will not complain about comparison of non-NULL pointer with 0 */
+#if (defined(__GNUC__) && (__GNUC__ >= 4)) || \
+  (defined(__clang__) && (__clang_major__ > 3 || (3 == __clang_major__  && __clang_minor__ >= 7)))
+__attribute__ ((pure))
+#endif
 static inline void btree_assert_walker_(btree_walker *p)
 {
 	BTREE_ASSERT(p);
