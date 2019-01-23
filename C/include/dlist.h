@@ -97,6 +97,10 @@ struct dlist {
 #define dlist_assert_ptr_(p) DLIST_ASSERT(p)
 #else
 /* do not declare 'p' as non-NULL, so gcc/clang will not complain about comparison of non-NULL pointer with 0 */
+#if (defined(__GNUC__) && (__GNUC__ >= 4)) || \
+  (defined(__clang__) && (__clang_major__ > 3 || (3 == __clang_major__  && __clang_minor__ >= 7)))
+__attribute__ ((pure))
+#endif
 static inline void dlist_assert_ptr_(const void *p)
 {
 	DLIST_ASSERT(p);
@@ -238,6 +242,10 @@ A_At(dlist, A_In)
 A_Ret_range(==,dlist)
 A_Ret_never_null
 #endif
+#if (defined(__GNUC__) && (__GNUC__ >= 4)) || \
+  (defined(__clang__) && (__clang_major__ > 3 || (3 == __clang_major__  && __clang_minor__ >= 7)))
+__attribute__ ((pure))
+#endif
 static inline struct dlist *dlist_check_circular(
 	const struct dlist *dlist)
 {
@@ -282,7 +290,7 @@ A_Ret_range(==,dlist)
 static inline struct dlist *dlist_make_uncircular(
 	struct dlist *dlist)
 {
-	dlist_check_circular(dlist);
+	(void)dlist_check_circular(dlist);
 	{
 		struct dlist_entry *f = dlist->dlist_first;
 		struct dlist_entry *l = dlist->dlist_last;
@@ -316,6 +324,10 @@ static inline void dlist_entry_check_non_circular(
 A_Nonnull_all_args
 A_At(s, A_In)
 A_At(e, A_In)
+#endif
+#if (defined(__GNUC__) && (__GNUC__ >= 4)) || \
+  (defined(__clang__) && (__clang_major__ > 3 || (3 == __clang_major__  && __clang_minor__ >= 7)))
+__attribute__ ((pure))
 #endif
 static inline void dlist_check_sublist(
 	const struct dlist_entry *s,
@@ -832,6 +844,10 @@ static inline void dlist_move(
 A_Nonnull_all_args
 A_At(c, A_In)
 #endif
+#if (defined(__GNUC__) && (__GNUC__ >= 4)) || \
+  (defined(__clang__) && (__clang_major__ > 3 || (3 == __clang_major__  && __clang_minor__ >= 7)))
+__attribute__ ((pure))
+#endif
 static inline void dlist_entry_check_circular(const struct dlist_entry *c)
 {
 	(void)c;
@@ -922,7 +938,7 @@ static inline struct dlist *dlist_circular_add_list_front_(
 	struct dlist_entry *s/*==e?*/,
 	struct dlist_entry *e)
 {
-	dlist_check_circular(dlist);
+	(void)dlist_check_circular(dlist);
 	/*caller should do: s->prev = &dlist->e;*/
 	dlist_circular_insert_list_after_(&dlist->e, s, e);
 	return dlist;
@@ -943,7 +959,7 @@ static inline struct dlist *dlist_circular_add_list_back_(
 	struct dlist_entry *s/*==e?*/,
 	struct dlist_entry *e)
 {
-	dlist_check_circular(dlist);
+	(void)dlist_check_circular(dlist);
 	/*caller should do: e->next = &dlist->e;*/
 	dlist_circular_insert_list_before_(&dlist->e, s, e);
 	return dlist;
@@ -1268,7 +1284,7 @@ static inline void dlist_circular_move(
 	struct dlist *A_Restrict dst/*initialized?*/,
 	struct dlist *A_Restrict src)
 {
-	dlist_check_circular(src);
+	(void)dlist_check_circular(src);
 	dlist_assert_ptr_(dst);
 	DLIST_ASSERT_PTRS(dst != src);
 	src->dlist_first->prev = &dst->e;
