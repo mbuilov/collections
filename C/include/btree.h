@@ -41,7 +41,7 @@ struct btree_node {
   (defined(__clang__) && (__clang_major__ > 3 || (3 == __clang_major__  && __clang_minor__ >= 7)))
 __attribute__ ((pure))
 #endif
-static inline void btree_assert_ptr_(const void *p)
+static inline void btree_assert_ptr_(const void *const p)
 {
 	BTREE_ASSERT(p);
 }
@@ -56,17 +56,17 @@ static inline void btree_assert_ptr_(const void *p)
 
 #ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
 A_Const_function
-A_Check_return
 A_Ret_range(==,a - k)
+A_Check_return
 #endif
 static inline int btree_key_int_diff_(
-	unsigned a,
-	unsigned k)
+	const unsigned a,
+	const unsigned k)
 {
 #ifdef UBSAN_UNSIGNED_OVERFLOW
-	unsigned d = (a >= k) ? a - k : ((unsigned)-1 - (k - a)) + 1u;
+	const unsigned d = (a >= k) ? a - k : ((unsigned)-1 - (k - a)) + 1u;
 #else
-	unsigned d = a - k;
+	const unsigned d = a - k;
 #endif
 	return (int)d;
 }
@@ -156,13 +156,14 @@ static inline int btree_key_int_diff_(
 
 #ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
 A_Const_function
-A_When(n, A_Ret_notnull)
+A_At(n, A_In_opt)
+A_When(n, A_Ret_valid)
 A_When(!n, A_Ret_null)
 A_Ret_range(==,n)
 A_Check_return
 #endif
 static inline struct btree_node *btree_const_cast(
-	const struct btree_node *n/*NULL?*/)
+	const struct btree_node *const n/*NULL?*/)
 {
 #ifdef __cplusplus
 	return const_cast<struct btree_node*>(n);
@@ -204,7 +205,7 @@ typedef int btree_comparator(
   (defined(__clang__) && (__clang_major__ > 3 || (3 == __clang_major__  && __clang_minor__ >= 7)))
 __attribute__ ((pure))
 #endif
-static inline void btree_assert_comparator_(btree_comparator *p)
+static inline void btree_assert_comparator_(btree_comparator *const p)
 {
 	BTREE_ASSERT(p);
 }
@@ -217,18 +218,18 @@ static inline void btree_assert_comparator_(btree_comparator *p)
 A_At(tree, A_In_opt)
 A_At(key, A_When(tree, A_In))
 A_At(comparator, A_When(tree, A_In))
-A_Ret_maybenull
+A_Ret_opt_valid
 A_Check_return
 #endif
 static inline struct btree_node *btree_search(
 	const struct btree_node *tree/*NULL?*/,
-	const struct btree_key *key/*!=NULL if tree!=NULL*/,
-	btree_comparator *comparator/*!=NULL if tree!=NULL*/)
+	const struct btree_key *const key/*!=NULL if tree!=NULL*/,
+	btree_comparator *const comparator/*!=NULL if tree!=NULL*/)
 {
 	BTREE_ASSERT(!tree || key);
 	BTREE_ASSERT(!tree || comparator);
 	while (tree) {
-		int c = comparator(tree, key);
+		const int c = comparator(tree, key);
 		if (c == 0)
 			break;
 		tree = tree->leaves[c < 0];
@@ -305,7 +306,7 @@ typedef int btree_walker(
   (defined(__clang__) && (__clang_major__ > 3 || (3 == __clang_major__  && __clang_minor__ >= 7)))
 __attribute__ ((pure))
 #endif
-static inline void btree_assert_walker_(btree_walker *p)
+static inline void btree_assert_walker_(btree_walker *const p)
 {
 	BTREE_ASSERT(p);
 }
@@ -317,18 +318,18 @@ static inline void btree_assert_walker_(btree_walker *p)
 A_At(tree, A_In_opt)
 A_At(obj, A_When(tree, A_Inout))
 A_At(callback, A_When(tree, A_In))
-A_Ret_maybenull
+A_Ret_opt_valid
 A_Check_return
 #endif
 static inline struct btree_node *btree_walk_recursive(
 	const struct btree_node *tree/*NULL?*/,
-	struct btree_object *obj/*!=NULL if tree!=NULL*/,
-	btree_walker *callback/*!=NULL if tree!=NULL*/)
+	struct btree_object *const obj/*!=NULL if tree!=NULL*/,
+	btree_walker *const callback/*!=NULL if tree!=NULL*/)
 {
 	BTREE_ASSERT(!tree || obj);
 	BTREE_ASSERT(!tree || callback);
 	for (; tree && callback(tree, obj); tree = tree->btree_right) {
-		struct btree_node *left = btree_walk_recursive(tree->btree_left, obj, callback);
+		struct btree_node *const left = btree_walk_recursive(tree->btree_left, obj, callback);
 		if (left)
 			return left;
 	}
@@ -340,18 +341,18 @@ static inline struct btree_node *btree_walk_recursive(
 A_At(tree, A_In_opt)
 A_At(obj, A_When(tree, A_Inout))
 A_At(callback, A_When(tree, A_In))
-A_Ret_maybenull
+A_Ret_opt_valid
 A_Check_return
 #endif
 static inline struct btree_node *btree_walk_recursive_forward(
 	const struct btree_node *tree/*NULL?*/,
-	struct btree_object *obj/*!=NULL if tree!=NULL*/,
-	btree_walker *callback/*!=NULL if tree!=NULL*/)
+	struct btree_object *const obj/*!=NULL if tree!=NULL*/,
+	btree_walker *const callback/*!=NULL if tree!=NULL*/)
 {
 	BTREE_ASSERT(!tree || obj);
 	BTREE_ASSERT(!tree || callback);
 	for (; tree; tree = tree->btree_right) {
-		struct btree_node *left = btree_walk_recursive_forward(tree->btree_left, obj, callback);
+		struct btree_node *const left = btree_walk_recursive_forward(tree->btree_left, obj, callback);
 		if (left)
 			return left;
 		if (!callback(tree, obj))
@@ -365,18 +366,18 @@ static inline struct btree_node *btree_walk_recursive_forward(
 A_At(tree, A_In_opt)
 A_At(obj, A_When(tree, A_Inout))
 A_At(callback, A_When(tree, A_In))
-A_Ret_maybenull
+A_Ret_opt_valid
 A_Check_return
 #endif
 static inline struct btree_node *btree_walk_recursive_backward(
 	const struct btree_node *tree/*NULL?*/,
-	struct btree_object *obj/*!=NULL if tree!=NULL*/,
-	btree_walker *callback/*!=NULL if tree!=NULL*/)
+	struct btree_object *const obj/*!=NULL if tree!=NULL*/,
+	btree_walker *const callback/*!=NULL if tree!=NULL*/)
 {
 	BTREE_ASSERT(!tree || obj);
 	BTREE_ASSERT(!tree || callback);
 	for (; tree; tree = tree->btree_left) {
-		struct btree_node *right = btree_walk_recursive_backward(tree->btree_right, obj, callback);
+		struct btree_node *const right = btree_walk_recursive_backward(tree->btree_right, obj, callback);
 		if (right)
 			return right;
 		if (!callback(tree, obj))
@@ -387,10 +388,11 @@ static inline struct btree_node *btree_walk_recursive_backward(
 
 /* get the leftmost node of the tree */
 #ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Pure_function
 A_Nonnull_all_args
 A_At(tree, A_In)
-A_Pure_function
 A_Ret_never_null
+A_Ret_valid
 A_Check_return
 #endif
 static inline struct btree_node *btree_first(
@@ -398,7 +400,7 @@ static inline struct btree_node *btree_first(
 {
 	btree_assert_ptr_(tree);
 	for (;;) {
-		const struct btree_node *l = tree->btree_left;
+		const struct btree_node *const l = tree->btree_left;
 		if (!l)
 			break;
 		tree = l;
@@ -408,10 +410,11 @@ static inline struct btree_node *btree_first(
 
 /* get the rightmost node of the tree */
 #ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Pure_function
 A_Nonnull_all_args
 A_At(tree, A_In)
-A_Pure_function
 A_Ret_never_null
+A_Ret_valid
 A_Check_return
 #endif
 static inline struct btree_node *btree_last(
@@ -419,7 +422,7 @@ static inline struct btree_node *btree_last(
 {
 	btree_assert_ptr_(tree);
 	for (;;) {
-		const struct btree_node *r = tree->btree_right;
+		const struct btree_node *const r = tree->btree_right;
 		if (!r)
 			break;
 		tree = r;
@@ -443,7 +446,7 @@ static inline struct btree_node *btree_last(
 	A_At(comparator, A_In)         \
 	A_At(obj, A_Inout)             \
 	A_At(callback, A_In)           \
-	A_Ret_maybenull                \
+	A_Ret_opt_valid                \
 	A_Check_return
 #else
 #define BTREE_SUB_WALK_ANNOTATIONS
@@ -461,10 +464,10 @@ static inline struct btree_node *btree_last(
 BTREE_SUB_WALK_ANNOTATIONS
 static inline struct btree_node *btree_walk_sub_recursive_left(
 	const struct btree_node *tree/*!=NULL*/,
-	const struct btree_key *key/*!=NULL*/,
-	btree_comparator *comparator/*!=NULL*/,
-	struct btree_object *obj/*!=NULL*/,
-	btree_walker *callback/*!=NULL*/)
+	const struct btree_key *const key/*!=NULL*/,
+	btree_comparator *const comparator/*!=NULL*/,
+	struct btree_object *const obj/*!=NULL*/,
+	btree_walker *const callback/*!=NULL*/)
 {
 	BTREE_SUB_WALK_CHECK_PARAMS(tree, key, comparator, obj, callback);
 	for (;;) {
@@ -477,7 +480,7 @@ static inline struct btree_node *btree_walk_sub_recursive_left(
 		if (!callback(tree, obj))
 			return btree_const_cast(tree);
 		{
-			struct btree_node *n = btree_walk_recursive(tree->btree_right, obj, callback);
+			struct btree_node *const n = btree_walk_recursive(tree->btree_right, obj, callback);
 			if (n)
 				return n;
 		}
@@ -496,10 +499,10 @@ static inline struct btree_node *btree_walk_sub_recursive_left(
 BTREE_SUB_WALK_ANNOTATIONS
 static inline struct btree_node *btree_walk_sub_recursive_right(
 	const struct btree_node *tree/*!=NULL*/,
-	const struct btree_key *key/*!=NULL*/,
-	btree_comparator *comparator/*!=NULL*/,
-	struct btree_object *obj/*!=NULL*/,
-	btree_walker *callback/*!=NULL*/)
+	const struct btree_key *const key/*!=NULL*/,
+	btree_comparator *const comparator/*!=NULL*/,
+	struct btree_object *const obj/*!=NULL*/,
+	btree_walker *const callback/*!=NULL*/)
 {
 	BTREE_SUB_WALK_CHECK_PARAMS(tree, key, comparator, obj, callback);
 	for (;;) {
@@ -512,7 +515,7 @@ static inline struct btree_node *btree_walk_sub_recursive_right(
 		if (!callback(tree, obj))
 			return btree_const_cast(tree);
 		{
-			struct btree_node *n = btree_walk_recursive(tree->btree_left, obj, callback);
+			struct btree_node *const n = btree_walk_recursive(tree->btree_left, obj, callback);
 			if (n)
 				return n;
 		}
@@ -534,16 +537,16 @@ static inline struct btree_node *btree_walk_sub_recursive_right(
 BTREE_SUB_WALK_ANNOTATIONS
 static inline struct btree_node *btree_walk_sub_recursive(
 	const struct btree_node *tree/*!=NULL*/,
-	const struct btree_key *key/*!=NULL*/,
-	btree_comparator *comparator/*!=NULL*/,
-	struct btree_object *obj/*!=NULL*/,
-	btree_walker *callback/*!=NULL*/)
+	const struct btree_key *const key/*!=NULL*/,
+	btree_comparator *const comparator/*!=NULL*/,
+	struct btree_object *const obj/*!=NULL*/,
+	btree_walker *const callback/*!=NULL*/)
 {
 	BTREE_SUB_WALK_CHECK_PARAMS(tree, key, comparator, obj, callback);
 	if (!callback(tree, obj))
 		return btree_const_cast(tree);
 	{
-		struct btree_node *n = btree_walk_sub_recursive_left(tree, key, comparator, obj, callback);
+		struct btree_node *const n = btree_walk_sub_recursive_left(tree, key, comparator, obj, callback);
 		if (n)
 			return n;
 	}
@@ -555,10 +558,10 @@ static inline struct btree_node *btree_walk_sub_recursive(
 BTREE_SUB_WALK_ANNOTATIONS
 static inline struct btree_node *btree_walk_sub_recursive_forward_left(
 	const struct btree_node *tree/*!=NULL*/,
-	const struct btree_key *key/*!=NULL*/,
-	btree_comparator *comparator/*!=NULL*/,
-	struct btree_object *obj/*!=NULL*/,
-	btree_walker *callback/*!=NULL*/)
+	const struct btree_key *const key/*!=NULL*/,
+	btree_comparator *const comparator/*!=NULL*/,
+	struct btree_object *const obj/*!=NULL*/,
+	btree_walker *const callback/*!=NULL*/)
 {
 	BTREE_SUB_WALK_CHECK_PARAMS(tree, key, comparator, obj, callback);
 	for (tree = tree->btree_left;; tree = tree->btree_right) {
@@ -568,7 +571,7 @@ static inline struct btree_node *btree_walk_sub_recursive_forward_left(
 			break;
 	}
 	{
-		struct btree_node *n = btree_walk_sub_recursive_forward_left(tree, key, comparator, obj, callback);
+		struct btree_node *const n = btree_walk_sub_recursive_forward_left(tree, key, comparator, obj, callback);
 		if (n)
 			return n;
 	}
@@ -582,10 +585,10 @@ static inline struct btree_node *btree_walk_sub_recursive_forward_left(
 BTREE_SUB_WALK_ANNOTATIONS
 static inline struct btree_node *btree_walk_sub_recursive_forward_right(
 	const struct btree_node *tree/*!=NULL*/,
-	const struct btree_key *key/*!=NULL*/,
-	btree_comparator *comparator/*!=NULL*/,
-	struct btree_object *obj/*!=NULL*/,
-	btree_walker *callback/*!=NULL*/)
+	const struct btree_key *const key/*!=NULL*/,
+	btree_comparator *const comparator/*!=NULL*/,
+	struct btree_object *const obj/*!=NULL*/,
+	btree_walker *const callback/*!=NULL*/)
 {
 	BTREE_SUB_WALK_CHECK_PARAMS(tree, key, comparator, obj, callback);
 	for (;;) {
@@ -596,7 +599,7 @@ static inline struct btree_node *btree_walk_sub_recursive_forward_right(
 				break;
 		}
 		{
-			struct btree_node *n = btree_walk_recursive_forward(tree->btree_left, obj, callback);
+			struct btree_node *const n = btree_walk_recursive_forward(tree->btree_left, obj, callback);
 			if (n)
 				return n;
 		}
@@ -613,14 +616,14 @@ static inline struct btree_node *btree_walk_sub_recursive_forward_right(
 BTREE_SUB_WALK_ANNOTATIONS
 static inline struct btree_node *btree_walk_sub_recursive_forward(
 	const struct btree_node *tree/*!=NULL*/,
-	const struct btree_key *key/*!=NULL*/,
-	btree_comparator *comparator/*!=NULL*/,
-	struct btree_object *obj/*!=NULL*/,
-	btree_walker *callback/*!=NULL*/)
+	const struct btree_key *const key/*!=NULL*/,
+	btree_comparator *const comparator/*!=NULL*/,
+	struct btree_object *const obj/*!=NULL*/,
+	btree_walker *const callback/*!=NULL*/)
 {
 	BTREE_SUB_WALK_CHECK_PARAMS(tree, key, comparator, obj, callback);
 	{
-		struct btree_node *n = btree_walk_sub_recursive_forward_left(tree, key, comparator, obj, callback);
+		struct btree_node *const n = btree_walk_sub_recursive_forward_left(tree, key, comparator, obj, callback);
 		if (n)
 			return n;
 	}
@@ -634,10 +637,10 @@ static inline struct btree_node *btree_walk_sub_recursive_forward(
 BTREE_SUB_WALK_ANNOTATIONS
 static inline struct btree_node *btree_walk_sub_recursive_backward_right(
 	const struct btree_node *tree/*!=NULL*/,
-	const struct btree_key *key/*!=NULL*/,
-	btree_comparator *comparator/*!=NULL*/,
-	struct btree_object *obj/*!=NULL*/,
-	btree_walker *callback/*!=NULL*/)
+	const struct btree_key *const key/*!=NULL*/,
+	btree_comparator *const comparator/*!=NULL*/,
+	struct btree_object *const obj/*!=NULL*/,
+	btree_walker *const callback/*!=NULL*/)
 {
 	BTREE_SUB_WALK_CHECK_PARAMS(tree, key, comparator, obj, callback);
 	for (tree = tree->btree_right;; tree = tree->btree_left) {
@@ -647,7 +650,7 @@ static inline struct btree_node *btree_walk_sub_recursive_backward_right(
 			break;
 	}
 	{
-		struct btree_node *n = btree_walk_sub_recursive_backward_right(tree, key, comparator, obj, callback);
+		struct btree_node *const n = btree_walk_sub_recursive_backward_right(tree, key, comparator, obj, callback);
 		if (n)
 			return n;
 	}
@@ -661,10 +664,10 @@ static inline struct btree_node *btree_walk_sub_recursive_backward_right(
 BTREE_SUB_WALK_ANNOTATIONS
 static inline struct btree_node *btree_walk_sub_recursive_backward_left(
 	const struct btree_node *tree/*!=NULL*/,
-	const struct btree_key *key/*!=NULL*/,
-	btree_comparator *comparator/*!=NULL*/,
-	struct btree_object *obj/*!=NULL*/,
-	btree_walker *callback/*!=NULL*/)
+	const struct btree_key *const key/*!=NULL*/,
+	btree_comparator *const comparator/*!=NULL*/,
+	struct btree_object *const obj/*!=NULL*/,
+	btree_walker *const callback/*!=NULL*/)
 {
 	BTREE_SUB_WALK_CHECK_PARAMS(tree, key, comparator, obj, callback);
 	for (;;) {
@@ -675,7 +678,7 @@ static inline struct btree_node *btree_walk_sub_recursive_backward_left(
 				break;
 		}
 		{
-			struct btree_node *n = btree_walk_recursive_backward(tree->btree_right, obj, callback);
+			struct btree_node *const n = btree_walk_recursive_backward(tree->btree_right, obj, callback);
 			if (n)
 				return n;
 		}
@@ -692,14 +695,14 @@ static inline struct btree_node *btree_walk_sub_recursive_backward_left(
 BTREE_SUB_WALK_ANNOTATIONS
 static inline struct btree_node *btree_walk_sub_recursive_backward(
 	const struct btree_node *tree/*!=NULL*/,
-	const struct btree_key *key/*!=NULL*/,
-	btree_comparator *comparator/*!=NULL*/,
-	struct btree_object *obj/*!=NULL*/,
-	btree_walker *callback/*!=NULL*/)
+	const struct btree_key *const key/*!=NULL*/,
+	btree_comparator *const comparator/*!=NULL*/,
+	struct btree_object *const obj/*!=NULL*/,
+	btree_walker *const callback/*!=NULL*/)
 {
 	BTREE_SUB_WALK_CHECK_PARAMS(tree, key, comparator, obj, callback);
 	{
-		struct btree_node *n = btree_walk_sub_recursive_backward_right(tree, key, comparator, obj, callback);
+		struct btree_node *const n = btree_walk_sub_recursive_backward_right(tree, key, comparator, obj, callback);
 		if (n)
 			return n;
 	}
@@ -723,12 +726,12 @@ A_Check_return
 #endif
 static inline int btree_find_leaf(
 	struct btree_node *p/*!=NULL*/,
-	struct btree_node **parent/*out:!=NULL*/)
+	struct btree_node **const parent/*out:!=NULL*/)
 {
 	btree_assert_ptr_(p);
 	btree_assert_ptr_(parent);
 	if (p->btree_right) {
-		struct btree_node *left = p->btree_left;
+		struct btree_node *const left = p->btree_left;
 		if (!left) {
 			*parent = p;
 			return 1; /* parent at right */
@@ -749,16 +752,18 @@ static inline int btree_find_leaf(
 #ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
 A_Nonnull_all_args
 A_At(parent, A_Inout)
-A_At(*parent, A_In_opt)
+A_At(*parent, A_In_opt
+  A_When(*parent, A_Post_notnull A_Post_valid)
+  A_When(!*parent, A_Post_null))
 A_At(key, A_In)
 A_At(comparator, A_In)
 A_Check_return
 #endif
 static inline int btree_search_parent(
-	struct btree_node **parent/*in:*NULL?,out*/,
-	const struct btree_key *key/*!=NULL*/,
-	btree_comparator *comparator/*!=NULL*/,
-	int leaf)
+	struct btree_node **const parent/*in:*NULL?,out*/,
+	const struct btree_key *const key/*!=NULL*/,
+	btree_comparator *const comparator/*!=NULL*/,
+	const int leaf)
 {
 	btree_assert_ptr_(parent);
 	btree_assert_ptr_(key);
@@ -768,8 +773,8 @@ static inline int btree_search_parent(
 		if (!p)
 			return 1; /* tree is empty, parent is NULL */
 		for (;;) {
-			struct btree_node *p_ = p;
-			int c = comparator(p, key); /* c = p - key */
+			struct btree_node *const p_ = p;
+			const int c = comparator(p, key); /* c = p - key */
 			if (c != 0) {
 				p = p->leaves[c < 0];
 				if (p)
@@ -788,6 +793,7 @@ static inline int btree_search_parent(
 #ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
 A_Pure_function
 A_At(tree, A_In_opt)
+A_Ret_range(>=,s)
 A_Check_return
 #endif
 static inline size_t btree_size_(
@@ -811,7 +817,7 @@ A_At(tree, A_In_opt)
 A_Check_return
 #endif
 static inline size_t btree_size(
-	const struct btree_node *tree/*NULL?*/)
+	const struct btree_node *const tree/*NULL?*/)
 {
 	return btree_size_(tree, 0);
 }
@@ -829,9 +835,9 @@ static inline size_t btree_height(
 	if (!tree)
 		return 0;
 	{
-		size_t left_height = btree_height(tree->btree_left);
-		size_t right_height = btree_height(tree->btree_right);
-		size_t h = (left_height > right_height) ? left_height : right_height;
+		const size_t left_height = btree_height(tree->btree_left);
+		const size_t right_height = btree_height(tree->btree_right);
+		const size_t h = (left_height > right_height) ? left_height : right_height;
 		/* note: assume stack overflow will occur before integer overflow,
 		  so do not check for integer overflow in 'h + 1' */
 		return h + 1;

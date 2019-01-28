@@ -39,6 +39,7 @@
 #endif
 #endif
 
+/* compare pointers */
 #ifndef PRBTREE_ASSERT_PTRS
 #define PRBTREE_ASSERT_PTRS(expr) PRBTREE_ASSERT(expr)
 #endif
@@ -94,7 +95,7 @@ typedef int prbtree_node_check_alignment_t[1-2*(__alignof(struct prbtree_node) <
   (defined(__clang__) && (__clang_major__ > 3 || (3 == __clang_major__  && __clang_minor__ >= 7)))
 __attribute__ ((pure))
 #endif
-static inline void prbtree_assert_ptr_(const void *p)
+static inline void prbtree_assert_ptr_(const void *const p)
 {
 	PRBTREE_ASSERT(p);
 }
@@ -103,30 +104,30 @@ static inline void prbtree_assert_ptr_(const void *p)
 #ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
 A_Const_function
 A_At(n, A_In_opt)
-A_Check_return
-A_When(n, A_Ret_notnull)
+A_When(n, A_Ret_valid)
 A_When(!n, A_Ret_null)
 A_Ret_range(==,n)
+A_Check_return
 #endif
 static inline struct prbtree_node *prbtree_node_from_btree_node_(
-	const struct btree_node *n/*NULL?*/)
+	const struct btree_node *const n/*NULL?*/)
 {
-	void *p = btree_const_cast(n/*NULL?*/);
+	void *const p = btree_const_cast(n/*NULL?*/);
 	return (struct prbtree_node*)p;
 }
 
 #ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
 A_Const_function
 A_At(pn, A_In_opt)
-A_Check_return
-A_When(pn, A_Ret_notnull)
+A_When(pn, A_Ret_valid)
 A_When(!pn, A_Ret_null)
 A_Ret_range(==,pn)
+A_Check_return
 #endif
 static inline struct btree_node *prbtree_node_to_btree_node_(
-	const struct prbtree_node *pn/*NULL?*/)
+	const struct prbtree_node *const pn/*NULL?*/)
 {
-	const void *p = pn;
+	const void *const p = pn;
 	return btree_const_cast((const struct btree_node*)p/*NULL?*/);
 }
 
@@ -140,7 +141,7 @@ A_Nonnull_all_args
 A_At(tree, A_Out)
 #endif
 static inline void prbtree_init(
-	struct prbtree *tree/*!=NULL,out*/)
+	struct prbtree *const tree/*!=NULL,out*/)
 {
 	prbtree_assert_ptr_(tree);
 	tree->root = (struct prbtree_node*)0;
@@ -151,7 +152,7 @@ A_Nonnull_all_args
 A_At(e, A_Out)
 #endif
 static inline void prbtree_init_node(
-	struct prbtree_node *e/*!=NULL,out*/)
+	struct prbtree_node *const e/*!=NULL,out*/)
 {
 	prbtree_assert_ptr_(e);
 	e->prbtree_left  = (struct prbtree_node*)0;
@@ -171,7 +172,7 @@ A_Pre_satisfies(!e->parent_color)
 __attribute__ ((pure))
 #endif
 static inline void prbtree_check_new_node(
-	const struct prbtree_node *e/*!=NULL*/)
+	const struct prbtree_node *const e/*!=NULL*/)
 {
 	prbtree_assert_ptr_(e);
 	PRBTREE_ASSERT(!e->prbtree_left);
@@ -182,7 +183,7 @@ static inline void prbtree_check_new_node(
 
 #ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
 A_Const_function
-A_Ret_maybenull
+A_Ret_opt_valid
 A_Check_return
 #endif
 static inline struct prbtree_node *prbtree_get_parent_(
@@ -215,7 +216,7 @@ A_Ret_maybenull
 A_Check_return
 #endif
 static inline struct prbtree_node *prbtree_get_parent(
-	const struct prbtree_node *n/*!=NULL*/)
+	const struct prbtree_node *const n/*!=NULL*/)
 {
 	prbtree_assert_ptr_(n);
 	return prbtree_get_parent_(n->parent_color);
@@ -230,7 +231,7 @@ A_Ret_range(0,1)
 A_Check_return
 #endif
 static inline unsigned prbtree_get_color_1(
-	const void *parent_color/*NULL?*/)
+	const void *const parent_color/*NULL?*/)
 {
 #ifdef _MSC_VER
 #pragma warning(push)
@@ -255,7 +256,7 @@ A_Ret_range(0,1)
 A_Check_return
 #endif
 static inline unsigned prbtree_get_color_(
-	const struct prbtree_node *n/*!=NULL*/)
+	const struct prbtree_node *const n/*!=NULL*/)
 {
 	prbtree_assert_ptr_(n);
 	return prbtree_get_color_1(n->parent_color);
@@ -266,11 +267,11 @@ A_Nonnull_all_args
 A_Const_function
 A_At(n, A_In)
 A_Ret_range(==,n->parent_color)
-A_Ret_maybenull
+A_Ret_opt_valid
 A_Check_return
 #endif
 static inline struct prbtree_node *prbtree_black_node_parent_(
-	struct prbtree_node *n/*!=NULL*/)
+	struct prbtree_node *const n/*!=NULL*/)
 {
 	prbtree_assert_ptr_(n);
 #ifdef _MSC_VER
@@ -296,8 +297,8 @@ A_At(c, A_In_range(0,1))
 A_Check_return
 #endif
 static inline void *prbtree_make_parent_color_(
-	struct prbtree_node *p/*NULL?*/,
-	unsigned c)
+	struct prbtree_node *const p/*NULL?*/,
+	const unsigned c)
 {
 #ifdef _MSC_VER
 #pragma warning(push)
@@ -327,7 +328,7 @@ A_At(p, A_Inout)
 A_At(e, A_Inout)
 #endif
 PRBTREE_EXPORTS void prbtree_rebalance(
-	struct prbtree *A_Restrict tree/*!=NULL*/,
+	struct prbtree *A_Restrict const tree/*!=NULL*/,
 	struct prbtree_node *A_Restrict p/*!=NULL*/,
 	struct prbtree_node *A_Restrict e/*!=NULL*/);
 
@@ -349,9 +350,9 @@ A_At(p, A_Inout_opt)
 A_At(e, A_Inout)
 #endif
 static inline void prbtree_insert(
-	struct prbtree *A_Restrict tree/*!=NULL*/,
-	struct prbtree_node *A_Restrict p/*NULL?*/,
-	struct prbtree_node *A_Restrict e/*!=NULL*/,
+	struct prbtree *A_Restrict const tree/*!=NULL*/,
+	struct prbtree_node *A_Restrict const p/*NULL?*/,
+	struct prbtree_node *A_Restrict const e/*!=NULL*/,
 	int c)
 {
 	prbtree_assert_ptr_(tree);
@@ -377,20 +378,20 @@ A_At(o, A_In)
 A_At(e, A_Out)
 #endif
 static inline void prbtree_replace_(
-	struct prbtree_node **A_Restrict n/*!=NULL,out*/,
-	const struct prbtree_node *A_Restrict o/*!=NULL,in*/,
-	struct prbtree_node *A_Restrict e/*!=NULL,out*/)
+	struct prbtree_node **A_Restrict const n/*!=NULL,out*/,
+	const struct prbtree_node *A_Restrict const o/*!=NULL,in*/,
+	struct prbtree_node *A_Restrict const e/*!=NULL,out*/)
 {
 	prbtree_assert_ptr_(n);
 	prbtree_assert_ptr_(o);
 	prbtree_assert_ptr_(e);
 	PRBTREE_ASSERT_PTRS(o != e);
 	{
-		struct prbtree_node **A_Restrict el = &e->prbtree_left;
-		struct prbtree_node **A_Restrict er = &e->prbtree_right;
-		struct prbtree_node *A_Restrict l = o->prbtree_left;
-		struct prbtree_node *A_Restrict r = o->prbtree_right;
-		void *p = o->parent_color;
+		struct prbtree_node **A_Restrict const el = &e->prbtree_left;
+		struct prbtree_node **A_Restrict const er = &e->prbtree_right;
+		struct prbtree_node *A_Restrict const l = o->prbtree_left;
+		struct prbtree_node *A_Restrict const r = o->prbtree_right;
+		void *const p = o->parent_color;
 		PRBTREE_ASSERT_PTRS(o != l);
 		PRBTREE_ASSERT_PTRS(o != r);
 		PRBTREE_ASSERT_PTRS(e != l);
@@ -420,6 +421,7 @@ A_At(tree, A_Inout)
 A_At(p, A_Inout_opt)
 A_At(o, A_In)
 A_Ret_never_null
+A_Ret_valid
 A_Check_return
 #endif
 #if (defined(__GNUC__) && (__GNUC__ >= 4)) || \
@@ -427,9 +429,9 @@ A_Check_return
 __attribute__ ((pure))
 #endif
 static inline struct prbtree_node **prbtree_slot_at_parent_(
-	struct prbtree *A_Restrict tree/*!=NULL*/,
-	struct prbtree_node *A_Restrict p/*NULL?*/,
-	const struct prbtree_node *A_Restrict o/*!=NULL*/)
+	struct prbtree *A_Restrict const tree/*!=NULL*/,
+	struct prbtree_node *A_Restrict const p/*NULL?*/,
+	const struct prbtree_node *A_Restrict const o/*!=NULL*/)
 {
 	prbtree_assert_ptr_(tree);
 	prbtree_assert_ptr_(o);
@@ -445,9 +447,9 @@ A_At(o, A_In)
 A_At(e, A_Out)
 #endif
 static inline void prbtree_replace(
-	struct prbtree *A_Restrict tree/*!=NULL*/,
-	const struct prbtree_node *A_Restrict o/*!=NULL*/,
-	struct prbtree_node *A_Restrict e/*!=NULL,out*/)
+	struct prbtree *A_Restrict const tree/*!=NULL*/,
+	const struct prbtree_node *A_Restrict const o/*!=NULL*/,
+	struct prbtree_node *A_Restrict const e/*!=NULL,out*/)
 {
 	prbtree_assert_ptr_(tree);
 	prbtree_assert_ptr_(o);
@@ -463,17 +465,17 @@ A_At(tree, A_Inout)
 A_At(e, A_Inout)
 #endif
 PRBTREE_EXPORTS void prbtree_remove(
-	struct prbtree *A_Restrict tree/*!=NULL*/,
+	struct prbtree *A_Restrict const tree/*!=NULL*/,
 	struct prbtree_node *A_Restrict e/*!=NULL*/);
 
 /* non-recursive iteration over nodes of the tree */
 
 /* find right parent */
 #ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_all_args
 A_Pure_function
+A_Nonnull_all_args
 A_At(current, A_In)
-A_Ret_maybenull
+A_Ret_opt_valid
 A_Check_return
 #endif
 static inline struct prbtree_node *prbtree_right_parent(
@@ -481,7 +483,7 @@ static inline struct prbtree_node *prbtree_right_parent(
 {
 	prbtree_assert_ptr_(current);
 	for (;;) {
-		struct prbtree_node *p = prbtree_get_parent(current);
+		struct prbtree_node *const p = prbtree_get_parent(current);
 		if (!p || current == p->prbtree_left)
 			return p; /* NULL? */
 		current = p;
@@ -490,10 +492,10 @@ static inline struct prbtree_node *prbtree_right_parent(
 
 /* find left parent */
 #ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_all_args
 A_Pure_function
+A_Nonnull_all_args
 A_At(current, A_In)
-A_Ret_maybenull
+A_Ret_opt_valid
 A_Check_return
 #endif
 static inline struct prbtree_node *prbtree_left_parent(
@@ -501,7 +503,7 @@ static inline struct prbtree_node *prbtree_left_parent(
 {
 	prbtree_assert_ptr_(current);
 	for (;;) {
-		struct prbtree_node *p = prbtree_get_parent(current);
+		struct prbtree_node *const p = prbtree_get_parent(current);
 		if (!p || current == p->prbtree_right)
 			return p; /* NULL? */
 		current = p;
@@ -510,18 +512,18 @@ static inline struct prbtree_node *prbtree_left_parent(
 
 /* get next node, returns NULL for the rightmost node */
 #ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_all_args
 A_Pure_function
+A_Nonnull_all_args
 A_At(current, A_In)
-A_Ret_maybenull
+A_Ret_opt_valid
 A_Check_return
 #endif
 static inline struct prbtree_node *prbtree_next(
-	const struct prbtree_node *current/*!=NULL*/)
+	const struct prbtree_node *const current/*!=NULL*/)
 {
 	prbtree_assert_ptr_(current);
 	{
-		const struct prbtree_node *n = current->prbtree_right;
+		const struct prbtree_node *const n = current->prbtree_right;
 		if (n)
 			return prbtree_node_from_btree_node_(btree_first(&n->u.n)); /* != NULL */
 	}
@@ -530,18 +532,18 @@ static inline struct prbtree_node *prbtree_next(
 
 /* get previous node, returns NULL for the leftmost node */
 #ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_all_args
 A_Pure_function
+A_Nonnull_all_args
 A_At(current, A_In)
-A_Ret_maybenull
+A_Ret_opt_valid
 A_Check_return
 #endif
 static inline struct prbtree_node *prbtree_prev(
-	const struct prbtree_node *current/*!=NULL*/)
+	const struct prbtree_node *const current/*!=NULL*/)
 {
 	prbtree_assert_ptr_(current);
 	{
-		const struct prbtree_node *p = current->prbtree_left;
+		const struct prbtree_node *const p = current->prbtree_left;
 		if (p)
 			return prbtree_node_from_btree_node_(btree_last(&p->u.n)); /* != NULL */
 	}
