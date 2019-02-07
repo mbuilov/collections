@@ -723,6 +723,7 @@ A_Nonnull_all_args
 A_At(p, A_In)
 A_At(parent, A_Outptr)
 A_Check_return
+A_Ret_range(!=,0)
 #endif
 static inline int btree_find_leaf(
 	struct btree_node *p/*!=NULL*/,
@@ -753,11 +754,12 @@ static inline int btree_find_leaf(
 A_Nonnull_all_args
 A_At(parent, A_Inout)
 A_At(*parent, A_In_opt
-  A_When(*parent, A_Post_notnull A_Post_valid)
-  A_When(!*parent, A_Post_null))
+  A_When(A_Old(*parent), A_Post_notnull A_Post_valid)
+  A_When(A_Old(!*parent), A_Post_null))
 A_At(key, A_In)
 A_At(comparator, A_In)
 A_Check_return
+A_When(!return, A_At(*parent, A_Post_notnull A_Post_valid))
 #endif
 static inline int btree_search_parent(
 	struct btree_node **const parent/*in:*NULL?,out*/,
