@@ -40,6 +40,7 @@ struct btree_node {
 #if (defined(__GNUC__) && (__GNUC__ >= 4)) || \
   (defined(__clang__) && (__clang_major__ > 3 || (3 == __clang_major__  && __clang_minor__ >= 7)))
 __attribute__ ((pure))
+__attribute__ ((always_inline))
 #endif
 static inline void btree_assert_ptr_(const void *const p)
 {
@@ -204,6 +205,7 @@ typedef int btree_comparator(
 #if (defined(__GNUC__) && (__GNUC__ >= 4)) || \
   (defined(__clang__) && (__clang_major__ > 3 || (3 == __clang_major__  && __clang_minor__ >= 7)))
 __attribute__ ((pure))
+__attribute__ ((always_inline))
 #endif
 static inline void btree_assert_comparator_(btree_comparator *const p)
 {
@@ -305,6 +307,7 @@ typedef int btree_walker(
 #if (defined(__GNUC__) && (__GNUC__ >= 4)) || \
   (defined(__clang__) && (__clang_major__ > 3 || (3 == __clang_major__  && __clang_minor__ >= 7)))
 __attribute__ ((pure))
+__attribute__ ((always_inline))
 #endif
 static inline void btree_assert_walker_(btree_walker *const p)
 {

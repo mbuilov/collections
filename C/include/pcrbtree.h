@@ -97,6 +97,7 @@ typedef int pcrbtree_node_check_alignment_t[1-2*(__alignof(struct pcrbtree_node)
 #if (defined(__GNUC__) && (__GNUC__ >= 4)) || \
   (defined(__clang__) && (__clang_major__ > 3 || (3 == __clang_major__  && __clang_minor__ >= 7)))
 __attribute__ ((pure))
+__attribute__ ((always_inline))
 #endif
 static inline void pcrbtree_assert_ptr_(const void *const p)
 {

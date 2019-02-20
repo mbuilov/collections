@@ -110,6 +110,7 @@ struct dlist_circular {
 #if (defined(__GNUC__) && (__GNUC__ >= 4)) || \
   (defined(__clang__) && (__clang_major__ > 3 || (3 == __clang_major__  && __clang_minor__ >= 7)))
 __attribute__ ((pure))
+__attribute__ ((always_inline))
 #endif
 static inline void dlist_assert_ptr_(const void *const p)
 {
@@ -185,6 +186,9 @@ A_Ret_never_null
 A_Ret_range(==,&dlc->l.e)
 A_Ret_valid
 A_Check_return
+#endif
+#ifdef __GNUC__
+__attribute__ ((pure))
 #endif
 static inline const struct dlist_entry *dlist_circular_end(
 	const struct dlist_circular *const dlc)
