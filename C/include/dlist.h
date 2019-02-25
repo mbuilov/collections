@@ -227,12 +227,12 @@ static inline struct dlist *dlist_const_cast_(
 #ifdef __cplusplus
 	return const_cast<struct dlist*>(dl);
 #else
-#if defined(__GNUC__) && (__GNUC__ > 4 || (4 == __GNUC__ && __GNUC_MINOR__ >= 2))
+#if defined(__GNUC__) && (__GNUC__ > 4 || (4 == __GNUC__ && __GNUC_MINOR__ >= 6))
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wcast-qual" /* casting away qualifiers */
 #endif
 	return (struct dlist*)dl;
-#if defined(__GNUC__) && (__GNUC__ > 4 || (4 == __GNUC__ && __GNUC_MINOR__ >= 2))
+#if defined(__GNUC__) && (__GNUC__ > 4 || (4 == __GNUC__ && __GNUC_MINOR__ >= 6))
 #pragma GCC diagnostic pop
 #endif
 #endif
@@ -252,12 +252,12 @@ static inline struct dlist_circular *dlist_circular_const_cast_(
 #ifdef __cplusplus
 	return const_cast<struct dlist_circular*>(dlc);
 #else
-#if defined(__GNUC__) && (__GNUC__ > 4 || (4 == __GNUC__ && __GNUC_MINOR__ >= 2))
+#if defined(__GNUC__) && (__GNUC__ > 4 || (4 == __GNUC__ && __GNUC_MINOR__ >= 6))
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wcast-qual" /* casting away qualifiers */
 #endif
 	return (struct dlist_circular*)dlc;
-#if defined(__GNUC__) && (__GNUC__ > 4 || (4 == __GNUC__ && __GNUC_MINOR__ >= 2))
+#if defined(__GNUC__) && (__GNUC__ > 4 || (4 == __GNUC__ && __GNUC_MINOR__ >= 6))
 #pragma GCC diagnostic pop
 #endif
 #endif

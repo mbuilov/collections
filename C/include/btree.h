@@ -169,12 +169,12 @@ static inline struct btree_node *btree_const_cast(
 #ifdef __cplusplus
 	return const_cast<struct btree_node*>(n);
 #else
-#if defined(__GNUC__) && (__GNUC__ > 4 || (4 == __GNUC__ && __GNUC_MINOR__ >= 2))
+#if defined(__GNUC__) && (__GNUC__ > 4 || (4 == __GNUC__ && __GNUC_MINOR__ >= 6))
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wcast-qual" /* casting away qualifiers */
 #endif
 	return (struct btree_node*)n;
-#if defined(__GNUC__) && (__GNUC__ > 4 || (4 == __GNUC__ && __GNUC_MINOR__ >= 2))
+#if defined(__GNUC__) && (__GNUC__ > 4 || (4 == __GNUC__ && __GNUC_MINOR__ >= 6))
 #pragma GCC diagnostic pop
 #endif
 #endif
