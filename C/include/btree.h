@@ -34,7 +34,7 @@ struct btree_node {
 
 /* check that pointer is not NULL */
 #ifdef _MSC_VER
-#define btree_assert_ptr_(p)     BTREE_ASSERT(p)
+#define btree_assert_ptr_(p) BTREE_ASSERT(p)
 #else
 /* do not declare 'p' as non-NULL, so gcc/clang will not complain about comparison of non-NULL pointer with 0 */
 #if (defined(__GNUC__) && (__GNUC__ >= 4)) || \
@@ -167,8 +167,15 @@ static inline struct btree_node *btree_const_cast(
 	const struct btree_node *const n/*NULL?*/)
 {
 #ifdef __cplusplus
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable:26492) /* Don't use const_cast to cast away const or volatile */
+#endif
 	return const_cast<struct btree_node*>(n);
-#else
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
+#else /* !__cplusplus */
 #if defined(__GNUC__) && (__GNUC__ > 4 || (4 == __GNUC__ && __GNUC_MINOR__ >= 6))
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wcast-qual" /* casting away qualifiers */
@@ -177,7 +184,7 @@ static inline struct btree_node *btree_const_cast(
 #if defined(__GNUC__) && (__GNUC__ > 4 || (4 == __GNUC__ && __GNUC_MINOR__ >= 6))
 #pragma GCC diagnostic pop
 #endif
-#endif
+#endif /* !__cplusplus */
 }
 
 /* abstract key structure that is passed to binary tree comparator callback */
@@ -231,7 +238,7 @@ static inline struct btree_node *btree_search(
 	BTREE_ASSERT(!tree || key);
 	BTREE_ASSERT(!tree || comparator);
 	while (tree) {
-		const int c = comparator(tree, key);
+		const int c = comparator(tree, key); /* c = tree - key */
 		if (c == 0)
 			break;
 		tree = tree->leaves[c < 0];
@@ -735,7 +742,7 @@ static inline int btree_find_leaf(
 	btree_assert_ptr_(p);
 	btree_assert_ptr_(parent);
 	if (p->btree_right) {
-		struct btree_node *const left = p->btree_left;
+		const struct btree_node *const left = p->btree_left;
 		if (!left) {
 			*parent = p;
 			return 1; /* parent at right */
