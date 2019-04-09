@@ -109,7 +109,9 @@ struct dlist_circular {
 /* do not declare 'p' as non-NULL, so gcc/clang will not complain about comparison of non-NULL pointer with 0 */
 #if (defined(__GNUC__) && (__GNUC__ >= 4)) || \
   (defined(__clang__) && (__clang_major__ > 3 || (3 == __clang_major__  && __clang_minor__ >= 7)))
+#ifdef NDEBUG
 __attribute__ ((pure))
+#endif
 __attribute__ ((always_inline))
 #endif
 static inline void dlist_assert_ptr_(const void *const p)
@@ -366,7 +368,9 @@ A_At(e, A_In)
 #endif
 #if (defined(__GNUC__) && (__GNUC__ >= 4)) || \
   (defined(__clang__) && (__clang_major__ > 3 || (3 == __clang_major__  && __clang_minor__ >= 7)))
+#ifdef NDEBUG
 __attribute__ ((pure))
+#endif
 #endif
 static inline void dlist_check_sublist(
 	const struct dlist_entry *const s/*==e?*/,
@@ -923,7 +927,9 @@ A_At(c, A_In)
 #endif
 #if (defined(__GNUC__) && (__GNUC__ >= 4)) || \
   (defined(__clang__) && (__clang_major__ > 3 || (3 == __clang_major__  && __clang_minor__ >= 7)))
+#ifdef NDEBUG
 __attribute__ ((pure))
+#endif
 #endif
 static inline void dlist_entry_check_circular(const struct dlist_entry *const c)
 {

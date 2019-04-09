@@ -96,7 +96,9 @@ typedef int pcrbtree_node_check_alignment_t[1-2*(__alignof(struct pcrbtree_node)
 /* do not declare 'p' as non-NULL, so gcc/clang will not complain about comparison of non-NULL pointer with 0 */
 #if (defined(__GNUC__) && (__GNUC__ >= 4)) || \
   (defined(__clang__) && (__clang_major__ > 3 || (3 == __clang_major__  && __clang_minor__ >= 7)))
+#ifdef NDEBUG
 __attribute__ ((pure))
+#endif
 __attribute__ ((always_inline))
 #endif
 static inline void pcrbtree_assert_ptr_(const void *const p)
@@ -173,7 +175,9 @@ A_Pre_satisfies(!e->parent_color)
 #endif
 #if (defined(__GNUC__) && (__GNUC__ >= 4)) || \
   (defined(__clang__) && (__clang_major__ > 3 || (3 == __clang_major__  && __clang_minor__ >= 7)))
+#ifdef NDEBUG
 __attribute__ ((pure))
+#endif
 #endif
 static inline void pcrbtree_check_new_node(
 	const struct pcrbtree_node *const e/*!=NULL*/)

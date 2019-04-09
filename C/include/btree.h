@@ -39,7 +39,9 @@ struct btree_node {
 /* do not declare 'p' as non-NULL, so gcc/clang will not complain about comparison of non-NULL pointer with 0 */
 #if (defined(__GNUC__) && (__GNUC__ >= 4)) || \
   (defined(__clang__) && (__clang_major__ > 3 || (3 == __clang_major__  && __clang_minor__ >= 7)))
+#ifdef NDEBUG
 __attribute__ ((pure))
+#endif
 __attribute__ ((always_inline))
 #endif
 static inline void btree_assert_ptr_(const void *const p)
@@ -176,12 +178,12 @@ static inline struct btree_node *btree_const_cast(
 #pragma warning(pop)
 #endif
 #else /* !__cplusplus */
-#if defined(__GNUC__) && (__GNUC__ > 4 || (4 == __GNUC__ && __GNUC_MINOR__ >= 6))
+#if defined __clang__ || (defined __GNUC__ && (__GNUC__ > 4 || (4 == __GNUC__ && __GNUC_MINOR__ >= 6)))
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wcast-qual" /* casting away qualifiers */
 #endif
 	return (struct btree_node*)n;
-#if defined(__GNUC__) && (__GNUC__ > 4 || (4 == __GNUC__ && __GNUC_MINOR__ >= 6))
+#if defined __clang__ || (defined __GNUC__ && (__GNUC__ > 4 || (4 == __GNUC__ && __GNUC_MINOR__ >= 6)))
 #pragma GCC diagnostic pop
 #endif
 #endif /* !__cplusplus */
@@ -211,7 +213,9 @@ typedef int btree_comparator(
 /* do not declare 'p' as non-NULL, so gcc/clang will not complain about comparison of non-NULL pointer with 0 */
 #if (defined(__GNUC__) && (__GNUC__ >= 4)) || \
   (defined(__clang__) && (__clang_major__ > 3 || (3 == __clang_major__  && __clang_minor__ >= 7)))
+#ifdef NDEBUG
 __attribute__ ((pure))
+#endif
 __attribute__ ((always_inline))
 #endif
 static inline void btree_assert_comparator_(btree_comparator *const p)
@@ -313,7 +317,9 @@ typedef int btree_walker(
 /* do not declare 'p' as non-NULL, so gcc/clang will not complain about comparison of non-NULL pointer with 0 */
 #if (defined(__GNUC__) && (__GNUC__ >= 4)) || \
   (defined(__clang__) && (__clang_major__ > 3 || (3 == __clang_major__  && __clang_minor__ >= 7)))
+#ifdef NDEBUG
 __attribute__ ((pure))
+#endif
 __attribute__ ((always_inline))
 #endif
 static inline void btree_assert_walker_(btree_walker *const p)
