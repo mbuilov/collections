@@ -446,13 +446,13 @@ static inline struct btree_node *btree_last(
 	return btree_const_cast(tree); /* !=NULL */
 }
 
-#define BTREE_SUB_WALK_CHECK_PARAMS(tree, key, comparator, obj, callback) { \
+#define BTREE_SUB_WALK_CHECK_PARAMS(tree, key, comparator, obj, callback) do { \
 	btree_assert_ptr_(tree);              \
 	btree_assert_ptr_(key);               \
 	btree_assert_comparator_(comparator); \
 	btree_assert_ptr_(obj);               \
 	btree_assert_walker_(callback);       \
-}
+} while (0)
 
 #ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
 #define BTREE_SUB_WALK_ANNOTATIONS \
