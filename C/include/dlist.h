@@ -27,7 +27,7 @@
 #ifdef ASSERT
 #define DLIST_ASSERT(expr) ASSERT(expr)
 #else
-#define DLIST_ASSERT(expr) ((void)0)
+#define DLIST_ASSERT(expr) ((void)(expr))
 #endif
 #endif
 
@@ -376,8 +376,6 @@ static inline void dlist_check_sublist(
 	const struct dlist_entry *const s/*==e?*/,
 	const struct dlist_entry *const e)
 {
-	(void)s;
-	(void)e;
 	dlist_assert_ptr_(s);
 	dlist_assert_ptr_(e);
 	DLIST_ASSERT_PTRS(s == e || s->next);
@@ -396,7 +394,6 @@ static inline void dlist_entry_check_non_circular(
 	const struct dlist *const dl,
 	const struct dlist_entry *const c)
 {
-	(void)c;
 	dlist_assert_ptr_(c);
 	DLIST_ASSERT_PTRS(&dl->e != c->next);
 	DLIST_ASSERT_PTRS(&dl->e != c->prev);
@@ -933,7 +930,6 @@ __attribute__ ((pure))
 #endif
 static inline void dlist_entry_check_circular(const struct dlist_entry *const c)
 {
-	(void)c;
 	dlist_assert_ptr_(c);
 	DLIST_ASSERT(c->next && c->prev);
 }

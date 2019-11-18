@@ -35,7 +35,7 @@
 #ifdef ASSERT
 #define PCRBTREE_ASSERT(expr) ASSERT(expr)
 #else
-#define PCRBTREE_ASSERT(expr) ((void)0)
+#define PCRBTREE_ASSERT(expr) ((void)(expr))
 #endif
 #endif
 
@@ -186,7 +186,6 @@ static inline void pcrbtree_check_new_node(
 	PCRBTREE_ASSERT(!e->pcrbtree_left);
 	PCRBTREE_ASSERT(!e->pcrbtree_right);
 	PCRBTREE_ASSERT(!e->parent_color);
-	(void)e;
 }
 
 #ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */

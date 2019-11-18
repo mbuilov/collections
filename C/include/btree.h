@@ -13,7 +13,7 @@
 #ifdef ASSERT
 #define BTREE_ASSERT(expr) ASSERT(expr)
 #else
-#define BTREE_ASSERT(expr) ((void)0)
+#define BTREE_ASSERT(expr) ((void)(expr))
 #endif
 #endif
 

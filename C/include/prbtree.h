@@ -35,7 +35,7 @@
 #ifdef ASSERT
 #define PRBTREE_ASSERT(expr) ASSERT(expr)
 #else
-#define PRBTREE_ASSERT(expr) ((void)0)
+#define PRBTREE_ASSERT(expr) ((void)(expr))
 #endif
 #endif
 
@@ -183,7 +183,6 @@ static inline void prbtree_check_new_node(
 	PRBTREE_ASSERT(!e->prbtree_left);
 	PRBTREE_ASSERT(!e->prbtree_right);
 	PRBTREE_ASSERT(!e->parent_color);
-	(void)e;
 }
 
 #ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
