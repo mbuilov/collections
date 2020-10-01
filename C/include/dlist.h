@@ -108,7 +108,7 @@ struct dlist_circular {
 #else
 /* do not declare 'p' as non-NULL, so gcc/clang will not complain about comparison of non-NULL pointer with 0 */
 #if (defined(__GNUC__) && (__GNUC__ >= 4)) || \
-  (defined(__clang__) && (__clang_major__ > 3 || (3 == __clang_major__  && __clang_minor__ >= 7)))
+  (defined(__clang__) && __clang_major__ > 3 - (__clang_minor__ >= 7))
 #ifdef NDEBUG
 __attribute__ ((pure))
 #endif
@@ -229,12 +229,12 @@ static inline struct dlist *dlist_const_cast_(
 #ifdef __cplusplus
 	return const_cast<struct dlist*>(dl);
 #else
-#if defined(__GNUC__) && (__GNUC__ > 4 || (4 == __GNUC__ && __GNUC_MINOR__ >= 6))
+#if defined(__GNUC__) && __GNUC__ > 4 - (__GNUC_MINOR__ >= 6)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wcast-qual" /* casting away qualifiers */
 #endif
 	return (struct dlist*)dl;
-#if defined(__GNUC__) && (__GNUC__ > 4 || (4 == __GNUC__ && __GNUC_MINOR__ >= 6))
+#if defined(__GNUC__) && __GNUC__ > 4 - (__GNUC_MINOR__ >= 6)
 #pragma GCC diagnostic pop
 #endif
 #endif
@@ -254,12 +254,12 @@ static inline struct dlist_circular *dlist_circular_const_cast_(
 #ifdef __cplusplus
 	return const_cast<struct dlist_circular*>(dlc);
 #else
-#if defined(__GNUC__) && (__GNUC__ > 4 || (4 == __GNUC__ && __GNUC_MINOR__ >= 6))
+#if defined(__GNUC__) && __GNUC__ > 4 - (__GNUC_MINOR__ >= 6)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wcast-qual" /* casting away qualifiers */
 #endif
 	return (struct dlist_circular*)dlc;
-#if defined(__GNUC__) && (__GNUC__ > 4 || (4 == __GNUC__ && __GNUC_MINOR__ >= 6))
+#if defined(__GNUC__) && __GNUC__ > 4 - (__GNUC_MINOR__ >= 6)
 #pragma GCC diagnostic pop
 #endif
 #endif
@@ -292,7 +292,7 @@ A_Ret_range(==,dlc)
 A_Ret_valid
 #endif
 #if (defined(__GNUC__) && (__GNUC__ >= 4)) || \
-  (defined(__clang__) && (__clang_major__ > 3 || (3 == __clang_major__  && __clang_minor__ >= 7)))
+  (defined(__clang__) && __clang_major__ > 3 - (__clang_minor__ >= 7))
 __attribute__ ((pure))
 #endif
 static inline struct dlist_circular *dlist_check_circular(
@@ -367,7 +367,7 @@ A_At(s, A_In)
 A_At(e, A_In)
 #endif
 #if (defined(__GNUC__) && (__GNUC__ >= 4)) || \
-  (defined(__clang__) && (__clang_major__ > 3 || (3 == __clang_major__  && __clang_minor__ >= 7)))
+  (defined(__clang__) && __clang_major__ > 3 - (__clang_minor__ >= 7))
 #ifdef NDEBUG
 __attribute__ ((pure))
 #endif
@@ -923,7 +923,7 @@ A_Nonnull_all_args
 A_At(c, A_In)
 #endif
 #if (defined(__GNUC__) && (__GNUC__ >= 4)) || \
-  (defined(__clang__) && (__clang_major__ > 3 || (3 == __clang_major__  && __clang_minor__ >= 7)))
+  (defined(__clang__) && __clang_major__ > 3 - (__clang_minor__ >= 7))
 #ifdef NDEBUG
 __attribute__ ((pure))
 #endif

@@ -92,7 +92,7 @@ typedef int prbtree_node_check_alignment_t[1-2*(__alignof(struct prbtree_node) <
 #else
 /* do not declare 'p' as non-NULL, so gcc/clang will not complain about comparison of non-NULL pointer with 0 */
 #if (defined(__GNUC__) && (__GNUC__ >= 4)) || \
-  (defined(__clang__) && (__clang_major__ > 3 || (3 == __clang_major__  && __clang_minor__ >= 7)))
+  (defined(__clang__) && __clang_major__ > 3 - (__clang_minor__ >= 7))
 #ifdef NDEBUG
 __attribute__ ((pure))
 #endif
@@ -171,7 +171,7 @@ A_Pre_satisfies(!e->prbtree_right)
 A_Pre_satisfies(!e->parent_color)
 #endif
 #if (defined(__GNUC__) && (__GNUC__ >= 4)) || \
-  (defined(__clang__) && (__clang_major__ > 3 || (3 == __clang_major__  && __clang_minor__ >= 7)))
+  (defined(__clang__) && __clang_major__ > 3 - (__clang_minor__ >= 7))
 #ifdef NDEBUG
 __attribute__ ((pure))
 #endif
@@ -197,7 +197,7 @@ static inline struct prbtree_node *prbtree_get_parent_(
 #pragma warning(push)
 #pragma warning(disable:4826) /* Conversion from 'const char *' to 'unsigned __int64' is sign-extended */
 #pragma warning(disable:4305) /* 'type cast': truncation from 'unsigned __int64' to 'void *' */
-#elif !defined __cplusplus && defined __GNUC__ && (__GNUC__ > 4 || (4 == __GNUC__ && __GNUC_MINOR__ >= 6))
+#elif !defined __cplusplus && defined __GNUC__ && __GNUC__ > 4 - (__GNUC_MINOR__ >= 6)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wpointer-to-int-cast" /* warning: cast from pointer to integer of different size */
 #pragma GCC diagnostic ignored "-Wint-to-pointer-cast" /* warning: cast from pointer to integer of different size */
@@ -207,7 +207,7 @@ static inline struct prbtree_node *prbtree_get_parent_(
 		~1llu & (unsigned long long)parent_color);
 #ifdef _MSC_VER
 #pragma warning(pop)
-#elif !defined __cplusplus && defined __GNUC__ && (__GNUC__ > 4 || (4 == __GNUC__ && __GNUC_MINOR__ >= 6))
+#elif !defined __cplusplus && defined __GNUC__ && __GNUC__ > 4 - (__GNUC_MINOR__ >= 6)
 #pragma GCC diagnostic pop
 #endif
 }
@@ -240,14 +240,14 @@ static inline unsigned prbtree_get_color_1(
 #ifdef _MSC_VER
 #pragma warning(push)
 #pragma warning(disable:4826) /* Conversion from 'const char *' to 'unsigned __int64' is sign-extended */
-#elif !defined __cplusplus && defined __GNUC__ && (__GNUC__ > 4 || (4 == __GNUC__ && __GNUC_MINOR__ >= 6))
+#elif !defined __cplusplus && defined __GNUC__ && __GNUC__ > 4 - (__GNUC_MINOR__ >= 6)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wpointer-to-int-cast" /* warning: cast from pointer to integer of different size */
 #endif
 	return prbtree_get_color_2(parent_color);
 #ifdef _MSC_VER
 #pragma warning(pop)
-#elif !defined __cplusplus && defined __GNUC__ && (__GNUC__ > 4 || (4 == __GNUC__ && __GNUC_MINOR__ >= 6))
+#elif !defined __cplusplus && defined __GNUC__ && __GNUC__ > 4 - (__GNUC_MINOR__ >= 6)
 #pragma GCC diagnostic pop
 #endif
 }
@@ -281,14 +281,14 @@ static inline struct prbtree_node *prbtree_black_node_parent_(
 #ifdef _MSC_VER
 #pragma warning(push)
 #pragma warning(disable:4826) /* Conversion from 'const char *' to 'unsigned __int64' is sign-extended */
-#elif !defined __cplusplus && defined __GNUC__ && (__GNUC__ > 4 || (4 == __GNUC__ && __GNUC_MINOR__ >= 6))
+#elif !defined __cplusplus && defined __GNUC__ && __GNUC__ > 4 - (__GNUC_MINOR__ >= 6)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wpointer-to-int-cast" /* warning: cast from pointer to integer of different size */
 #endif
 	PRBTREE_ASSERT(!prbtree_get_color_2(n->parent_color));
 #ifdef _MSC_VER
 #pragma warning(pop)
-#elif !defined __cplusplus && defined __GNUC__ && (__GNUC__ > 4 || (4 == __GNUC__ && __GNUC_MINOR__ >= 6))
+#elif !defined __cplusplus && defined __GNUC__ && __GNUC__ > 4 - (__GNUC_MINOR__ >= 6)
 #pragma GCC diagnostic pop
 #endif
 	return (struct prbtree_node*)n->parent_color;
@@ -308,7 +308,7 @@ static inline void *prbtree_make_parent_color_(
 #pragma warning(push)
 #pragma warning(disable:4826) /* Conversion from 'const char *' to 'unsigned __int64' is sign-extended */
 #pragma warning(disable:4305) /* 'type cast': truncation from 'unsigned __int64' to 'void *' */
-#elif !defined __cplusplus && defined __GNUC__ && (__GNUC__ > 4 || (4 == __GNUC__ && __GNUC_MINOR__ >= 6))
+#elif !defined __cplusplus && defined __GNUC__ && __GNUC__ > 4 - (__GNUC_MINOR__ >= 6)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wpointer-to-int-cast" /* warning: cast from pointer to integer of different size */
 #pragma GCC diagnostic ignored "-Wint-to-pointer-cast" /* warning: cast from pointer to integer of different size */
@@ -320,7 +320,7 @@ static inline void *prbtree_make_parent_color_(
 		((unsigned long long)p | c));
 #ifdef _MSC_VER
 #pragma warning(pop)
-#elif !defined __cplusplus && defined __GNUC__ && (__GNUC__ > 4 || (4 == __GNUC__ && __GNUC_MINOR__ >= 6))
+#elif !defined __cplusplus && defined __GNUC__ && __GNUC__ > 4 - (__GNUC_MINOR__ >= 6)
 #pragma GCC diagnostic pop
 #endif
 }
@@ -429,7 +429,7 @@ A_Ret_valid
 A_Check_return
 #endif
 #if (defined(__GNUC__) && (__GNUC__ >= 4)) || \
-  (defined(__clang__) && (__clang_major__ > 3 || (3 == __clang_major__  && __clang_minor__ >= 7)))
+  (defined(__clang__) && __clang_major__ > 3 - (__clang_minor__ >= 7))
 __attribute__ ((pure))
 #endif
 static inline struct prbtree_node **prbtree_slot_at_parent_(
