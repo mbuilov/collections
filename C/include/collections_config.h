@@ -3,13 +3,13 @@
 
 /**********************************************************************************
 * Embedded Collections library
-* Copyright (C) 2008-2017 Michael M. Builov, https://github.com/mbuilov/collections
+* Copyright (C) 2008-2020 Michael M. Builov, https://github.com/mbuilov/collections
 * Licensed under LGPL version 3 or any later version, see COPYING
 **********************************************************************************/
 
 /* collections_config.h */
 
-/* define external functions needed to build collections library */
+/* define external declarationd for building collections library */
 
 #include <stdlib.h> /* for size_t */
 
