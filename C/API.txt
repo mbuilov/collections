@@ -1,0 +1,72 @@
+dlist.h
+==================================
+struct dlist_entry
+struct dlist                      struct dlist_circular
+dlist_first                       dlist_circular_first
+dlist_last                        dlist_circular_last
+DLIST_DECLARE                     DLIST_DECLARE_CIRCULAR
+dlist_init                        dlist_circular_init
+dlist_is_empty                    dlist_circular_is_empty
+                                  dlist_circular_end
+dlist_make_circular               dlist_make_uncircular
+dlist_add_list_front              dlist_circular_add_list_front
+dlist_add_list_back               dlist_circular_add_list_back
+dlist_add_front                   dlist_circular_add_front
+dlist_add_back                    dlist_circular_add_back
+dlist_insert_list_after           dlist_circular_insert_list_after
+dlist_insert_list_before          dlist_circular_insert_list_before
+dlist_insert_after                dlist_circular_insert_after
+dlist_insert_before               dlist_circular_insert_before
+dlist_remove_list                 dlist_circular_remove_list
+dlist_remove                      dlist_circular_remove
+dlist_restore_list                dlist_circular_restore_list
+dlist_restore                     dlist_circular_restore
+dlist_replace_list                dlist_circular_replace_list
+dlist_replace                     dlist_circular_replace
+dlist_move                        dlist_circular_move
+dlist_iterate                     dlist_circular_iterate
+dlist_iterate_backward            dlist_circular_iterate_backward
+dlist_iterate_delete              dlist_circular_iterate_delete
+dlist_iterate_delete_backward     dlist_circular_iterate_delete_backward
+dlist_entry_link_list_before
+dlist_entry_link_list_after
+dlist_entry_link_before
+dlist_entry_link_after
+
+btree.h
+==============================
+struct btree_node
+btree_left
+btree_right
+btree_first
+btree_last
+btree_size
+btree_height
+BTREE_KEY_COMPARATOR
+struct btree_key
+btree_comparator
+btree_search
+struct btree_object
+btree_walker
+btree_walk_recursive
+btree_walk_recursive_forward
+btree_walk_recursive_backward
+btree_walk_sub_recursive
+btree_walk_sub_recursive_forward
+btree_walk_sub_recursive_backward
+btree_search_parent
+
+prbtree.h                         pcrbtree.h
+==============================    ==============================
+struct prbtree_node               struct pcrbtree_node
+prbtree_left                      pcrbtree_left
+prbtree_right                     pcrbtree_right
+struct prbtree                    struct pcrbtree
+prbtree_init                      pcrbtree_init
+prbtree_init_node                 pcrbtree_init_node
+prbtree_get_parent                pcrbtree_get_parent
+prbtree_insert                    pcrbtree_insert
+prbtree_replace                   pcrbtree_replace
+prbtree_remove                    pcrbtree_remove
+prbtree_next                      pcrbtree_next
+prbtree_prev                      pcrbtree_prev
