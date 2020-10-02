@@ -267,7 +267,7 @@ static inline void pcrbtree_replace_child(
 	*pcrbtree_slot_at_parent_(tree, p, pcrbtree_is_right_1(pc)) = e;
 }
 
-static inline void pcrbtree_remove_(
+static void pcrbtree_remove_(
 	struct pcrbtree *A_Restrict const tree/*!=NULL*/,
 	struct pcrbtree_node *A_Restrict p/*!=NULL*/,
 	struct pcrbtree_node *A_Restrict e/*!=NULL*/)

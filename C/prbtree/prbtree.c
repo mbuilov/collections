@@ -185,7 +185,7 @@ PRBTREE_EXPORTS void prbtree_rebalance(
 	}
 }
 
-static inline void prbtree_remove_(
+static void prbtree_remove_(
 	struct prbtree *A_Restrict const tree/*!=NULL*/,
 	struct prbtree_node *A_Restrict p/*!=NULL*/,
 	struct prbtree_node *A_Restrict e/*!=NULL*/)
