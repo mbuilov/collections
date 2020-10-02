@@ -1,0 +1,27 @@
+1) compiling
+
+javac -g -Xlint:all -d obj/DlistTest -cp ../emcollections.jar DlistTest.java
+jar -c -f DlistTest.jar -C obj/DlistTest .
+
+javac -g -Xlint:all -d obj/BtreeTest -cp ../emcollections.jar BtreeTest.java TreeTest.java
+jar -c -f BtreeTest.jar -C obj/BtreeTest .
+
+javac -g -Xlint:all -d obj/PtreeTest -cp ../emcollections.jar PtreeTest.java PtreeTests.java TreeTest.java
+jar -c -f PtreeTest.jar -C obj/PtreeTest .
+
+javac -g -Xlint:all -d obj/PrbtreeTest -cp ../emcollections.jar PrbtreeTest.java PtreeTests.java TreeTest.java
+jar -c -f PrbtreeTest.jar -C obj/PrbtreeTest .
+
+2) running the tests (Windows)
+
+java -cp ../emcollections.jar;BtreeTest.jar   BtreeTest
+java -cp ../emcollections.jar;DlistTest.jar   DlistTest
+java -cp ../emcollections.jar;PtreeTest.jar   PtreeTest
+java -cp ../emcollections.jar;PrbtreeTest.jar PrbtreeTest
+
+3) running the tests (Linux)
+
+java -cp ../emcollections.jar:BtreeTest.jar   BtreeTest
+java -cp ../emcollections.jar:DlistTest.jar   DlistTest
+java -cp ../emcollections.jar:PtreeTest.jar   PtreeTest
+java -cp ../emcollections.jar:PrbtreeTest.jar PrbtreeTest

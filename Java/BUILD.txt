@@ -1,0 +1,2 @@
+javac -g -Xlint:all -d obj emcollections/Btree.java emcollections/Prbtree.java emcollections/Ptree.java emcollections/Dlist.java
+jar -c -f emcollections.jar -C obj .
