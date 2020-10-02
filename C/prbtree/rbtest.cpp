@@ -353,7 +353,7 @@ int main(int argc, char *argv[])
 	if (argc > 1) {
 		out = fopen(argv[1], "w");
 		if (!out) {
-			fprintf(out, "cannot open '%s' for writing\n", argv[1]);
+			fprintf(stderr, "cannot open '%s' for writing\n", argv[1]);
 			return -1;
 		}
 	}
