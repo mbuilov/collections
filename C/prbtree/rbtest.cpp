@@ -36,6 +36,7 @@
 #define PRBTREE_NODE pcrbtree_node
 #define PRBTREE_INIT_NODE pcrbtree_init_node
 #define PRBTREE_GET_COLOR_ pcrbtree_get_color_
+#define PRBTREE_GET_PARENT pcrbtree_get_parent
 #define PRBTREE_NODE_FROM_BTREE_NODE_ pcrbtree_node_from_btree_node_
 #define PRBTREE_NEXT pcrbtree_next
 #define PRBTREE_NODE_TO_BTREE_NODE_ pcrbtree_node_to_btree_node_
@@ -48,6 +49,7 @@
 #define PRBTREE_NODE prbtree_node
 #define PRBTREE_INIT_NODE prbtree_init_node
 #define PRBTREE_GET_COLOR_ prbtree_get_color_
+#define PRBTREE_GET_PARENT prbtree_get_parent
 #define PRBTREE_NODE_FROM_BTREE_NODE_ prbtree_node_from_btree_node_
 #define PRBTREE_NEXT prbtree_next
 #define PRBTREE_NODE_TO_BTREE_NODE_ prbtree_node_to_btree_node_
