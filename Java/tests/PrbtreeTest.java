@@ -1,3 +1,9 @@
+/**********************************************************************************
+* Embedded red-back binary tree of nodes with parent pointers
+* Copyright (C) 2012-2021 Michael M. Builov, https://github.com/mbuilov/collections
+* Licensed under LGPL version 3 or any later version, see COPYING
+**********************************************************************************/
+
 import emcollections.Btree.*;
 import emcollections.Ptree.*;
 import emcollections.Prbtree.*;
