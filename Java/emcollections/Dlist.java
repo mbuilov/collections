@@ -1,11 +1,12 @@
 /**********************************************************************************
 * Embedded doubly-linked list
-* Copyright (C) 2012-2017 Michael M. Builov, https://github.com/mbuilov/collections
+* Copyright (C) 2012-2021 Michael M. Builov, https://github.com/mbuilov/collections
 * Licensed under LGPL version 3 or any later version, see COPYING
 **********************************************************************************/
 
 package emcollections;
 
+import java.lang.ArithmeticException;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.ListIterator;
@@ -23,9 +24,39 @@ import java.util.NoSuchElementException;
     ------------------------------------------------------------------------
 */
 
+/* class diagram:
+
+interfaces -------------------------------------------------------------------------------------------------------------
+
+             DlistEntryReadAccessor<E>                                                    DlistListReadAccessor<L,E>
+                  ^        ^                                                                      ^      ^
+                  |        \--- DlistEntryAccessor<E>                  DlistListAccessor<L,E> ---/       |
+                  |                      ^    ^                            ^   ^                         |
+                  |                      |    \---- DlistModifier<L,E> ----/   |                         |
+                  |                      |                ^                    |                         |
+abstract classes .|......................|................|....................|.........................|..............
+                  |                      |                |                    |                         |
+          DlistEntryReadAccessorImpl<E>  |                |                    |         DlistListReadAccessorImpl<L,E>
+                     ^                   |                |                    |                       ^
+                     \-- DlistEntryAccessorImpl<E>        |              DlistListAccessorImpl<L,E> ---/
+                                   ^                      |
+                                   \------------- DlistModifierImpl<L,E>
+
+------------------------------------------------------------------------------------------------------------------------
+*/
+
+/* iterators/collections:
+
+DlistEntryReadAccessorImpl<E>::DlistReadIterator -----> DlistEntryReadAccessorImpl<E>::DlistIteratorBase ---> ListIterator<E>
+DlistEntryReadAccessorImpl<E>::DlistReadCollection ---> Collection<E>
+
+DlistEntryAccessorImpl<E>::DlistIterator<L> ----------> DlistEntryReadAccessorImpl<E>::DlistIteratorBase ---> ListIterator<E>
+DlistEntryAccessorImpl<E>::DlistCollection<L> --------> Collection<E>
+*/
+
 /* Embedded doubly-linked list:
   one object may encapsulate multiple list entries - to reference it from multiple lists,
-  for example an object of class 'Apple' may be referenced to 'fruits' and 'food' lists simultaneously:
+  for example an object of class 'Apple' may be referenced from 'fruits' and 'food' lists simultaneously:
 
   class Apple {
     Apple fruit_next;
@@ -96,7 +127,7 @@ public class Dlist {
 		public E prev(E current);               /* returns null for the first entry */
 
 		/* count entries in the list */
-		/* NOTE: returns Integer.MAX_VALUE if entries count >= Integer.MAX_VALUE */
+		/* NOTE: throws ArithmeticException("list size too big") if entries count > Integer.MAX_VALUE */
 		public int listSize(E first/*null?*/);
 
         /* check if entry is in the list */
@@ -106,16 +137,17 @@ public class Dlist {
 		public boolean listContainsAll(E first/*null?*/, Collection<?> c);
 
 		/* fill entries array preserving ordering */
-		/* NOTE: cannot fill more than Integer.MAX_VALUE elements */
+		/* NOTE: throws ArithmeticException("list size too big") if entries count > Integer.MAX_VALUE */
 		public <T> T[] listToArray(E first/*null?*/, T[] a);
 
 		/* fill entries array preserving ordering */
-		/* NOTE: cannot fill more than Integer.MAX_VALUE elements */
+		/* NOTE: throws ArithmeticException("list size too big") if entries count > Integer.MAX_VALUE */
 		public Object[] listToArray(E first/*null?*/);
 
 		public ListIterator<E> listReadIterator(E first/*null?*/);
 		public Collection<E> listReadCollection(E first/*null?*/);
 
+		/* same as above, but use accessor to get first entry of the list */
 		public <L> int size(DlistListReadAccessor<L,E> acc, L list);
 		public <L> boolean contains(DlistListReadAccessor<L,E> acc, L list, E n);
 		public <L> boolean containsAll(DlistListReadAccessor<L,E> acc, L list, Collection<?> c);
@@ -204,12 +236,12 @@ public class Dlist {
 		//public E prev(E current);
 
 		/* count entries in the list */
-		/* NOTE: returns Integer.MAX_VALUE if entries count >= Integer.MAX_VALUE */
+		/* NOTE: throws ArithmeticException("list size too big") if entries count > Integer.MAX_VALUE */
 		@Override public int listSize(E first/*null?*/) {
 			int s = 0;
 			while (first != null) {
-				if (Integer.MAX_VALUE == ++s)
-					break;
+				if (Integer.MAX_VALUE == s++)
+					throw new ArithmeticException("list size too big");
 				first = next(first);
 			}
 			return s;
@@ -242,7 +274,7 @@ public class Dlist {
 		}
 
 		/* fill entries array preserving ordering */
-		/* NOTE: cannot fill more than Integer.MAX_VALUE elements */
+		/* NOTE: throws ArithmeticException("list size too big") if entries count > Integer.MAX_VALUE */
 		@SuppressWarnings("unchecked")
 		@Override public <T> T[] listToArray(E first/*null?*/, T[] a) {
 			T[] arr = (T[])java.lang.reflect.Array.newInstance(a.getClass().getComponentType(), listSize(first));
@@ -251,7 +283,7 @@ public class Dlist {
 		}
 
 		/* fill entries array preserving ordering */
-		/* NOTE: cannot fill more than Integer.MAX_VALUE elements */
+		/* NOTE: throws ArithmeticException("list size too big") if entries count > Integer.MAX_VALUE */
 		@Override public Object[] listToArray(E first/*null?*/) {
 			Object[] arr = new Object[listSize(first)];
 			_fill_array(first, arr);
@@ -562,12 +594,12 @@ public class Dlist {
 				list = _list;
 			}
 			@Override public E next() {
-				E n = super.next(); /* may throw an exception */
+				E n = super.next(); /* may throw NoSuchElementException() */
 				dir = 1;
 				return n;
 			}
 			@Override public E previous() {
-				E n = super.previous(); /* may throw an exception */
+				E n = super.previous(); /* may throw NoSuchElementException() */
 				dir = -1;
 				return n;
 			}
