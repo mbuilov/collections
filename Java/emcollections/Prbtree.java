@@ -1,6 +1,6 @@
 /**********************************************************************************
 * Embedded red-back binary tree of nodes with parent pointers
-* Copyright (C) 2012-2017 Michael M. Builov, https://github.com/mbuilov/collections
+* Copyright (C) 2012-2021 Michael M. Builov, https://github.com/mbuilov/collections
 * Licensed under LGPL version 3 or any later version, see COPYING
 **********************************************************************************/
 
@@ -10,6 +10,27 @@ import emcollections.Btree.*;
 import emcollections.Ptree.*;
 import java.util.Collection;
 import java.util.ListIterator;
+
+/* class diagram:
+
+interfaces (* - imported) ----------------------------
+
+                      *PtreeNodeAccessor<E>
+                         ^     ^     ^
+                         |     |     |
+        PrbtreeNodeAccessor<E> |   *PtreeModifier<R,E>
+                   ^           |               ^
+abstract classes ..|...........|...............|......
+                   |           |               |
+                   | *PtreeNodeAccessorImpl<E> |
+                   |        ^                  |
+                   |        |                  |
+            PrbtreeNodeAccessorImpl<E>         |
+                       ^                       |
+                       \----- PrbtreeModifierImpl<R,E>
+
+------------------------------------------------------
+*/
 
 /* Embedded red-back binary tree of nodes with parent pointers:
   one object may encapsulate multiple tree nodes - to reference it from multiple trees */
