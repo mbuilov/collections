@@ -1,6 +1,6 @@
 /**********************************************************************************
 * Embedded binary tree of nodes with parent pointers
-* Copyright (C) 2012-2017 Michael M. Builov, https://github.com/mbuilov/collections
+* Copyright (C) 2012-2021 Michael M. Builov, https://github.com/mbuilov/collections
 * Licensed under LGPL version 3 or any later version, see COPYING
 **********************************************************************************/
 
@@ -10,6 +10,57 @@ import emcollections.Btree.*;
 import java.util.Collection;
 import java.util.ListIterator;
 import java.util.NoSuchElementException;
+
+/* binary tree with parent pointers:
+
+                           nodeB
+               ^          --------
+                \---------|parent|
+                       ---|left  |
+                      /   |right |----
+                     /    |data  |    \
+            nodeA <--     --------     --> nodeC
+           --------         ^  ^          --------
+           |parent|--------/    \---------|parent|
+        ---|left  |                    ---|left  |
+       /   |right |----               /   |right |----
+      /    |data  |    \             /    |data  |    \
+   <--     --------     -->       <--     --------     -->
+
+*/
+
+/* class diagram:
+
+interfaces (* - imported) -------------------------------------------------------------------------------------------
+
+       *BtreeNodeAccessor<E> ------------> *BtreeNodeReadAccessor<E>                  BtreeRootReadAccessor<R,E>
+                ^                                 ^          ^                            ^           ^
+                |                                 |          |                            |           |
+        PtreeNodeAccessor<E> --> PtreeNodeReadAccessor<E>    |               BtreeRootAccessor<R,E>   |
+                  ^   ^             ^                        |                 ^     ^                |
+                  |   \-------------|--- PtreeModifier<R,E> -|-----------------/     |                |
+                  |                 |               ^        |                       |                |
+abstract classes .|.................|...............|........|.......................|................|..............
+                  |                 |               |        |                       |                |
+                  |                 |               |  *BtreeNodeReadAccessorImpl<E> |                |
+                  |                 |               |              ^                 |                |
+                  |  PtreeNodeReadAccessorImpl<E> --|--------------/                 | BtreeRootReadAccessorImpl<R,E>
+                  |               ^                 |                                |              ^
+       PtreeNodeAccessorImpl<E> --/                 |                 BtreeRootAccessorImpl<R,E> ---/
+                    ^                               |
+                    \-- PtreeModifierImpl<R,E> -----/
+
+---------------------------------------------------------------------------------------------------------------------
+*/
+
+/* iterators/collections:
+
+PtreeNodeReadAccessorImpl<E>::PtreeReadIterator -----> PtreeNodeReadAccessorImpl<E>::PtreeIteratorBase ---> ListIterator<E>
+PtreeNodeReadAccessorImpl<E>::PtreeReadCollection ---> Collection<E>
+
+PtreeNodeAccessorImpl<E>::PtreeIterator<R> ----------> PtreeNodeReadAccessorImpl<E>::PtreeIteratorBase ---> ListIterator<E>
+PtreeNodeAccessorImpl<E>::PtreeCollection<L> --------> Collection<E>
+*/
 
 /* Embedded binary tree of nodes with parent pointers:
   one object may encapsulate multiple tree nodes - to reference it from multiple trees */
@@ -312,7 +363,7 @@ public class Ptree {
 			final BtreeParent<E> parent = new BtreeParent<E>(acc.root(root));
 			int c = searchParent(parent, key, cmp, /*leaf:*/allow_dup);
 			if (c == 0)
-				return parent.p; /* exsisting node with the same key found */
+				return parent.p; /* existing node with the same key found */
 			insertAtParent(acc, root, parent.p, e, c < 0);
 			return null; /* ok, node inserted */
 		}
@@ -325,7 +376,7 @@ public class Ptree {
 			final BtreeParent<E> parent = new BtreeParent<E>(acc.root(root));
 			int c = searchParentInt(parent, key, ext, /*leaf:*/allow_dup);
 			if (c == 0)
-				return parent.p; /* exsisting node with the same key found */
+				return parent.p; /* existing node with the same key found */
 			insertAtParent(acc, root, parent.p, e, c < 0);
 			return null; /* ok, node inserted */
 		}
@@ -338,7 +389,7 @@ public class Ptree {
 			final BtreeParent<E> parent = new BtreeParent<E>(acc.root(root));
 			long c = searchParentLong(parent, key, ext, /*leaf:*/allow_dup);
 			if (c == 0)
-				return parent.p; /* exsisting node with the same key found */
+				return parent.p; /* existing node with the same key found */
 			insertAtParent(acc, root, parent.p, e, c < 0);
 			return null; /* ok, node inserted */
 		}
@@ -353,7 +404,7 @@ public class Ptree {
 			final BtreeParent<E> parent = new BtreeParent<E>(acc.root(root));
 			int c = searchParentObject(parent, key, ext, unique, /*leaf:*/allow_dup);
 			if (c == 0)
-				return parent.p; /* exsisting node with the same key found */
+				return parent.p; /* existing node with the same key found */
 			insertAtParent(acc, root, parent.p, e, c < 0);
 			return null; /* ok, node inserted */
 		}
@@ -766,4 +817,5 @@ public class Ptree {
 			setRoot(root, null);
 		}
 	}
+// see example in Prbtree.java
 }
