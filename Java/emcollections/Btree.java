@@ -1,12 +1,52 @@
 /**********************************************************************************
 * Embedded binary tree
-* Copyright (C) 2012-2017 Michael M. Builov, https://github.com/mbuilov/collections
+* Copyright (C) 2012-2021 Michael M. Builov, https://github.com/mbuilov/collections
 * Licensed under LGPL version 3 or any later version, see COPYING
 **********************************************************************************/
 
 package emcollections;
 
+import java.lang.ArithmeticException;
 import java.util.Collection;
+
+/* binary tree:
+                           nodeB
+                          -------
+                       ---|left |
+                      /   |right|----
+                     /    |data |    \
+            nodeA <--     -------     --> nodeC
+           -------                       -------
+        ---|left |                    ---|left |
+       /   |right|----               /   |right|----
+      /    |data |    \             /    |data |    \
+   <--     -------     -->       <--     -------     -->
+
+*/
+
+/* class diagram:
+
+interfaces ----------------------------------------------------------------------------------------
+
+     BtreeNodeAccessor<E> ----------> BtreeNodeReadAccessor<E>
+                                                 ^
+     BtreeCallback<E,D>   BtreeComparator<E,K>   |     BtreeKeyExtractorInt<E>
+            ^                    ^               |         ^  BtreeKeyExtractorLong<E>
+            \----------\  /------/               |         |     ^   BtreeKeyExtractorObject<E,K>
+                       |  |                      |         |     |      ^
+abstract classes ......|..|......................|.........|.....|......|..........................
+                       |  |                      |         |     |      |
+                       |  |  BtreeNodeReadAccessorImpl<E>  |     |      |
+                       |  |        ^  ^   ^   ^            |     |      |
+   BtreeSearcher<E,K> -+--+-------/   |   |   |            |     |      |
+   BtreeSearcherInt<E> ---------------+---|---|------------/     |      |
+   BtreeSearcherLong<E> ------------------+---|------------------/      |
+   BtreeSearcherObject<E,K> ------------------+-------------------------/
+
+---------------------------------------------------------------------------------------------------
+*/
+
+/* classes:  BtreeParent<E> */
 
 /* Embedded binary tree:
   one object may encapsulate multiple tree nodes - to reference it from multiple trees */
@@ -44,7 +84,7 @@ public class Btree {
 		public E treeLast(E tree/*null?*/);  /* get rightmost node of the tree */
 
 		/* count nodes in the tree */
-		/* NOTE: returns Integer.MAX_VALUE if nodes count >= Integer.MAX_VALUE */
+		/* NOTE: throws ArithmeticException("tree size too big") if nodes count > Integer.MAX_VALUE */
 		public int treeSize(E tree/*null?*/);
 
 		/* recursively determine tree height */
@@ -57,11 +97,11 @@ public class Btree {
 		public boolean treeContainsAll(E tree/*null?*/, Collection<?> c);
 
 		/* fill nodes array preserving ordering */
-		/* NOTE: cannot fill more than Integer.MAX_VALUE elements */
+		/* NOTE: throws ArithmeticException("tree size too big") if nodes count > Integer.MAX_VALUE */
 		public <T> T[] treeToArray(E tree/*null?*/, T[] a);
 
 		/* fill nodes array preserving ordering */
-		/* NOTE: cannot fill more than Integer.MAX_VALUE elements */
+		/* NOTE: throws ArithmeticException("tree size too big") if nodes count > Integer.MAX_VALUE */
 		public Object[] treeToArray(E tree/*null?*/);
 
 		/* ===== recursive tree walking/searching ====== */
@@ -87,7 +127,7 @@ public class Btree {
 		public E treeSearchInt(E tree/*null?*/, int key, BtreeKeyExtractorInt<? super E> ext);
 		public E treeSearchLong(E tree/*null?*/, long key, BtreeKeyExtractorLong<? super E> ext);
 
-		/* search node with given key in the tree ordered by non-unique key idenitity hashes */
+		/* search node with given key in the tree ordered by non-unique key identity hashes */
 		public <K> E treeSearchObject(E tree/*null?*/, K key, BtreeKeyExtractorObject<? super E,K> ext);
 
 		/* ===== walk over bounded same keys sub-tree of ordered tree with non-unique keys ====== */
@@ -120,7 +160,7 @@ public class Btree {
 		public int searchParentInt(BtreeParent<E> parent/*in,out*/, int key, BtreeKeyExtractorInt<? super E> ext, boolean leaf);
 		public long searchParentLong(BtreeParent<E> parent/*in,out*/, long key, BtreeKeyExtractorLong<? super E> ext, boolean leaf);
 
-		/* search node with given key in the tree ordered by non-unique key idenitity hashes */
+		/* search node with given key in the tree ordered by non-unique key identity hashes */
 		/* unique - true if inserting node with unique key (so don't try to search another node with the same key) */
 		public <K> int searchParentObject(BtreeParent<E> parent/*in,out*/,
 			K key, BtreeKeyExtractorObject<? super E,K> ext, boolean unique, boolean leaf);
@@ -179,8 +219,8 @@ public class Btree {
 
 		private int _size(E tree/*null?*/, int s) {
 			while (null != tree) {
-				if (s == Integer.MAX_VALUE)
-					return Integer.MAX_VALUE;
+				if (Integer.MAX_VALUE == s)
+					throw new ArithmeticException("tree size too big");
 				s = _size(left(tree), s + 1);
 				tree = right(tree);
 			}
@@ -188,7 +228,7 @@ public class Btree {
 		}
 
 		/* recursively count nodes in the tree */
-		/* NOTE: returns Integer.MAX_VALUE if nodes count >= Integer.MAX_VALUE */
+		/* NOTE: throws ArithmeticException("tree size too big") if nodes count > Integer.MAX_VALUE */
 		@Override public int treeSize(E tree/*null?*/) {
 			return _size(tree, 0);
 		}
@@ -237,7 +277,7 @@ public class Btree {
 		}
 
 		/* recursively fill nodes array preserving ordering */
-		/* NOTE: cannot fill more than Integer.MAX_VALUE elements */
+		/* NOTE: throws ArithmeticException("tree size too big") if nodes count > Integer.MAX_VALUE */
 		@SuppressWarnings("unchecked")
 		@Override public <T> T[] treeToArray(E tree/*null?*/, T[] a) {
 			T[] arr = (T[])java.lang.reflect.Array.newInstance(a.getClass().getComponentType(), treeSize(tree));
@@ -246,7 +286,7 @@ public class Btree {
 		}
 
 		/* recursively fill nodes array preserving ordering */
-		/* NOTE: cannot fill more than Integer.MAX_VALUE elements */
+		/* NOTE: throws ArithmeticException("tree size too big") if nodes count > Integer.MAX_VALUE */
 		@Override public Object[] treeToArray(E tree/*null?*/) {
 			Object[] arr = new Object[treeSize(tree)];
 			_fill_array_recursive(tree, arr, 0);
@@ -415,7 +455,7 @@ public class Btree {
 			}
 		}
 
-		/* search node with given key in the tree ordered by non-unique key idenitity hashes */
+		/* search node with given key in the tree ordered by non-unique key identity hashes */
 		@Override public <K> E treeSearchObject(E tree/*null?*/, final K key, final BtreeKeyExtractorObject<? super E,K> ext) {
 			final int hash = System.identityHashCode(key);
 			while (null != tree) {
@@ -640,7 +680,7 @@ public class Btree {
 			}
 		}
 
-		/* walk over same key sub-tree */
+		/* walk over same int keys sub-tree */
 		@Override public <D> E walkSubRecursiveInt(E tree, final int key, final D data,
 			final BtreeKeyExtractorInt<? super E> ext, final BtreeCallback<? super E,D> cb)
 		{
@@ -922,7 +962,7 @@ public class Btree {
 			}
 		}
 
-		/* search node with given key in the tree ordered by non-unique key idenitity hashes */
+		/* search node with given key in the tree ordered by non-unique key identity hashes */
 		/* unique - true if inserting node with unique key (so don't try to search another node with the same key) */
 		@Override public <K> int searchParentObject(final BtreeParent<E> parent/*in,out*/,
 			final K key, final BtreeKeyExtractorObject<? super E,K> ext, final boolean unique, final boolean leaf)
