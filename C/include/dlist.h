@@ -3,7 +3,7 @@
 
 /**********************************************************************************
 * Embedded doubly-linked circular list
-* Copyright (C) 2012-2019 Michael M. Builov, https://github.com/mbuilov/collections
+* Copyright (C) 2012-2021 Michael M. Builov, https://github.com/mbuilov/collections
 * Licensed under LGPL version 3 or any later version, see COPYING
 **********************************************************************************/
 
@@ -316,7 +316,7 @@ A_Ret_valid
 static inline struct dlist_circular *dlist_make_circular(
 	struct dlist *const dl)
 {
-	dlist_check_non_circular(dl);
+	(void)dlist_check_non_circular(dl);
 	if (dl->dlist_first) {
 		struct dlist_entry *const f = dl->dlist_first;
 		struct dlist_entry *const l = dl->dlist_last;
@@ -389,11 +389,14 @@ static inline void dlist_check_sublist(
 A_Nonnull_all_args
 A_At(dl, A_In)
 A_At(c, A_In)
+A_Pre_satisfies(&dl->e != c->next)
+A_Pre_satisfies(&dl->e != c->prev)
 #endif
 static inline void dlist_entry_check_non_circular(
 	const struct dlist *const dl,
-	const struct dlist_entry *const c)
+	const struct dlist_entry *const c/*==&dl->e?*/)
 {
+	dlist_assert_ptr_(dl);
 	dlist_assert_ptr_(c);
 	DLIST_ASSERT_PTRS(&dl->e != c->next);
 	DLIST_ASSERT_PTRS(&dl->e != c->prev);
@@ -409,26 +412,31 @@ A_At(s, A_In)
 A_At(e, A_Inout)
 A_Pre_satisfies(c != s)
 A_Pre_satisfies(c != e)
+A_Pre_satisfies(&dl->e != s)
+A_Pre_satisfies(&dl->e != e)
 A_Ret_never_null
 A_Ret_range(==,dl)
 A_Ret_valid
 #endif
 static inline struct dlist *dlist_insert_list_after_(
 	struct dlist *const dl,
-	struct dlist_entry *A_Restrict const c,
+	struct dlist_entry *const c/*==&dl->e?*/,
 	struct dlist_entry *const s/*==e?*/,
 	struct dlist_entry *const e)
 {
-	dlist_check_non_circular(dl);
+	(void)dlist_check_non_circular(dl);
 	dlist_entry_check_non_circular(dl, c);
 	dlist_check_sublist(s, e);
 	DLIST_ASSERT_PTRS(c != s);
 	DLIST_ASSERT_PTRS(c != e);
+	DLIST_ASSERT_PTRS(&dl->e != s);
+	DLIST_ASSERT_PTRS(&dl->e != e);
 	{
 		struct dlist_entry *A_Restrict const n = c->next;
 		DLIST_ASSERT_PTRS(n != c);
 		DLIST_ASSERT_PTRS(n != s);
 		DLIST_ASSERT_PTRS(n != e);
+		DLIST_ASSERT_PTRS(n != &dl->e);
 		c->next = s;
 		e->next = n;
 		if (n)
@@ -450,26 +458,31 @@ A_At(s, A_Inout)
 A_At(e, A_In)
 A_Pre_satisfies(c != s)
 A_Pre_satisfies(c != e)
+A_Pre_satisfies(&dl->e != s)
+A_Pre_satisfies(&dl->e != e)
 A_Ret_never_null
 A_Ret_range(==,dl)
 A_Ret_valid
 #endif
 static inline struct dlist *dlist_insert_list_before_(
 	struct dlist *const dl,
-	struct dlist_entry *A_Restrict const c,
+	struct dlist_entry *const c/*==&dl->e?*/,
 	struct dlist_entry *const s/*==e?*/,
 	struct dlist_entry *const e)
 {
-	dlist_check_non_circular(dl);
+	(void)dlist_check_non_circular(dl);
 	dlist_entry_check_non_circular(dl, c);
 	dlist_check_sublist(s, e);
 	DLIST_ASSERT_PTRS(c != s);
 	DLIST_ASSERT_PTRS(c != e);
+	DLIST_ASSERT_PTRS(&dl->e != s);
+	DLIST_ASSERT_PTRS(&dl->e != e);
 	{
 		struct dlist_entry *A_Restrict const p = c->prev;
 		DLIST_ASSERT_PTRS(p != c);
 		DLIST_ASSERT_PTRS(p != s);
 		DLIST_ASSERT_PTRS(p != e);
+		DLIST_ASSERT_PTRS(p != &dl->e);
 		c->prev = e;
 		s->prev = p;
 		if (p)
@@ -488,12 +501,14 @@ A_Nonnull_all_args
 A_At(dl, A_Inout)
 A_At(s, A_In)
 A_At(e, A_Inout)
+A_Pre_satisfies(&dl->e != s)
+A_Pre_satisfies(&dl->e != e)
 A_Ret_never_null
 A_Ret_range(==,dl)
 A_Ret_valid
 #endif
 static inline struct dlist *dlist_add_list_front_(
-	struct dlist *const dl,
+	struct dlist *A_Restrict const dl,
 	struct dlist_entry *const s/*==e?*/,
 	struct dlist_entry *const e)
 {
@@ -508,12 +523,14 @@ A_Nonnull_all_args
 A_At(dl, A_Inout)
 A_At(s, A_Inout)
 A_At(e, A_In)
+A_Pre_satisfies(&dl->e != s)
+A_Pre_satisfies(&dl->e != e)
 A_Ret_never_null
 A_Ret_range(==,dl)
 A_Ret_valid
 #endif
 static inline struct dlist *dlist_add_list_back_(
-	struct dlist *const dl,
+	struct dlist *A_Restrict const dl,
 	struct dlist_entry *const s/*==e?*/,
 	struct dlist_entry *const e)
 {
@@ -527,12 +544,14 @@ A_Nonnull_all_args
 A_At(dl, A_Inout)
 A_At(s, A_Inout)
 A_At(e, A_Inout)
+A_Pre_satisfies(&dl->e != s)
+A_Pre_satisfies(&dl->e != e)
 A_Ret_never_null
 A_Ret_range(==,dl)
 A_Ret_valid
 #endif
 static inline struct dlist *dlist_add_list_front(
-	struct dlist *const dl,
+	struct dlist *A_Restrict const dl,
 	struct dlist_entry *const s/*==e?*/,
 	struct dlist_entry *const e)
 {
@@ -547,12 +566,14 @@ A_Nonnull_all_args
 A_At(dl, A_Inout)
 A_At(s, A_Inout)
 A_At(e, A_Inout)
+A_Pre_satisfies(&dl->e != s)
+A_Pre_satisfies(&dl->e != e)
 A_Ret_never_null
 A_Ret_range(==,dl)
 A_Ret_valid
 #endif
 static inline struct dlist *dlist_add_list_back(
-	struct dlist *const dl,
+	struct dlist *A_Restrict const dl,
 	struct dlist_entry *const s/*==e?*/,
 	struct dlist_entry *const e)
 {
@@ -566,12 +587,13 @@ static inline struct dlist *dlist_add_list_back(
 A_Nonnull_all_args
 A_At(dl, A_Inout)
 A_At(e, A_Inout)
+A_Pre_satisfies(&dl->e != e)
 A_Ret_never_null
 A_Ret_range(==,dl)
 A_Ret_valid
 #endif
 static inline struct dlist *dlist_add_front(
-	struct dlist *const dl,
+	struct dlist *A_Restrict const dl,
 	struct dlist_entry *A_Restrict const e)
 {
 	return dlist_add_list_front(dl, e, e);
@@ -582,12 +604,13 @@ static inline struct dlist *dlist_add_front(
 A_Nonnull_all_args
 A_At(dl, A_Inout)
 A_At(e, A_Inout)
+A_Pre_satisfies(&dl->e != e)
 A_Ret_never_null
 A_Ret_range(==,dl)
 A_Ret_valid
 #endif
 static inline struct dlist *dlist_add_back(
-	struct dlist *const dl,
+	struct dlist *A_Restrict const dl,
 	struct dlist_entry *A_Restrict const e)
 {
 	return dlist_add_list_back(dl, e, e);
@@ -600,6 +623,8 @@ A_At(dl, A_Inout)
 A_At(c, A_Inout)
 A_At(s, A_Inout)
 A_At(e, A_Inout)
+A_Pre_satisfies(&dl->e != s)
+A_Pre_satisfies(&dl->e != e)
 A_Pre_satisfies(c != &dl->e)
 A_Pre_satisfies(c != s)
 A_Pre_satisfies(c != e)
@@ -608,7 +633,7 @@ A_Ret_range(==,dl)
 A_Ret_valid
 #endif
 static inline struct dlist *dlist_insert_list_after(
-	struct dlist *const dl,
+	struct dlist *A_Restrict const dl,
 	struct dlist_entry *A_Restrict const c,
 	struct dlist_entry *const s/*==e?*/,
 	struct dlist_entry *const e)
@@ -627,6 +652,8 @@ A_At(dl, A_Inout)
 A_At(c, A_Inout)
 A_At(s, A_Inout)
 A_At(e, A_Inout)
+A_Pre_satisfies(&dl->e != s)
+A_Pre_satisfies(&dl->e != e)
 A_Pre_satisfies(c != &dl->e)
 A_Pre_satisfies(c != s)
 A_Pre_satisfies(c != e)
@@ -635,7 +662,7 @@ A_Ret_range(==,dl)
 A_Ret_valid
 #endif
 static inline struct dlist *dlist_insert_list_before(
-	struct dlist *const dl,
+	struct dlist *A_Restrict const dl,
 	struct dlist_entry *A_Restrict const c,
 	struct dlist_entry *const s/*==e?*/,
 	struct dlist_entry *const e)
@@ -653,13 +680,15 @@ A_Nonnull_all_args
 A_At(dl, A_Inout)
 A_At(c, A_Inout)
 A_At(e, A_Inout)
+A_Pre_satisfies(&dl->e != e)
+A_Pre_satisfies(c != &dl->e)
 A_Pre_satisfies(c != e)
 A_Ret_never_null
 A_Ret_range(==,dl)
 A_Ret_valid
 #endif
 static inline struct dlist *dlist_insert_after(
-	struct dlist *const dl,
+	struct dlist *A_Restrict const dl,
 	struct dlist_entry *A_Restrict const c,
 	struct dlist_entry *A_Restrict const e)
 {
@@ -672,13 +701,15 @@ A_Nonnull_all_args
 A_At(dl, A_Inout)
 A_At(c, A_Inout)
 A_At(e, A_Inout)
+A_Pre_satisfies(&dl->e != e)
+A_Pre_satisfies(c != &dl->e)
 A_Pre_satisfies(c != e)
 A_Ret_never_null
 A_Ret_range(==,dl)
 A_Ret_valid
 #endif
 static inline struct dlist *dlist_insert_before(
-	struct dlist *const dl,
+	struct dlist *A_Restrict const dl,
 	struct dlist_entry *A_Restrict const c,
 	struct dlist_entry *A_Restrict const e)
 {
@@ -691,16 +722,20 @@ A_Nonnull_all_args
 A_At(dl, A_Inout)
 A_At(os, A_In)
 A_At(oe, A_In)
+A_Pre_satisfies(&dl->e != os)
+A_Pre_satisfies(&dl->e != oe)
 A_Ret_never_null
 A_Ret_range(==,dl)
 A_Ret_valid
 #endif
 static inline struct dlist *dlist_remove_list(
-	struct dlist *const dl,
+	struct dlist *A_Restrict const dl,
 	struct dlist_entry *const os/*==oe?*/,
 	struct dlist_entry *const oe)
 {
-	dlist_check_non_circular(dl);
+	(void)dlist_check_non_circular(dl);
+	DLIST_ASSERT_PTRS(&dl->e != os);
+	DLIST_ASSERT_PTRS(&dl->e != oe);
 	dlist_entry_check_non_circular(dl, os);
 	dlist_entry_check_non_circular(dl, oe);
 	{
@@ -711,6 +746,8 @@ static inline struct dlist *dlist_remove_list(
 		DLIST_ASSERT_PTRS(n != oe);
 		DLIST_ASSERT_PTRS(p != os);
 		DLIST_ASSERT_PTRS(p != oe);
+		DLIST_ASSERT_PTRS(n != &dl->e);
+		DLIST_ASSERT_PTRS(p != &dl->e);
 		if (p)
 			p->next = n;
 		else
@@ -728,12 +765,13 @@ static inline struct dlist *dlist_remove_list(
 A_Nonnull_all_args
 A_At(dl, A_Inout)
 A_At(oe, A_In)
+A_Pre_satisfies(&dl->e != oe)
 A_Ret_never_null
 A_Ret_range(==,dl)
 A_Ret_valid
 #endif
 static inline struct dlist *dlist_remove(
-	struct dlist *const dl,
+	struct dlist *A_Restrict const dl,
 	struct dlist_entry *A_Restrict const oe)
 {
 	return dlist_remove_list(dl, oe, oe);
@@ -745,16 +783,20 @@ A_Nonnull_all_args
 A_At(dl, A_Inout)
 A_At(os, A_In)
 A_At(oe, A_In)
+A_Pre_satisfies(&dl->e != os)
+A_Pre_satisfies(&dl->e != oe)
 A_Ret_never_null
 A_Ret_range(==,dl)
 A_Ret_valid
 #endif
 static inline struct dlist *dlist_restore_list_(
-	struct dlist *const dl,
+	struct dlist *A_Restrict const dl,
 	struct dlist_entry *const os/*==oe?*/,
 	struct dlist_entry *const oe)
 {
-	dlist_check_non_circular(dl);
+	(void)dlist_check_non_circular(dl);
+	DLIST_ASSERT_PTRS(&dl->e != os);
+	DLIST_ASSERT_PTRS(&dl->e != oe);
 	dlist_entry_check_non_circular(dl, os);
 	dlist_entry_check_non_circular(dl, oe);
 	{
@@ -765,6 +807,8 @@ static inline struct dlist *dlist_restore_list_(
 		DLIST_ASSERT_PTRS(n != oe);
 		DLIST_ASSERT_PTRS(p != os);
 		DLIST_ASSERT_PTRS(p != oe);
+		DLIST_ASSERT_PTRS(n != &dl->e);
+		DLIST_ASSERT_PTRS(p != &dl->e);
 		if (p)
 			p->next = os;
 		else
@@ -784,12 +828,14 @@ A_Nonnull_all_args
 A_At(dl, A_Inout)
 A_At(os, A_In)
 A_At(oe, A_In)
+A_Pre_satisfies(&dl->e != os)
+A_Pre_satisfies(&dl->e != oe)
 A_Ret_never_null
 A_Ret_range(==,dl)
 A_Ret_valid
 #endif
 static inline struct dlist *dlist_restore_list(
-	struct dlist *const dl,
+	struct dlist *A_Restrict const dl,
 	struct dlist_entry *const os/*==oe?*/,
 	struct dlist_entry *const oe)
 {
@@ -808,12 +854,13 @@ static inline struct dlist *dlist_restore_list(
 A_Nonnull_all_args
 A_At(dl, A_Inout)
 A_At(oe, A_In)
+A_Pre_satisfies(&dl->e != oe)
 A_Ret_never_null
 A_Ret_range(==,dl)
 A_Ret_valid
 #endif
 static inline struct dlist *dlist_restore(
-	struct dlist *const dl,
+	struct dlist *A_Restrict const dl,
 	struct dlist_entry *A_Restrict const oe)
 {
 	return dlist_restore_list(dl, oe, oe);
@@ -827,6 +874,10 @@ A_At(os, A_In)
 A_At(oe, A_In)
 A_At(s, A_Inout)
 A_At(e, A_Inout)
+A_Pre_satisfies(&dl->e != os)
+A_Pre_satisfies(&dl->e != oe)
+A_Pre_satisfies(&dl->e != s)
+A_Pre_satisfies(&dl->e != e)
 A_Pre_satisfies(os != s)
 A_Pre_satisfies(os != e)
 A_Pre_satisfies(oe != s)
@@ -836,13 +887,17 @@ A_Ret_range(==,dl)
 A_Ret_valid
 #endif
 static inline struct dlist *dlist_replace_list(
-	struct dlist *const dl,
+	struct dlist *A_Restrict const dl,
 	struct dlist_entry *const os/*==oe?*/,
 	struct dlist_entry *const oe,
 	struct dlist_entry *const s/*==e?*/,
 	struct dlist_entry *const e)
 {
-	dlist_check_non_circular(dl);
+	(void)dlist_check_non_circular(dl);
+	DLIST_ASSERT_PTRS(&dl->e != os);
+	DLIST_ASSERT_PTRS(&dl->e != oe);
+	DLIST_ASSERT_PTRS(&dl->e != s);
+	DLIST_ASSERT_PTRS(&dl->e != e);
 	dlist_entry_check_non_circular(dl, os);
 	dlist_entry_check_non_circular(dl, oe);
 	dlist_check_sublist(s, e);
@@ -862,6 +917,8 @@ static inline struct dlist *dlist_replace_list(
 		DLIST_ASSERT_PTRS(p != oe);
 		DLIST_ASSERT_PTRS(p != s);
 		DLIST_ASSERT_PTRS(p != e);
+		DLIST_ASSERT_PTRS(p != &dl->e);
+		DLIST_ASSERT_PTRS(n != &dl->e);
 		e->next = n;
 		s->prev = p;
 		if (p)
@@ -882,13 +939,15 @@ A_Nonnull_all_args
 A_At(dl, A_Inout)
 A_At(o, A_In)
 A_At(e, A_Inout)
+A_Pre_satisfies(&dl->e != o)
+A_Pre_satisfies(&dl->e != e)
 A_Pre_satisfies(o != e)
 A_Ret_never_null
 A_Ret_range(==,dl)
 A_Ret_valid
 #endif
 static inline struct dlist *dlist_replace(
-	struct dlist *const dl,
+	struct dlist *A_Restrict const dl,
 	struct dlist_entry *A_Restrict const o,
 	struct dlist_entry *A_Restrict const e)
 {
@@ -908,7 +967,7 @@ static inline void dlist_move(
 	struct dlist *A_Restrict const dst/*initialized?*/,
 	const struct dlist *A_Restrict const src)
 {
-	dlist_check_non_circular(src);
+	(void)dlist_check_non_circular(src);
 	dlist_assert_ptr_(dst);
 	DLIST_ASSERT_PTRS(dst != src);
 	dst->dlist_first = src->dlist_first;
@@ -1011,12 +1070,14 @@ A_Nonnull_all_args
 A_At(dlc, A_Inout)
 A_At(s, A_In)
 A_At(e, A_Inout)
+A_Pre_satisfies(&dlc->l.e != s)
+A_Pre_satisfies(&dlc->l.e != e)
 A_Ret_never_null
 A_Ret_range(==,dlc)
 A_Ret_valid
 #endif
 static inline struct dlist_circular *dlist_circular_add_list_front_(
-	struct dlist_circular *const dlc,
+	struct dlist_circular *A_Restrict const dlc,
 	struct dlist_entry *const s/*==e?*/,
 	struct dlist_entry *const e)
 {
@@ -1033,12 +1094,14 @@ A_Nonnull_all_args
 A_At(dlc, A_Inout)
 A_At(s, A_Inout)
 A_At(e, A_In)
+A_Pre_satisfies(&dlc->l.e != s)
+A_Pre_satisfies(&dlc->l.e != e)
 A_Ret_never_null
 A_Ret_range(==,dlc)
 A_Ret_valid
 #endif
 static inline struct dlist_circular *dlist_circular_add_list_back_(
-	struct dlist_circular *const dlc,
+	struct dlist_circular *A_Restrict const dlc,
 	struct dlist_entry *const s/*==e?*/,
 	struct dlist_entry *const e)
 {
@@ -1054,12 +1117,14 @@ A_Nonnull_all_args
 A_At(dlc, A_Inout)
 A_At(s, A_Inout)
 A_At(e, A_Inout)
+A_Pre_satisfies(&dlc->l.e != s)
+A_Pre_satisfies(&dlc->l.e != e)
 A_Ret_never_null
 A_Ret_range(==,dlc)
 A_Ret_valid
 #endif
 static inline struct dlist_circular *dlist_circular_add_list_front(
-	struct dlist_circular *const dlc,
+	struct dlist_circular *A_Restrict const dlc,
 	struct dlist_entry *const s/*==e?*/,
 	struct dlist_entry *const e)
 {
@@ -1074,12 +1139,14 @@ A_Nonnull_all_args
 A_At(dlc, A_Inout)
 A_At(s, A_Inout)
 A_At(e, A_Inout)
+A_Pre_satisfies(&dlc->l.e != s)
+A_Pre_satisfies(&dlc->l.e != e)
 A_Ret_never_null
 A_Ret_range(==,dlc)
 A_Ret_valid
 #endif
 static inline struct dlist_circular *dlist_circular_add_list_back(
-	struct dlist_circular *const dlc,
+	struct dlist_circular *A_Restrict const dlc,
 	struct dlist_entry *const s/*==e?*/,
 	struct dlist_entry *const e)
 {
@@ -1093,12 +1160,13 @@ static inline struct dlist_circular *dlist_circular_add_list_back(
 A_Nonnull_all_args
 A_At(dlc, A_Inout)
 A_At(e, A_Inout)
+A_Pre_satisfies(&dlc->l.e != e)
 A_Ret_never_null
 A_Ret_range(==,dlc)
 A_Ret_valid
 #endif
 static inline struct dlist_circular *dlist_circular_add_front(
-	struct dlist_circular *const dlc,
+	struct dlist_circular *A_Restrict const dlc,
 	struct dlist_entry *A_Restrict const e)
 {
 	return dlist_circular_add_list_front(dlc, e, e);
@@ -1109,12 +1177,13 @@ static inline struct dlist_circular *dlist_circular_add_front(
 A_Nonnull_all_args
 A_At(dlc, A_Inout)
 A_At(e, A_Inout)
+A_Pre_satisfies(&dlc->l.e != e)
 A_Ret_never_null
 A_Ret_range(==,dlc)
 A_Ret_valid
 #endif
 static inline struct dlist_circular *dlist_circular_add_back(
-	struct dlist_circular *const dlc,
+	struct dlist_circular *A_Restrict const dlc,
 	struct dlist_entry *A_Restrict const e)
 {
 	return dlist_circular_add_list_back(dlc, e, e);
@@ -1335,18 +1404,10 @@ static inline void dlist_circular_replace_list(
 		DLIST_ASSERT_PTRS(p != oe);
 		DLIST_ASSERT_PTRS(p != s);
 		DLIST_ASSERT_PTRS(p != e);
-		{
-			struct dlist_entry *A_Restrict const ss = s;
-			struct dlist_entry *A_Restrict const nn = n;
-			ss->prev = p;
-			nn->prev = e;
-		}
-		{
-			struct dlist_entry *A_Restrict const pp = p;
-			struct dlist_entry *A_Restrict const ee = e;
-			pp->next = s;
-			ee->next = n;
-		}
+		s->prev = p;
+		n->prev = e;
+		p->next = s;
+		e->next = n;
 	}
 }
 
@@ -1389,7 +1450,7 @@ static inline void dlist_circular_move(
 	dst->dlist_circular_last = src->dlist_circular_last;
 }
 
-/* -------------- making sub-list ------------ */
+/* -------------- making sub-list - to add to a list later ------------ */
 
 /* link abcd before 123 at head:
    123 + abcd  -> abcd123
