@@ -1,6 +1,6 @@
 /**********************************************************************************
 * Embedded red-black binary tree of nodes with parent pointers
-* Copyright (C) 2012-2018 Michael M. Builov, https://github.com/mbuilov/collections
+* Copyright (C) 2012-2021 Michael M. Builov, https://github.com/mbuilov/collections
 **********************************************************************************/
 
 /* rbtest.cpp */
