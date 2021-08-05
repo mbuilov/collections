@@ -207,11 +207,13 @@ static unsigned check_tree(struct btree_node *tree, int parent_is_red)
 		/* red parent must have either both (black) children != NULL, ot both == NULL */
 		ASSERT(PRB_BLACK_COLOR == PRBTREE_GET_COLOR_(PRBTREE_NODE_FROM_BTREE_NODE_(tree)) || (!!tree->btree_left == !!tree->btree_right));
 		if (tree->btree_left) {
-			ASSERT(tree == &PRBTREE_GET_PARENT(PRBTREE_NODE_FROM_BTREE_NODE_(tree->btree_left))->u.n);
+			PRBTREE_NODE *const p = PRBTREE_GET_PARENT(PRBTREE_NODE_FROM_BTREE_NODE_(tree->btree_left));
+			ASSERT(p && tree == &p->u.n);
 			check_right_order(tree->btree_left, tree);
 		}
 		if (tree->btree_right) {
-			ASSERT(tree == &PRBTREE_GET_PARENT(PRBTREE_NODE_FROM_BTREE_NODE_(tree->btree_right))->u.n);
+			PRBTREE_NODE *const p = PRBTREE_GET_PARENT(PRBTREE_NODE_FROM_BTREE_NODE_(tree->btree_right));
+			ASSERT(p && tree == &p->u.n);
 			check_right_order(tree, tree->btree_right);
 		}
 		if (tree->btree_left && tree->btree_right)
