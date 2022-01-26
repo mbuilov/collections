@@ -1,6 +1,6 @@
 /**********************************************************************************
 * Embedded red-black binary tree of nodes with parent pointers
-* Copyright (C) 2012-2018 Michael M. Builov, https://github.com/mbuilov/collections
+* Copyright (C) 2012-2022 Michael M. Builov, https://github.com/mbuilov/collections
 * Licensed under LGPL version 3 or any later version, see COPYING
 **********************************************************************************/
 
@@ -24,42 +24,21 @@
 #endif
 #endif /* ASSUME */
 
-#ifndef ASSERT
-#define ASSERT(e) ASSUME(e)
-#endif
-
 #include "prbtree.h"
-
-#ifndef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L)
-#define A_Restrict restrict
-#elif defined(_MSC_VER) && (_MSC_VER >= 1600)
-#define A_Restrict __restrict
-#elif defined(__GNUC__) && (__GNUC__ >= 3)
-#define A_Restrict __restrict__
-#elif defined(__clang__)
-#define A_Restrict __restrict__
-#else
-#define A_Restrict
-#endif
-#endif /* !SAL_DEFS_H_INCLUDED */
 
 /* node color is stored in the lowest bit of parent pointer */
 #define PRB_RED_COLOR   1u
 #define PRB_BLACK_COLOR 0u
 
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Use_decl_annotations
-#endif
 PRBTREE_EXPORTS void prbtree_rebalance(
-	struct prbtree *A_Restrict const tree/*!=NULL*/,
-	struct prbtree_node *A_Restrict p/*!=NULL*/,
-	struct prbtree_node *A_Restrict e/*!=NULL*/)
+	struct prbtree *const tree/*!=NULL*/,
+	struct prbtree_node *PRBTREE_RESTRICT p/*!=NULL*/,
+	struct prbtree_node *PRBTREE_RESTRICT e/*!=NULL*/)
 {
 	/* insert red node e */
-	prbtree_assert_ptr_(tree);
-	prbtree_assert_ptr_(p);
-	prbtree_assert_ptr_(e);
+	PRBTREE_ASSERT_PTR(tree);
+	PRBTREE_ASSERT_PTR(p);
+	PRBTREE_ASSERT_PTR(e);
 	PRBTREE_ASSERT_PTRS(p != e);
 	e->parent_color = prbtree_make_parent_color_(p, PRB_RED_COLOR);
 	while (PRB_BLACK_COLOR != prbtree_get_color_(p)) {
@@ -99,9 +78,9 @@ PRBTREE_EXPORTS void prbtree_rebalance(
 		    ----- ----  ----- -----      -----              ----- -----
 		         [a][b]
 		*/
-		struct prbtree_node *A_Restrict const g = prbtree_get_parent(p); /* p is red */
-		struct prbtree_node *A_Restrict t;
-		prbtree_assert_ptr_(g);
+		struct prbtree_node *PRBTREE_RESTRICT const g = prbtree_get_parent(p); /* p is red */
+		struct prbtree_node *PRBTREE_RESTRICT t;
+		PRBTREE_ASSERT_PTR(g);
 		PRBTREE_ASSERT_PTRS(g != e);
 		PRBTREE_ASSERT_PTRS(g != p);
 		t = g->prbtree_left; /* may be NULL on first iteration */
@@ -186,9 +165,9 @@ PRBTREE_EXPORTS void prbtree_rebalance(
 }
 
 static void prbtree_remove_(
-	struct prbtree *A_Restrict const tree/*!=NULL*/,
-	struct prbtree_node *A_Restrict p/*!=NULL*/,
-	struct prbtree_node *A_Restrict e/*!=NULL*/)
+	struct prbtree *const tree/*!=NULL*/,
+	struct prbtree_node *PRBTREE_RESTRICT p/*!=NULL*/,
+	struct prbtree_node *PRBTREE_RESTRICT e/*!=NULL*/)
 {
 	/* after removing leaf black node, tree is disbalanced - balance the tree by moving black node from sibling side:
 
@@ -327,19 +306,19 @@ static void prbtree_remove_(
 	                 -----------                          |0,R   |                              --------    |4,B*|                               |4,B*|
 	                                                      --------                                          ------                               ------
 	*/
-	prbtree_assert_ptr_(tree);
-	prbtree_assert_ptr_(p);
-	prbtree_assert_ptr_(e);
+	PRBTREE_ASSERT_PTR(tree);
+	PRBTREE_ASSERT_PTR(p);
+	PRBTREE_ASSERT_PTR(e);
 	PRBTREE_ASSERT_PTRS(p != e);
 	for (;;) {
 		void *p_;
-		struct prbtree_node *A_Restrict t = p->prbtree_left;
-		prbtree_assert_ptr_(t);
+		struct prbtree_node *PRBTREE_RESTRICT t = p->prbtree_left;
+		PRBTREE_ASSERT_PTR(t);
 		PRBTREE_ASSERT_PTRS(t != p);
 		if (PRB_BLACK_COLOR == prbtree_get_color_(p)) {
 			if (e == t) {
 				t = p->prbtree_right;
-				prbtree_assert_ptr_(t);
+				PRBTREE_ASSERT_PTR(t);
 				PRBTREE_ASSERT_PTRS(t != p);
 				PRBTREE_ASSERT_PTRS(t != e);
 				e = t->prbtree_left; /* may be NULL on first iteration */
@@ -348,7 +327,7 @@ static void prbtree_remove_(
 				/* parent is black: cases 1,2,3,4,5,6 */
 				if (PRB_BLACK_COLOR == prbtree_get_color_(t)) {
 					/* t is black: cases 1,2,3 */
-					struct prbtree_node *A_Restrict b = t->prbtree_right; /* may be NULL on first iteration */
+					struct prbtree_node *PRBTREE_RESTRICT b = t->prbtree_right; /* may be NULL on first iteration */
 					PRBTREE_ASSERT_PTRS(b != p);
 					PRBTREE_ASSERT_PTRS(b != t);
 					if (e && PRB_BLACK_COLOR != prbtree_get_color_(e)) { /* red on first iteration */
@@ -392,18 +371,18 @@ static void prbtree_remove_(
 				}
 				else {
 					/* cases 4,5,6 with black parent */
-					prbtree_assert_ptr_(e);
+					PRBTREE_ASSERT_PTR(e);
 #ifdef _MSC_VER
 					__assume(e);
 #endif
 					{
-						struct prbtree_node *A_Restrict const c = e->prbtree_left; /* may be NULL on first iteration */
+						struct prbtree_node *PRBTREE_RESTRICT const c = e->prbtree_left; /* may be NULL on first iteration */
 						PRBTREE_ASSERT_PTRS(c != p);
 						PRBTREE_ASSERT_PTRS(c != t);
 						PRBTREE_ASSERT_PTRS(c != e);
 						if (c && PRB_BLACK_COLOR != prbtree_get_color_(c)) { /* red on first iteration */
 							/* cases 5,6 */
-							struct prbtree_node *A_Restrict d = e->prbtree_right; /* may be NULL on first iteration */
+							struct prbtree_node *PRBTREE_RESTRICT d = e->prbtree_right; /* may be NULL on first iteration */
 							PRBTREE_ASSERT_PTRS(d != p);
 							PRBTREE_ASSERT_PTRS(d != t);
 							PRBTREE_ASSERT_PTRS(d != e);
@@ -434,7 +413,7 @@ static void prbtree_remove_(
 					}
 				}
 				{
-					struct prbtree_node *A_Restrict const q = e->prbtree_left; /* NULL on first iteration */
+					struct prbtree_node *PRBTREE_RESTRICT const q = e->prbtree_left; /* NULL on first iteration */
 					PRBTREE_ASSERT_PTRS(q != p);
 					PRBTREE_ASSERT_PTRS(q != t);
 					PRBTREE_ASSERT_PTRS(q != e);
@@ -451,7 +430,7 @@ static void prbtree_remove_(
 				/* parent is black: cases 1,2,3,4,5,6 */
 				if (PRB_BLACK_COLOR == prbtree_get_color_(t)) {
 					/* t is black: cases 1,2,3 */
-					struct prbtree_node *A_Restrict b = t->prbtree_left; /* may be NULL on first iteration */
+					struct prbtree_node *PRBTREE_RESTRICT b = t->prbtree_left; /* may be NULL on first iteration */
 					PRBTREE_ASSERT_PTRS(b != p);
 					PRBTREE_ASSERT_PTRS(b != t);
 					if (e && PRB_BLACK_COLOR != prbtree_get_color_(e)) { /* red on first iteration */
@@ -495,18 +474,18 @@ static void prbtree_remove_(
 				}
 				else {
 					/* cases 4,5,6 with black parent */
-					prbtree_assert_ptr_(e);
+					PRBTREE_ASSERT_PTR(e);
 #ifdef _MSC_VER
 					__assume(e);
 #endif
 					{
-						struct prbtree_node *A_Restrict const c = e->prbtree_right; /* may be NULL on first iteration */
+						struct prbtree_node *PRBTREE_RESTRICT const c = e->prbtree_right; /* may be NULL on first iteration */
 						PRBTREE_ASSERT_PTRS(c != p);
 						PRBTREE_ASSERT_PTRS(c != t);
 						PRBTREE_ASSERT_PTRS(c != e);
 						if (c && PRB_BLACK_COLOR != prbtree_get_color_(c)) { /* red on first iteration */
 							/* cases 5,6 */
-							struct prbtree_node *A_Restrict d = e->prbtree_left; /* may be NULL on first iteration */
+							struct prbtree_node *PRBTREE_RESTRICT d = e->prbtree_left; /* may be NULL on first iteration */
 							PRBTREE_ASSERT_PTRS(d != p);
 							PRBTREE_ASSERT_PTRS(d != t);
 							PRBTREE_ASSERT_PTRS(d != e);
@@ -537,7 +516,7 @@ static void prbtree_remove_(
 					}
 				}
 				{
-					struct prbtree_node *A_Restrict const q = e->prbtree_right; /* NULL on first iteration */
+					struct prbtree_node *PRBTREE_RESTRICT const q = e->prbtree_right; /* NULL on first iteration */
 					PRBTREE_ASSERT_PTRS(q != p);
 					PRBTREE_ASSERT_PTRS(q != t);
 					PRBTREE_ASSERT_PTRS(q != e);
@@ -548,7 +527,7 @@ static void prbtree_remove_(
 				}
 			}
 			{
-				struct prbtree_node *A_Restrict const g = prbtree_black_node_parent_(p); /* NULL? */
+				struct prbtree_node *PRBTREE_RESTRICT const g = prbtree_black_node_parent_(p); /* NULL? */
 				PRBTREE_ASSERT_PTRS(g != p);
 				PRBTREE_ASSERT_PTRS(g != t);
 				PRBTREE_ASSERT_PTRS(g != e);
@@ -558,14 +537,14 @@ static void prbtree_remove_(
 			p_ = prbtree_make_parent_color_(e, t != e ? PRB_RED_COLOR : PRB_BLACK_COLOR);
 		}
 		else {
-			struct prbtree_node *A_Restrict const g = prbtree_get_parent(p);
-			prbtree_assert_ptr_(g); /* p is red */
+			struct prbtree_node *PRBTREE_RESTRICT const g = prbtree_get_parent(p);
+			PRBTREE_ASSERT_PTR(g); /* p is red */
 			PRBTREE_ASSERT_PTRS(g != p);
 			PRBTREE_ASSERT_PTRS(g != t);
 			PRBTREE_ASSERT_PTRS(g != e);
 			if (e == t) {
 				t = p->prbtree_right;
-				prbtree_assert_ptr_(t);
+				PRBTREE_ASSERT_PTR(t);
 				PRBTREE_ASSERT_PTRS(t != p);
 				PRBTREE_ASSERT_PTRS(t != e);
 				PRBTREE_ASSERT_PTRS(t != g);
@@ -575,7 +554,7 @@ static void prbtree_remove_(
 				PRBTREE_ASSERT_PTRS(e != t);
 				{
 					/* parent is red: cases 4,5,6,7,8,9 (10:4,11:5,12:6,13:7,14:8,15:9) */
-					struct prbtree_node *A_Restrict b = t->prbtree_right; /* may be NULL on first iteration */
+					struct prbtree_node *PRBTREE_RESTRICT b = t->prbtree_right; /* may be NULL on first iteration */
 					PRBTREE_ASSERT_PTRS(b != p);
 					PRBTREE_ASSERT_PTRS(b != g);
 					PRBTREE_ASSERT_PTRS(b != t);
@@ -618,7 +597,7 @@ static void prbtree_remove_(
 					}
 				}
 				{
-					struct prbtree_node *A_Restrict const q = e->prbtree_left; /* NULL on first iteration */
+					struct prbtree_node *PRBTREE_RESTRICT const q = e->prbtree_left; /* NULL on first iteration */
 					PRBTREE_ASSERT_PTRS(q != p);
 					PRBTREE_ASSERT_PTRS(q != g);
 					PRBTREE_ASSERT_PTRS(q != t);
@@ -636,7 +615,7 @@ static void prbtree_remove_(
 				PRBTREE_ASSERT_PTRS(e != t);
 				{
 					/* parent is red: cases 4,5,6,7,8,9 (10:4,11:5,12:6,13:7,14:8,15:9) */
-					struct prbtree_node *A_Restrict b = t->prbtree_left; /* may be NULL on first iteration */
+					struct prbtree_node *PRBTREE_RESTRICT b = t->prbtree_left; /* may be NULL on first iteration */
 					PRBTREE_ASSERT_PTRS(b != p);
 					PRBTREE_ASSERT_PTRS(b != g);
 					PRBTREE_ASSERT_PTRS(b != t);
@@ -679,7 +658,7 @@ static void prbtree_remove_(
 					}
 				}
 				{
-					struct prbtree_node *A_Restrict const q = e->prbtree_right; /* NULL on first iteration */
+					struct prbtree_node *PRBTREE_RESTRICT const q = e->prbtree_right; /* NULL on first iteration */
 					PRBTREE_ASSERT_PTRS(q != p);
 					PRBTREE_ASSERT_PTRS(q != g);
 					PRBTREE_ASSERT_PTRS(q != t);
@@ -701,14 +680,11 @@ static void prbtree_remove_(
 	}
 }
 
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Use_decl_annotations
-#endif
 PRBTREE_EXPORTS void prbtree_remove(
-	struct prbtree *A_Restrict const tree/*!=NULL*/,
-	struct prbtree_node *A_Restrict e/*!=NULL*/)
+	struct prbtree *const tree/*!=NULL*/,
+	struct prbtree_node *PRBTREE_RESTRICT e/*!=NULL*/)
 {
-	struct prbtree_node *A_Restrict t = e->prbtree_right;
+	struct prbtree_node *PRBTREE_RESTRICT t = e->prbtree_right;
 	PRBTREE_ASSERT_PTRS(t != e);
 	if (t) {
 		if (t->prbtree_left) {
@@ -724,10 +700,10 @@ PRBTREE_EXPORTS void prbtree_remove(
 				  |    3,R| -----          --------- -----
 				  ---------                |2,B*|
 				                           ------           */
-				struct prbtree_node *A_Restrict const p = prbtree_black_node_parent_(t);
-				struct prbtree_node *A_Restrict const r = t->prbtree_right;
-				prbtree_assert_ptr_(p);
-				prbtree_assert_ptr_(r);
+				struct prbtree_node *PRBTREE_RESTRICT const p = prbtree_black_node_parent_(t);
+				struct prbtree_node *PRBTREE_RESTRICT const r = t->prbtree_right;
+				PRBTREE_ASSERT_PTR(p);
+				PRBTREE_ASSERT_PTR(r);
 				PRBTREE_ASSERT_PTRS(p != e);
 				PRBTREE_ASSERT_PTRS(p != t);
 				PRBTREE_ASSERT_PTRS(r != e);
@@ -747,8 +723,8 @@ PRBTREE_EXPORTS void prbtree_remove(
 			 ----- |    3,R|            ----- ---------
 			       ---------                  |2,B*|
 			                                  ------        */
-			struct prbtree_node *A_Restrict const r = t->prbtree_right;
-			prbtree_assert_ptr_(r);
+			struct prbtree_node *PRBTREE_RESTRICT const r = t->prbtree_right;
+			PRBTREE_ASSERT_PTR(r);
 			PRBTREE_ASSERT_PTRS(r != e);
 			PRBTREE_ASSERT_PTRS(r != t);
 			r->parent_color = prbtree_make_parent_color_(e, PRB_BLACK_COLOR); /* change parent & recolor node: red -> black */
@@ -772,7 +748,7 @@ PRBTREE_EXPORTS void prbtree_remove(
 	}
 	{
 		/* remove t (leaf) from parent */
-		struct prbtree_node *A_Restrict const p = prbtree_get_parent(t);
+		struct prbtree_node *PRBTREE_RESTRICT const p = prbtree_get_parent(t);
 		PRBTREE_ASSERT_PTRS(p != t);
 		if (!p) {
 			tree->root = (struct prbtree_node*)0;

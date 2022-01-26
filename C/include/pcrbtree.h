@@ -3,7 +3,7 @@
 
 /**********************************************************************************
 * Embedded red-black binary tree of nodes with parent pointers
-* Copyright (C) 2018-2019 Michael M. Builov, https://github.com/mbuilov/collections
+* Copyright (C) 2018-2022 Michael M. Builov, https://github.com/mbuilov/collections
 * Licensed under LGPL version 3 or any later version, see COPYING
 **********************************************************************************/
 
@@ -17,29 +17,44 @@
 #define PCRBTREE_EXPORTS
 #endif
 
-#ifndef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L)
-#define A_Restrict restrict
+/* PCRBTREE_RESTRICT - annotates pointer pointing to memory that is not writable via other pointers */
+#ifndef PCRBTREE_RESTRICT
+#ifdef A_Restrict
+#define PCRBTREE_RESTRICT A_Restrict
+#elif defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L)
+#define PCRBTREE_RESTRICT restrict
 #elif defined(_MSC_VER) && (_MSC_VER >= 1600)
-#define A_Restrict __restrict
+#define PCRBTREE_RESTRICT __restrict
 #elif defined(__GNUC__) && (__GNUC__ >= 3)
-#define A_Restrict __restrict__
+#define PCRBTREE_RESTRICT __restrict__
 #elif defined(__clang__)
-#define A_Restrict __restrict__
+#define PCRBTREE_RESTRICT __restrict__
 #else
-#define A_Restrict
+#define PCRBTREE_RESTRICT
 #endif
-#endif /* !SAL_DEFS_H_INCLUDED */
+#endif
 
+/* expr - do not compares pointers */
 #ifndef PCRBTREE_ASSERT
 #ifdef ASSERT
 #define PCRBTREE_ASSERT(expr) ASSERT(expr)
+#elif defined ASSUME
+#define PCRBTREE_ASSERT(expr) ASSUME(expr)
 #else
 #define PCRBTREE_ASSERT(expr) ((void)(expr))
 #endif
 #endif
 
-/* compare pointers */
+/* check that pointer is not NULL */
+#ifndef PCRBTREE_ASSERT_PTR
+#ifdef ASSERT_PTR
+#define PCRBTREE_ASSERT_PTR(ptr) ASSERT_PTR(ptr)
+#else
+#define PCRBTREE_ASSERT_PTR(ptr) PCRBTREE_ASSERT(ptr)
+#endif
+#endif
+
+/* expr - may compare pointers for equality */
 #ifndef PCRBTREE_ASSERT_PTRS
 #define PCRBTREE_ASSERT_PTRS(expr) PCRBTREE_ASSERT(expr)
 #endif
@@ -68,6 +83,7 @@ struct pcrbtree_node {
 #define pcrbtree_left  u.leaves[0]
 #define pcrbtree_right u.leaves[1]
 
+/* lowest 2 bits of parent_color pointer encodes flags - make sure that pointer is properly aligned */
 #if defined __STDC_VERSION__ && __STDC_VERSION__ >= 201112L
 
 #if defined(__GNUC__) && (__GNUC__ >= 5)
@@ -89,52 +105,18 @@ typedef int pcrbtree_node_check_alignment_t[1-2*(__alignof__(struct pcrbtree_nod
 typedef int pcrbtree_node_check_alignment_t[1-2*(__alignof(struct pcrbtree_node) < 4)];
 #endif
 
-/* check that pointer is not NULL */
-#ifdef _MSC_VER
-#define pcrbtree_assert_ptr_(p) PCRBTREE_ASSERT(p)
-#else
-/* do not declare 'p' as non-NULL, so gcc/clang will not complain about comparison of non-NULL pointer with 0 */
-#if (defined(__GNUC__) && (__GNUC__ >= 4)) || \
-  (defined(__clang__) && __clang_major__ > 3 - (__clang_minor__ >= 7))
-#ifdef NDEBUG
-__attribute__ ((pure))
-#endif
-__attribute__ ((always_inline))
-#endif
-static inline void pcrbtree_assert_ptr_(const void *const p)
-{
-	PCRBTREE_ASSERT(p);
-}
-#endif
-
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Const_function
-A_At(n, A_In_opt)
-A_When(n, A_Ret_valid)
-A_When(!n, A_Ret_null)
-A_Ret_range(==,n)
-A_Check_return
-#endif
 static inline struct pcrbtree_node *pcrbtree_node_from_btree_node_(
 	const struct btree_node *const n/*NULL?*/)
 {
-	void *const p = btree_const_cast(n/*NULL?*/);
-	return (struct pcrbtree_node*)p;
+	void *const x = btree_const_cast(n/*NULL?*/);
+	return (struct pcrbtree_node*)x;
 }
 
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Const_function
-A_At(pn, A_In_opt)
-A_When(pn, A_Ret_valid)
-A_When(!pn, A_Ret_null)
-A_Ret_range(==,pn)
-A_Check_return
-#endif
 static inline struct btree_node *pcrbtree_node_to_btree_node_(
-	const struct pcrbtree_node *const pn/*NULL?*/)
+	const struct pcrbtree_node *const p/*NULL?*/)
 {
-	const void *const p = pn;
-	return btree_const_cast((const struct btree_node*)p/*NULL?*/);
+	const void *const x = p;
+	return btree_const_cast((const struct btree_node*)x/*NULL?*/);
 }
 
 /* tree - just a pointer to the root node */
@@ -142,57 +124,31 @@ struct pcrbtree {
 	struct pcrbtree_node *root; /* NULL if tree is empty */
 };
 
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_all_args
-A_At(tree, A_Out)
-#endif
 static inline void pcrbtree_init(
 	struct pcrbtree *const tree/*!=NULL,out*/)
 {
-	pcrbtree_assert_ptr_(tree);
+	PCRBTREE_ASSERT_PTR(tree);
 	tree->root = (struct pcrbtree_node*)0;
 }
 
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_all_args
-A_At(e, A_Out)
-#endif
 static inline void pcrbtree_init_node(
 	struct pcrbtree_node *const e/*!=NULL,out*/)
 {
-	pcrbtree_assert_ptr_(e);
+	PCRBTREE_ASSERT_PTR(e);
 	e->pcrbtree_left  = (struct pcrbtree_node*)0;
 	e->pcrbtree_right = (struct pcrbtree_node*)0;
 	e->parent_color   = (void*)0;
 }
 
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_all_args
-A_At(e, A_In)
-A_Pre_satisfies(!e->pcrbtree_left)
-A_Pre_satisfies(!e->pcrbtree_right)
-A_Pre_satisfies(!e->parent_color)
-#endif
-#if (defined(__GNUC__) && (__GNUC__ >= 4)) || \
-  (defined(__clang__) && __clang_major__ > 3 - (__clang_minor__ >= 7))
-#ifdef NDEBUG
-__attribute__ ((pure))
-#endif
-#endif
 static inline void pcrbtree_check_new_node(
 	const struct pcrbtree_node *const e/*!=NULL*/)
 {
-	pcrbtree_assert_ptr_(e);
+	PCRBTREE_ASSERT_PTR(e);
 	PCRBTREE_ASSERT(!e->pcrbtree_left);
 	PCRBTREE_ASSERT(!e->pcrbtree_right);
 	PCRBTREE_ASSERT(!e->parent_color);
 }
 
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Const_function
-A_Ret_opt_valid
-A_Check_return
-#endif
 static inline struct pcrbtree_node *pcrbtree_get_parent_(
 	void *const parent_color/*NULL?*/)
 {
@@ -205,9 +161,10 @@ static inline struct pcrbtree_node *pcrbtree_get_parent_(
 #pragma GCC diagnostic ignored "-Wpointer-to-int-cast" /* warning: cast from pointer to integer of different size */
 #pragma GCC diagnostic ignored "-Wint-to-pointer-cast" /* warning: cast from pointer to integer of different size */
 #endif
-	return (struct pcrbtree_node*)(
-		(((1llu << (8*sizeof(void*) - 1)) | ~(~0llu << (8*sizeof(void*) - 1))) + 0*sizeof(int[1-2*(255 != (unsigned char)-1)])) &
-		~3llu & (unsigned long long)parent_color);
+	return (struct pcrbtree_node*)((unsigned long long)parent_color & ~3llu &
+		(((1llu << (8*sizeof(void*) - 1)) | ~(~0llu << (8*sizeof(void*) - 1))))) +
+		0*sizeof(int[1-2*(255 != (unsigned char)-1)]) +
+		0*sizeof(int[1-2*(sizeof(unsigned long long) < sizeof(void*))]);
 #ifdef _MSC_VER
 #pragma warning(pop)
 #elif !defined __cplusplus && defined __GNUC__ && __GNUC__ > 4 - (__GNUC_MINOR__ >= 6)
@@ -216,13 +173,8 @@ static inline struct pcrbtree_node *pcrbtree_get_parent_(
 }
 
 /* clang complains about side-effects if pcrbtree_get_bits_1() is used in PCRBTREE_ASSERT(), so use this define */
-#define pcrbtree_get_bits_2(parent_color) ((unsigned)(3llu & (unsigned long long)parent_color))
+#define pcrbtree_get_bits_2(parent_color) ((unsigned)(3llu & (unsigned long long)(parent_color)))
 
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Const_function
-A_Ret_range(0,3)
-A_Check_return
-#endif
 static inline unsigned pcrbtree_get_bits_1(
 	const void *const parent_color/*NULL?*/)
 {
@@ -241,11 +193,6 @@ static inline unsigned pcrbtree_get_bits_1(
 #endif
 }
 
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Const_function
-A_Ret_range(0,1)
-A_Check_return
-#endif
 static inline unsigned pcrbtree_is_right_1(
 	const void *const parent_color/*NULL?*/)
 {
@@ -264,11 +211,6 @@ static inline unsigned pcrbtree_is_right_1(
 #endif
 }
 
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Const_function
-A_Ret_range(0,2)
-A_Check_return
-#endif
 static inline unsigned pcrbtree_get_color_1(
 	const void *const parent_color/*NULL?*/)
 {
@@ -287,74 +229,41 @@ static inline unsigned pcrbtree_get_color_1(
 #endif
 }
 
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Const_function
-A_Nonnull_all_args
-A_At(n, A_In)
-A_Ret_opt_valid
-A_Check_return
-#endif
 static inline struct pcrbtree_node *pcrbtree_get_parent(
 	const struct pcrbtree_node *const n/*!=NULL*/)
 {
-	pcrbtree_assert_ptr_(n);
-	return pcrbtree_get_parent_(n->parent_color);
+	PCRBTREE_ASSERT_PTR(n);
+	return pcrbtree_get_parent_(n->parent_color); /* NULL? */
 }
 
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Const_function
-A_Nonnull_all_args
-A_At(n, A_In)
-A_Ret_range(0,3)
-A_Check_return
-#endif
+/* returns: 0,1,2 or 3 */
 static inline unsigned pcrbtree_get_bits_(
 	const struct pcrbtree_node *const n/*!=NULL*/)
 {
-	pcrbtree_assert_ptr_(n);
+	PCRBTREE_ASSERT_PTR(n);
 	return pcrbtree_get_bits_1(n->parent_color);
 }
 
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Const_function
-A_Nonnull_all_args
-A_At(n, A_In)
-A_Ret_range(0,1)
-A_Check_return
-#endif
+/* returns: 0 or 1 */
 static inline unsigned pcrbtree_is_right_(
 	const struct pcrbtree_node *const n/*!=NULL*/)
 {
-	pcrbtree_assert_ptr_(n);
+	PCRBTREE_ASSERT_PTR(n);
 	return pcrbtree_is_right_1(n->parent_color);
 }
 
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Const_function
-A_Nonnull_all_args
-A_At(n, A_In)
-A_Ret_range(0,2)
-A_Check_return
-#endif
+/* returns: 0 or 2 */
 static inline unsigned pcrbtree_get_color_(
 	const struct pcrbtree_node *const n/*!=NULL*/)
 {
-	pcrbtree_assert_ptr_(n);
+	PCRBTREE_ASSERT_PTR(n);
 	return pcrbtree_get_color_1(n->parent_color);
 }
 
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Const_function
-A_Nonnull_all_args
-A_At(n, A_In)
-A_Ret_range(==,n->parent_color)
-A_Ret_opt_valid
-A_Check_return
-#endif
 static inline struct pcrbtree_node *pcrbtree_left_black_node_parent_(
 	struct pcrbtree_node *const n/*!=NULL*/)
 {
-	pcrbtree_assert_ptr_(n);
+	PCRBTREE_ASSERT_PTR(n);
 #ifdef _MSC_VER
 #pragma warning(push)
 #pragma warning(disable:4826) /* Conversion from 'const char *' to 'unsigned __int64' is sign-extended */
@@ -371,15 +280,9 @@ static inline struct pcrbtree_node *pcrbtree_left_black_node_parent_(
 	return (struct pcrbtree_node*)n->parent_color;
 }
 
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Const_function
-A_At(p, A_In_opt)
-A_At(bits, A_In_range(0,3))
-A_Check_return
-#endif
-static inline void *pcrbtree_make_parent_color_1(
+static inline void *pcrbtree_make_parent_color_(
 	struct pcrbtree_node *const p/*NULL?*/,
-	const unsigned bits)
+	const unsigned bits/*0,1,2,3*/)
 {
 #ifdef _MSC_VER
 #pragma warning(push)
@@ -392,9 +295,10 @@ static inline void *pcrbtree_make_parent_color_1(
 #endif
 	PCRBTREE_ASSERT(bits <= 3);
 	PCRBTREE_ASSERT(!(3llu & (unsigned long long)p));
-	return (void*)(
-		(((1llu << (8*sizeof(void*) - 1)) | ~(~0llu << (8*sizeof(void*) - 1))) + 0*sizeof(int[1-2*(255 != (unsigned char)-1)])) &
-		((unsigned long long)p | bits));
+	return (char*)(((unsigned long long)p | bits) &
+		(((1llu << (8*sizeof(void*) - 1)) | ~(~0llu << (8*sizeof(void*) - 1))))) +
+		0*sizeof(int[1-2*(255 != (unsigned char)-1)]) +
+		0*sizeof(int[1-2*(sizeof(unsigned long long) < sizeof(void*))]);
 #ifdef _MSC_VER
 #pragma warning(pop)
 #elif !defined __cplusplus && defined __GNUC__ && __GNUC__ > 4 - (__GNUC_MINOR__ >= 6)
@@ -402,16 +306,10 @@ static inline void *pcrbtree_make_parent_color_1(
 #endif
 }
 
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_all_args
-A_At(tree, A_Inout)
-A_At(p, A_Inout)
-A_At(e, A_Inout)
-#endif
 PCRBTREE_EXPORTS void pcrbtree_rebalance(
-	struct pcrbtree *A_Restrict const tree/*!=NULL*/,
-	struct pcrbtree_node *A_Restrict p/*!=NULL*/,
-	struct pcrbtree_node *A_Restrict e/*!=NULL*/,
+	struct pcrbtree *const tree/*!=NULL*/,
+	struct pcrbtree_node *PCRBTREE_RESTRICT p/*!=NULL*/,
+	struct pcrbtree_node *PCRBTREE_RESTRICT e/*!=NULL*/,
 	const int c);
 
 /* insert new node into the tree,
@@ -424,21 +322,14 @@ PCRBTREE_EXPORTS void pcrbtree_rebalance(
   int c = btree_search_parent(&parent, key, key_comparator, allow_duplicates);
   pcrbtree_insert(tree, pcrbtree_node_from_btree_node_(parent), node, c);
 #endif
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_arg(1)
-A_Nonnull_arg(3)
-A_At(tree, A_Inout)
-A_At(p, A_Inout_opt)
-A_At(e, A_Inout)
-#endif
 static inline void pcrbtree_insert(
-	struct pcrbtree *A_Restrict const tree/*!=NULL*/,
-	struct pcrbtree_node *A_Restrict const p/*NULL?*/,
-	struct pcrbtree_node *A_Restrict const e/*!=NULL*/,
+	struct pcrbtree *const tree/*!=NULL*/,
+	struct pcrbtree_node *PCRBTREE_RESTRICT const p/*NULL?*/,
+	struct pcrbtree_node *PCRBTREE_RESTRICT const e/*!=NULL*/,
 	int c)
 {
-	pcrbtree_assert_ptr_(tree);
-	pcrbtree_assert_ptr_(e);
+	PCRBTREE_ASSERT_PTR(tree);
+	PCRBTREE_ASSERT_PTR(e);
 	PCRBTREE_ASSERT_PTRS(p != e);
 	pcrbtree_check_new_node(e); /* new node must have NULL children and parent */
 	if (p) {
@@ -452,31 +343,26 @@ static inline void pcrbtree_insert(
 }
 
 /* replace old node in the tree with a new one */
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_all_args
-A_At(n, A_Out)
-A_At(o, A_In)
-A_At(e, A_Out)
-#endif
 static inline void pcrbtree_replace_(
-	struct pcrbtree_node **A_Restrict const n/*!=NULL,out*/,
-	const struct pcrbtree_node *A_Restrict const o/*!=NULL,in*/,
-	struct pcrbtree_node *A_Restrict const e/*!=NULL,out*/)
+	struct pcrbtree_node **PCRBTREE_RESTRICT const n/*!=NULL,out*/,
+	const struct pcrbtree_node *PCRBTREE_RESTRICT const o/*!=NULL,in*/,
+	struct pcrbtree_node *PCRBTREE_RESTRICT const e/*!=NULL,out*/)
 {
-	pcrbtree_assert_ptr_(n);
-	pcrbtree_assert_ptr_(o);
-	pcrbtree_assert_ptr_(e);
+	PCRBTREE_ASSERT_PTR(n);
+	PCRBTREE_ASSERT_PTR(o);
+	PCRBTREE_ASSERT_PTR(e);
 	PCRBTREE_ASSERT_PTRS(o != e);
 	{
-		struct pcrbtree_node **A_Restrict const el = &e->pcrbtree_left;
-		struct pcrbtree_node **A_Restrict const er = &e->pcrbtree_right;
-		struct pcrbtree_node *A_Restrict const l = o->pcrbtree_left;
-		struct pcrbtree_node *A_Restrict const r = o->pcrbtree_right;
+		struct pcrbtree_node **PCRBTREE_RESTRICT const el = &e->pcrbtree_left;
+		struct pcrbtree_node **PCRBTREE_RESTRICT const er = &e->pcrbtree_right;
+		struct pcrbtree_node *PCRBTREE_RESTRICT const l = o->pcrbtree_left;    /* NULL? */
+		struct pcrbtree_node *PCRBTREE_RESTRICT const r = o->pcrbtree_right;   /* NULL? */
 		void *const p = o->parent_color;
 		PCRBTREE_ASSERT_PTRS(o != l);
 		PCRBTREE_ASSERT_PTRS(o != r);
 		PCRBTREE_ASSERT_PTRS(e != l);
 		PCRBTREE_ASSERT_PTRS(e != r);
+		PCRBTREE_ASSERT_PTRS((!l && !r) || (l != r));
 		PCRBTREE_ASSERT_PTRS(n != el);
 		PCRBTREE_ASSERT_PTRS(n != er);
 		PCRBTREE_ASSERT_PTRS(el != er);
@@ -484,58 +370,35 @@ static inline void pcrbtree_replace_(
 		*el = l;
 		*er = r;
 		e->parent_color = p;
-		if (l) {
-			PCRBTREE_ASSERT_PTRS(l != r);
-			l->parent_color = pcrbtree_make_parent_color_1(e, pcrbtree_get_bits_(l));
-		}
-		if (r) {
-			PCRBTREE_ASSERT_PTRS(l != r);
-			r->parent_color = pcrbtree_make_parent_color_1(e, pcrbtree_get_bits_(r));
-		}
+		if (l)
+			l->parent_color = pcrbtree_make_parent_color_(e, pcrbtree_get_bits_(l));
+		if (r)
+			r->parent_color = pcrbtree_make_parent_color_(e, pcrbtree_get_bits_(r));
 	}
 }
 
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_arg(1)
-A_At(tree, A_Inout)
-A_At(p, A_Inout_opt)
-A_At(is_right, A_In_range(0,1))
-A_Ret_never_null
-A_Ret_valid
-A_Check_return
-#endif
-#if (defined(__GNUC__) && (__GNUC__ >= 4)) || \
-  (defined(__clang__) && __clang_major__ > 3 - (__clang_minor__ >= 7))
-__attribute__ ((pure))
-#endif
 static inline struct pcrbtree_node **pcrbtree_slot_at_parent_(
-	struct pcrbtree *A_Restrict const tree/*!=NULL*/,
-	struct pcrbtree_node *A_Restrict const p/*NULL?*/,
-	const unsigned is_right)
+	struct pcrbtree *const tree/*!=NULL*/,
+	struct pcrbtree_node *const p/*NULL?*/,
+	const unsigned is_right/*0,1*/)
 {
-	pcrbtree_assert_ptr_(tree);
+	PCRBTREE_ASSERT_PTR(tree);
 	return p ? &p->u.leaves[is_right] : &tree->root;
 }
 
 /* replace old node in the tree with a new one */
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_all_args
-A_At(tree, A_Inout)
-A_At(o, A_In)
-A_At(e, A_Out)
-#endif
 static inline void pcrbtree_replace(
-	struct pcrbtree *A_Restrict const tree/*!=NULL*/,
-	const struct pcrbtree_node *A_Restrict const o/*!=NULL*/,
-	struct pcrbtree_node *A_Restrict const e/*!=NULL,out*/)
+	struct pcrbtree *const tree/*!=NULL*/,
+	const struct pcrbtree_node *PCRBTREE_RESTRICT const o/*!=NULL*/,
+	struct pcrbtree_node *PCRBTREE_RESTRICT const e/*!=NULL,out*/)
 {
-	pcrbtree_assert_ptr_(tree);
-	pcrbtree_assert_ptr_(o);
-	pcrbtree_assert_ptr_(e);
+	PCRBTREE_ASSERT_PTR(tree);
+	PCRBTREE_ASSERT_PTR(o);
+	PCRBTREE_ASSERT_PTR(e);
 	PCRBTREE_ASSERT_PTRS(o != e);
 	{
 		void *const parent_color = o->parent_color;
-		struct pcrbtree_node *A_Restrict const p = pcrbtree_get_parent_(parent_color); /* NULL? */
+		struct pcrbtree_node *PCRBTREE_RESTRICT const p = pcrbtree_get_parent_(parent_color); /* NULL? */
 		const unsigned is_right = pcrbtree_is_right_1(parent_color);
 		PCRBTREE_ASSERT_PTRS(p != o);
 		PCRBTREE_ASSERT_PTRS(p != e);
@@ -544,29 +407,17 @@ static inline void pcrbtree_replace(
 }
 
 /* remove node from the tree */
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_all_args
-A_At(tree, A_Inout)
-A_At(e, A_Inout)
-#endif
 PCRBTREE_EXPORTS void pcrbtree_remove(
-	struct pcrbtree *A_Restrict const tree/*!=NULL*/,
-	struct pcrbtree_node *A_Restrict e/*!=NULL*/);
+	struct pcrbtree *const tree/*!=NULL*/,
+	struct pcrbtree_node *PCRBTREE_RESTRICT e/*!=NULL*/);
 
 /* non-recursive iteration over nodes of the tree */
 
 /* find right parent */
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Pure_function
-A_Nonnull_all_args
-A_At(current, A_In)
-A_Ret_opt_valid
-A_Check_return
-#endif
 static inline struct pcrbtree_node *pcrbtree_right_parent(
 	const struct pcrbtree_node *current/*!=NULL*/)
 {
-	pcrbtree_assert_ptr_(current);
+	PCRBTREE_ASSERT_PTR(current);
 	for (;;) {
 		struct pcrbtree_node *const p = pcrbtree_get_parent(current);
 		if (!p || !pcrbtree_is_right_(current))
@@ -576,17 +427,10 @@ static inline struct pcrbtree_node *pcrbtree_right_parent(
 }
 
 /* find left parent */
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Pure_function
-A_Nonnull_all_args
-A_At(current, A_In)
-A_Ret_opt_valid
-A_Check_return
-#endif
 static inline struct pcrbtree_node *pcrbtree_left_parent(
 	const struct pcrbtree_node *current/*!=NULL*/)
 {
-	pcrbtree_assert_ptr_(current);
+	PCRBTREE_ASSERT_PTR(current);
 	for (;;) {
 		struct pcrbtree_node *const p = pcrbtree_get_parent(current);
 		if (!p || pcrbtree_is_right_(current))
@@ -596,17 +440,10 @@ static inline struct pcrbtree_node *pcrbtree_left_parent(
 }
 
 /* get next node, returns NULL for the rightmost node */
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Pure_function
-A_Nonnull_all_args
-A_At(current, A_In)
-A_Ret_opt_valid
-A_Check_return
-#endif
 static inline struct pcrbtree_node *pcrbtree_next(
 	const struct pcrbtree_node *const current/*!=NULL*/)
 {
-	pcrbtree_assert_ptr_(current);
+	PCRBTREE_ASSERT_PTR(current);
 	{
 		const struct pcrbtree_node *const n = current->pcrbtree_right;
 		if (n)
@@ -616,17 +453,10 @@ static inline struct pcrbtree_node *pcrbtree_next(
 }
 
 /* get previous node, returns NULL for the leftmost node */
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Pure_function
-A_Nonnull_all_args
-A_At(current, A_In)
-A_Ret_opt_valid
-A_Check_return
-#endif
 static inline struct pcrbtree_node *pcrbtree_prev(
 	const struct pcrbtree_node *const current/*!=NULL*/)
 {
-	pcrbtree_assert_ptr_(current);
+	PCRBTREE_ASSERT_PTR(current);
 	{
 		const struct pcrbtree_node *const p = current->pcrbtree_left;
 		if (p)
@@ -637,10 +467,6 @@ static inline struct pcrbtree_node *pcrbtree_prev(
 
 #ifdef __cplusplus
 }
-#endif
-
-#ifndef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-#undef A_Restrict
 #endif
 
 #endif /* PCRBTREE_H_INCLUDED */

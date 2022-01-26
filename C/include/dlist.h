@@ -3,35 +3,50 @@
 
 /**********************************************************************************
 * Embedded doubly-linked circular list
-* Copyright (C) 2012-2021 Michael M. Builov, https://github.com/mbuilov/collections
+* Copyright (C) 2012-2022 Michael M. Builov, https://github.com/mbuilov/collections
 * Licensed under LGPL version 3 or any later version, see COPYING
 **********************************************************************************/
 
 /* dlist.h */
 
-#ifndef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L)
-#define A_Restrict restrict
+/* DLIST_RESTRICT - annotates pointer pointing to memory that is not writable via other pointers */
+#ifndef DLIST_RESTRICT
+#ifdef A_Restrict
+#define DLIST_RESTRICT A_Restrict
+#elif defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L)
+#define DLIST_RESTRICT restrict
 #elif defined(_MSC_VER) && (_MSC_VER >= 1600)
-#define A_Restrict __restrict
+#define DLIST_RESTRICT __restrict
 #elif defined(__GNUC__) && (__GNUC__ >= 3)
-#define A_Restrict __restrict__
+#define DLIST_RESTRICT __restrict__
 #elif defined(__clang__)
-#define A_Restrict __restrict__
+#define DLIST_RESTRICT __restrict__
 #else
-#define A_Restrict
+#define DLIST_RESTRICT
 #endif
-#endif /* !SAL_DEFS_H_INCLUDED */
+#endif
 
+/* expr - do not compares pointers */
 #ifndef DLIST_ASSERT
 #ifdef ASSERT
 #define DLIST_ASSERT(expr) ASSERT(expr)
+#elif defined ASSUME
+#define DLIST_ASSERT(expr) ASSUME(expr)
 #else
 #define DLIST_ASSERT(expr) ((void)(expr))
 #endif
 #endif
 
-/* compare pointers */
+/* check that pointer is not NULL */
+#ifndef DLIST_ASSERT_PTR
+#ifdef ASSERT_PTR
+#define DLIST_ASSERT_PTR(ptr) ASSERT_PTR(ptr)
+#else
+#define DLIST_ASSERT_PTR(ptr) DLIST_ASSERT(ptr)
+#endif
+#endif
+
+/* expr - may compare pointers for equality */
 #ifndef DLIST_ASSERT_PTRS
 #define DLIST_ASSERT_PTRS(expr) DLIST_ASSERT(expr)
 #endif
@@ -102,53 +117,21 @@ struct dlist_circular {
 #define dlist_circular_first l.e.next
 #define dlist_circular_last  l.e.prev
 
-/* check that pointer is not NULL */
-#ifdef _MSC_VER
-#define dlist_assert_ptr_(p) DLIST_ASSERT(p)
-#else
-/* do not declare 'p' as non-NULL, so gcc/clang will not complain about comparison of non-NULL pointer with 0 */
-#if (defined(__GNUC__) && (__GNUC__ >= 4)) || \
-  (defined(__clang__) && __clang_major__ > 3 - (__clang_minor__ >= 7))
-#ifdef NDEBUG
-__attribute__ ((pure))
-#endif
-__attribute__ ((always_inline))
-#endif
-static inline void dlist_assert_ptr_(const void *const p)
-{
-	DLIST_ASSERT(p);
-}
-#endif
-
 /* initialize doubly-linked list */
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_all_args
-A_At(dl, A_Out)
-A_Ret_never_null
-A_Ret_range(==,dl)
-A_Ret_valid
-#endif
 static inline struct dlist *dlist_init(
-	struct dlist *const dl)
+	struct dlist *const dl/*!=NULL*/)
 {
-	dlist_assert_ptr_(dl);
+	DLIST_ASSERT_PTR(dl);
 	dl->dlist_first = NULL;
 	dl->dlist_last = NULL;
 	return dl;
 }
 
 /* initialize doubly-linked circular list */
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_all_args
-A_At(dlc, A_Out)
-A_Ret_never_null
-A_Ret_range(==,dlc)
-A_Ret_valid
-#endif
 static inline struct dlist_circular *dlist_circular_init(
-	struct dlist_circular *const dlc)
+	struct dlist_circular *const dlc/*!=NULL*/)
 {
-	dlist_assert_ptr_(dlc);
+	DLIST_ASSERT_PTR(dlc);
 	dlc->dlist_circular_first = &dlc->l.e;
 	dlc->dlist_circular_last = &dlc->l.e;
 	return dlc;
@@ -160,20 +143,14 @@ static inline struct dlist_circular *dlist_circular_init(
 
 /* statically initialize doubly-linked circular list */
 #define DLIST_CIRCULAR_INITIALIZER(dlc) {{{&dlc.l.e, &dlc.l.e}}}
-#define DLIST_DECLARE_CIRCULAR(dlc)     struct dlist_circular dlc = DLIST_CIRCULAR_INITIALIZER(dlc)
+#define DLIST_CIRCULAR_DECLARE(dlc)     struct dlist_circular dlc = DLIST_CIRCULAR_INITIALIZER(dlc)
 
 /* check if doubly-linked list is empty */
 /* note: do not checks dl->dlist_last */
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_all_args
-A_At(dl, A_In)
-A_Ret_range(0,1)
-A_Check_return
-#endif
 static inline int dlist_is_empty(
-	const struct dlist *const dl)
+	const struct dlist *const dl/*!=NULL*/)
 {
-	dlist_assert_ptr_(dl);
+	DLIST_ASSERT_PTR(dl);
 	DLIST_ASSERT(!dl->dlist_first || !dl->dlist_first->prev);
 	DLIST_ASSERT_PTRS(&dl->e != dl->dlist_first);
 	return !dl->dlist_first;
@@ -181,48 +158,23 @@ static inline int dlist_is_empty(
 
 /* get end of doubly-linked circular list */
 /* note: dlc may be not valid/destroyed before the call */
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_all_args
-A_At(dlc, A_In)
-A_Ret_never_null
-A_Ret_range(==,&dlc->l.e)
-A_Ret_valid
-A_Check_return
-#endif
-#ifdef __GNUC__
-__attribute__ ((pure))
-#endif
 static inline const struct dlist_entry *dlist_circular_end(
-	const struct dlist_circular *const dlc)
+	const struct dlist_circular *const dlc/*!=NULL*/)
 {
-	dlist_assert_ptr_(dlc);
+	DLIST_ASSERT_PTR(dlc);
 	return &dlc->l.e;
 }
 
 /* check if doubly-linked circular list is empty */
 /* note: do not checks dlc->dlist_circular_last */
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_all_args
-A_At(dlc, A_In)
-A_Ret_range(0,1)
-A_Check_return
-#endif
 static inline int dlist_circular_is_empty(
-	const struct dlist_circular *const dlc)
+	const struct dlist_circular *const dlc/*!=NULL*/)
 {
-	dlist_assert_ptr_(dlc);
-	DLIST_ASSERT(dlc->dlist_circular_first);
+	DLIST_ASSERT_PTR(dlc);
+	DLIST_ASSERT_PTR(dlc->dlist_circular_first);
 	return dlist_circular_end(dlc) == dlc->dlist_circular_first;
 }
 
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Const_function
-A_Check_return
-A_At(dl, A_In_opt)
-A_When(dl, A_Ret_valid)
-A_When(!dl, A_Ret_null)
-A_Ret_range(==,dl)
-#endif
 static inline struct dlist *dlist_const_cast_(
 	const struct dlist *const dl/*NULL?*/)
 {
@@ -240,14 +192,6 @@ static inline struct dlist *dlist_const_cast_(
 #endif
 }
 
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Const_function
-A_Check_return
-A_At(dlc, A_In_opt)
-A_When(dlc, A_Ret_valid)
-A_When(!dlc, A_Ret_null)
-A_Ret_range(==,dlc)
-#endif
 static inline struct dlist_circular *dlist_circular_const_cast_(
 	const struct dlist_circular *const dlc/*NULL?*/)
 {
@@ -265,17 +209,10 @@ static inline struct dlist_circular *dlist_circular_const_cast_(
 #endif
 }
 
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_all_args
-A_At(dl, A_In)
-A_Ret_never_null
-A_Ret_range(==,dl)
-A_Ret_valid
-#endif
 static inline struct dlist *dlist_check_non_circular(
-	const struct dlist *const dl)
+	const struct dlist *const dl/*!=NULL*/)
 {
-	dlist_assert_ptr_(dl);
+	DLIST_ASSERT_PTR(dl);
 	DLIST_ASSERT(!dl->dlist_first || !dl->dlist_first->prev);
 	DLIST_ASSERT(!dl->dlist_last || !dl->dlist_last->next);
 	DLIST_ASSERT(!dl->dlist_first == !dl->dlist_last);
@@ -284,40 +221,23 @@ static inline struct dlist *dlist_check_non_circular(
 	return dlist_const_cast_(dl);
 }
 
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_all_args
-A_At(dlc, A_In)
-A_Ret_never_null
-A_Ret_range(==,dlc)
-A_Ret_valid
-#endif
-#if (defined(__GNUC__) && (__GNUC__ >= 4)) || \
-  (defined(__clang__) && __clang_major__ > 3 - (__clang_minor__ >= 7))
-__attribute__ ((pure))
-#endif
 static inline struct dlist_circular *dlist_check_circular(
-	const struct dlist_circular *const dlc)
+	const struct dlist_circular *const dlc/*!=NULL*/)
 {
-	dlist_assert_ptr_(dlc);
-	DLIST_ASSERT(dlc->dlist_circular_first && &dlc->l.e == dlc->dlist_circular_first->prev);
-	DLIST_ASSERT(dlc->dlist_circular_last && &dlc->l.e == dlc->dlist_circular_last->next);
+	DLIST_ASSERT_PTR(dlc);
+	DLIST_ASSERT_PTRS(dlc->dlist_circular_first && &dlc->l.e == dlc->dlist_circular_first->prev);
+	DLIST_ASSERT_PTRS(dlc->dlist_circular_last && &dlc->l.e == dlc->dlist_circular_last->next);
 	DLIST_ASSERT_PTRS((&dlc->l.e == dlc->dlist_circular_first) == (&dlc->l.e == dlc->dlist_circular_last));
 	return dlist_circular_const_cast_(dlc);
 }
 
 /* make doubly-linked list circular */
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_all_args
-A_At(dl, A_Inout)
-A_Ret_never_null
-A_Ret_range(==,dl)
-A_Ret_valid
-#endif
 static inline struct dlist_circular *dlist_make_circular(
-	struct dlist *const dl)
+	struct dlist *const dl/*!=NULL*/)
 {
 	(void)dlist_check_non_circular(dl);
 	if (dl->dlist_first) {
+		/* note: l may be == f */
 		struct dlist_entry *const f = dl->dlist_first;
 		struct dlist_entry *const l = dl->dlist_last;
 		f->prev = &dl->e;
@@ -334,15 +254,8 @@ static inline struct dlist_circular *dlist_make_circular(
 }
 
 /* make doubly-linked circular list non-circular */
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_all_args
-A_At(dlc, A_Inout)
-A_Ret_never_null
-A_Ret_range(==,dlc)
-A_Ret_valid
-#endif
 static inline struct dlist *dlist_make_uncircular(
-	struct dlist_circular *const dlc)
+	struct dlist_circular *const dlc/*!=NULL*/)
 {
 	(void)dlist_check_circular(dlc);
 	{
@@ -361,23 +274,12 @@ static inline struct dlist *dlist_make_uncircular(
 }
 
 /* check doubly-linked sub-list: s<=>a<=>...<=>b<=>e */
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_all_args
-A_At(s, A_In)
-A_At(e, A_In)
-#endif
-#if (defined(__GNUC__) && (__GNUC__ >= 4)) || \
-  (defined(__clang__) && __clang_major__ > 3 - (__clang_minor__ >= 7))
-#ifdef NDEBUG
-__attribute__ ((pure))
-#endif
-#endif
 static inline void dlist_check_sublist(
-	const struct dlist_entry *const s/*==e?*/,
-	const struct dlist_entry *const e)
+	const struct dlist_entry *const s/*!=NULL,==e?*/,
+	const struct dlist_entry *const e/*!=NULL,==s?*/)
 {
-	dlist_assert_ptr_(s);
-	dlist_assert_ptr_(e);
+	DLIST_ASSERT_PTR(s);
+	DLIST_ASSERT_PTR(e);
 	DLIST_ASSERT_PTRS(s == e || s->next);
 	DLIST_ASSERT_PTRS(s == e || e->prev);
 }
@@ -385,44 +287,23 @@ static inline void dlist_check_sublist(
 /* -------------- non-circular dlist methods ------------ */
 
 /* check that 'c' is not an entry of circular list */
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_all_args
-A_At(dl, A_In)
-A_At(c, A_In)
-A_Pre_satisfies(&dl->e != c->next)
-A_Pre_satisfies(&dl->e != c->prev)
-#endif
 static inline void dlist_entry_check_non_circular(
-	const struct dlist *const dl,
-	const struct dlist_entry *const c/*==&dl->e?*/)
+	const struct dlist *const dl/*!=NULL*/,
+	const struct dlist_entry *const c/*!=NULL,==&dl->e?*/)
 {
-	dlist_assert_ptr_(dl);
-	dlist_assert_ptr_(c);
+	DLIST_ASSERT_PTR(dl);
+	DLIST_ASSERT_PTR(c);
 	DLIST_ASSERT_PTRS(&dl->e != c->next);
 	DLIST_ASSERT_PTRS(&dl->e != c->prev);
 }
 
 /* insert a list of linked entries after the current entry c, if c == &dl->e, then at front of the list */
 /* NOTE: caller should set, possibly before the call, s->prev to c (or to NULL, if inserting at front of the list) */
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_all_args
-A_At(dl, A_Inout)
-A_At(c, A_Inout)
-A_At(s, A_In)
-A_At(e, A_Inout)
-A_Pre_satisfies(c != s)
-A_Pre_satisfies(c != e)
-A_Pre_satisfies(&dl->e != s)
-A_Pre_satisfies(&dl->e != e)
-A_Ret_never_null
-A_Ret_range(==,dl)
-A_Ret_valid
-#endif
 static inline struct dlist *dlist_insert_list_after_(
-	struct dlist *const dl,
-	struct dlist_entry *const c/*==&dl->e?*/,
-	struct dlist_entry *const s/*==e?*/,
-	struct dlist_entry *const e)
+	struct dlist *const dl/*!=NULL*/,
+	struct dlist_entry *const c/*!=NULL,==&dl->e?*/,
+	struct dlist_entry *const s/*!=NULL,==e?*/,
+	struct dlist_entry *const e/*!=NULL,==s?*/)
 {
 	(void)dlist_check_non_circular(dl);
 	dlist_entry_check_non_circular(dl, c);
@@ -432,7 +313,7 @@ static inline struct dlist *dlist_insert_list_after_(
 	DLIST_ASSERT_PTRS(&dl->e != s);
 	DLIST_ASSERT_PTRS(&dl->e != e);
 	{
-		struct dlist_entry *A_Restrict const n = c->next;
+		struct dlist_entry *DLIST_RESTRICT const n = c->next;
 		DLIST_ASSERT_PTRS(n != c);
 		DLIST_ASSERT_PTRS(n != s);
 		DLIST_ASSERT_PTRS(n != e);
@@ -450,25 +331,11 @@ static inline struct dlist *dlist_insert_list_after_(
 
 /* insert a list of linked entries before the current entry c, if c == &dl->e, then at back of the list */
 /* NOTE: caller should set, possibly before the call, e->next to c (or to NULL, if inserting at back of the list) */
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_all_args
-A_At(dl, A_Inout)
-A_At(c, A_Inout)
-A_At(s, A_Inout)
-A_At(e, A_In)
-A_Pre_satisfies(c != s)
-A_Pre_satisfies(c != e)
-A_Pre_satisfies(&dl->e != s)
-A_Pre_satisfies(&dl->e != e)
-A_Ret_never_null
-A_Ret_range(==,dl)
-A_Ret_valid
-#endif
 static inline struct dlist *dlist_insert_list_before_(
-	struct dlist *const dl,
-	struct dlist_entry *const c/*==&dl->e?*/,
-	struct dlist_entry *const s/*==e?*/,
-	struct dlist_entry *const e)
+	struct dlist *const dl/*!=NULL*/,
+	struct dlist_entry *const c/*!=NULL,==&dl->e?*/,
+	struct dlist_entry *const s/*!=NULL,==e?*/,
+	struct dlist_entry *const e/*!=NULL,==s?*/)
 {
 	(void)dlist_check_non_circular(dl);
 	dlist_entry_check_non_circular(dl, c);
@@ -478,7 +345,7 @@ static inline struct dlist *dlist_insert_list_before_(
 	DLIST_ASSERT_PTRS(&dl->e != s);
 	DLIST_ASSERT_PTRS(&dl->e != e);
 	{
-		struct dlist_entry *A_Restrict const p = c->prev;
+		struct dlist_entry *DLIST_RESTRICT const p = c->prev;
 		DLIST_ASSERT_PTRS(p != c);
 		DLIST_ASSERT_PTRS(p != s);
 		DLIST_ASSERT_PTRS(p != e);
@@ -496,21 +363,10 @@ static inline struct dlist *dlist_insert_list_before_(
 
 /* prepend a list of linked entries at front of the list */
 /* NOTE: caller should set s->prev to NULL, possibly before the call */
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_all_args
-A_At(dl, A_Inout)
-A_At(s, A_In)
-A_At(e, A_Inout)
-A_Pre_satisfies(&dl->e != s)
-A_Pre_satisfies(&dl->e != e)
-A_Ret_never_null
-A_Ret_range(==,dl)
-A_Ret_valid
-#endif
 static inline struct dlist *dlist_add_list_front_(
-	struct dlist *A_Restrict const dl,
-	struct dlist_entry *const s/*==e?*/,
-	struct dlist_entry *const e)
+	struct dlist *const dl/*!=NULL*/,
+	struct dlist_entry *const s/*!=NULL,==e?*/,
+	struct dlist_entry *const e/*!=NULL,==s?*/)
 {
 	/*caller should do: s->prev = NULL;*/
 	return dlist_insert_list_after_(dl, &dl->e, s, e);
@@ -518,220 +374,104 @@ static inline struct dlist *dlist_add_list_front_(
 
 /* append a list of linked entries at back of the list */
 /* NOTE: caller should set e->next to NULL, possibly before the call */
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_all_args
-A_At(dl, A_Inout)
-A_At(s, A_Inout)
-A_At(e, A_In)
-A_Pre_satisfies(&dl->e != s)
-A_Pre_satisfies(&dl->e != e)
-A_Ret_never_null
-A_Ret_range(==,dl)
-A_Ret_valid
-#endif
 static inline struct dlist *dlist_add_list_back_(
-	struct dlist *A_Restrict const dl,
-	struct dlist_entry *const s/*==e?*/,
-	struct dlist_entry *const e)
+	struct dlist *const dl/*!=NULL*/,
+	struct dlist_entry *const s/*!=NULL,==e?*/,
+	struct dlist_entry *const e/*!=NULL,==s?*/)
 {
 	/*caller should do: e->next = NULL;*/
 	return dlist_insert_list_before_(dl, &dl->e, s, e);
 }
 
 /* prepend a list of linked entries at front of the list */
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_all_args
-A_At(dl, A_Inout)
-A_At(s, A_Inout)
-A_At(e, A_Inout)
-A_Pre_satisfies(&dl->e != s)
-A_Pre_satisfies(&dl->e != e)
-A_Ret_never_null
-A_Ret_range(==,dl)
-A_Ret_valid
-#endif
 static inline struct dlist *dlist_add_list_front(
-	struct dlist *A_Restrict const dl,
-	struct dlist_entry *const s/*==e?*/,
-	struct dlist_entry *const e)
+	struct dlist *const dl/*!=NULL*/,
+	struct dlist_entry *const s/*!=NULL,==e?*/,
+	struct dlist_entry *const e/*!=NULL,==s?*/)
 {
-	dlist_add_list_front_(dl, s, e);
+	(void)dlist_add_list_front_(dl, s, e);
 	s->prev = NULL;
 	return dl;
 }
 
 /* append a list of linked entries at back of the list */
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_all_args
-A_At(dl, A_Inout)
-A_At(s, A_Inout)
-A_At(e, A_Inout)
-A_Pre_satisfies(&dl->e != s)
-A_Pre_satisfies(&dl->e != e)
-A_Ret_never_null
-A_Ret_range(==,dl)
-A_Ret_valid
-#endif
 static inline struct dlist *dlist_add_list_back(
-	struct dlist *A_Restrict const dl,
-	struct dlist_entry *const s/*==e?*/,
-	struct dlist_entry *const e)
+	struct dlist *const dl/*!=NULL*/,
+	struct dlist_entry *const s/*!=NULL,==e?*/,
+	struct dlist_entry *const e/*!=NULL,==s?*/)
 {
-	dlist_add_list_back_(dl, s, e);
+	(void)dlist_add_list_back_(dl, s, e);
 	e->next = NULL;
 	return dl;
 }
 
 /* prepend an entry at front of the list */
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_all_args
-A_At(dl, A_Inout)
-A_At(e, A_Inout)
-A_Pre_satisfies(&dl->e != e)
-A_Ret_never_null
-A_Ret_range(==,dl)
-A_Ret_valid
-#endif
 static inline struct dlist *dlist_add_front(
-	struct dlist *A_Restrict const dl,
-	struct dlist_entry *A_Restrict const e)
+	struct dlist *const dl/*!=NULL*/,
+	struct dlist_entry *const e/*!=NULL*/)
 {
 	return dlist_add_list_front(dl, e, e);
 }
 
 /* append an entry at back of the list */
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_all_args
-A_At(dl, A_Inout)
-A_At(e, A_Inout)
-A_Pre_satisfies(&dl->e != e)
-A_Ret_never_null
-A_Ret_range(==,dl)
-A_Ret_valid
-#endif
 static inline struct dlist *dlist_add_back(
-	struct dlist *A_Restrict const dl,
-	struct dlist_entry *A_Restrict const e)
+	struct dlist *const dl/*!=NULL*/,
+	struct dlist_entry *const e/*!=NULL*/)
 {
 	return dlist_add_list_back(dl, e, e);
 }
 
 /* insert a list of linked entries after the current entry */
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_all_args
-A_At(dl, A_Inout)
-A_At(c, A_Inout)
-A_At(s, A_Inout)
-A_At(e, A_Inout)
-A_Pre_satisfies(&dl->e != s)
-A_Pre_satisfies(&dl->e != e)
-A_Pre_satisfies(c != &dl->e)
-A_Pre_satisfies(c != s)
-A_Pre_satisfies(c != e)
-A_Ret_never_null
-A_Ret_range(==,dl)
-A_Ret_valid
-#endif
 static inline struct dlist *dlist_insert_list_after(
-	struct dlist *A_Restrict const dl,
-	struct dlist_entry *A_Restrict const c,
-	struct dlist_entry *const s/*==e?*/,
-	struct dlist_entry *const e)
+	struct dlist *const dl/*!=NULL*/,
+	struct dlist_entry *DLIST_RESTRICT const c/*!=NULL,!=&dl->e*/,
+	struct dlist_entry *const s/*!=NULL,==e?*/,
+	struct dlist_entry *const e/*!=NULL,==s?*/)
 {
-	dlist_assert_ptr_(dl);
+	DLIST_ASSERT_PTR(dl);
 	DLIST_ASSERT_PTRS(&dl->e != c);
-	dlist_insert_list_after_(dl, c, s, e);
-	s->prev = c; /* if c == &dl->e, s->prev should be NULL - use dlist_add_list_front() instead */
+	(void)dlist_insert_list_after_(dl, c, s, e);
+	s->prev = c; /* if c == &dl->e, s->prev must be NULL - use dlist_add_list_front() instead */
 	return dl;
 }
 
 /* insert a list of linked entries before the current entry */
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_all_args
-A_At(dl, A_Inout)
-A_At(c, A_Inout)
-A_At(s, A_Inout)
-A_At(e, A_Inout)
-A_Pre_satisfies(&dl->e != s)
-A_Pre_satisfies(&dl->e != e)
-A_Pre_satisfies(c != &dl->e)
-A_Pre_satisfies(c != s)
-A_Pre_satisfies(c != e)
-A_Ret_never_null
-A_Ret_range(==,dl)
-A_Ret_valid
-#endif
 static inline struct dlist *dlist_insert_list_before(
-	struct dlist *A_Restrict const dl,
-	struct dlist_entry *A_Restrict const c,
-	struct dlist_entry *const s/*==e?*/,
-	struct dlist_entry *const e)
+	struct dlist *const dl/*!=NULL*/,
+	struct dlist_entry *DLIST_RESTRICT const c/*!=NULL,!=&dl->e*/,
+	struct dlist_entry *const s/*!=NULL,==e?*/,
+	struct dlist_entry *const e/*!=NULL,==s?*/)
 {
-	dlist_assert_ptr_(dl);
+	DLIST_ASSERT_PTR(dl);
 	DLIST_ASSERT_PTRS(&dl->e != c);
-	dlist_insert_list_before_(dl, c, s, e);
-	e->next = c; /* if c == &dl->e, e->next should be NULL - use dlist_add_list_back() instead */
+	(void)dlist_insert_list_before_(dl, c, s, e);
+	e->next = c; /* if c == &dl->e, e->next must be NULL - use dlist_add_list_back() instead */
 	return dl;
 }
 
 /* insert an entry after the current one */
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_all_args
-A_At(dl, A_Inout)
-A_At(c, A_Inout)
-A_At(e, A_Inout)
-A_Pre_satisfies(&dl->e != e)
-A_Pre_satisfies(c != &dl->e)
-A_Pre_satisfies(c != e)
-A_Ret_never_null
-A_Ret_range(==,dl)
-A_Ret_valid
-#endif
 static inline struct dlist *dlist_insert_after(
-	struct dlist *A_Restrict const dl,
-	struct dlist_entry *A_Restrict const c,
-	struct dlist_entry *A_Restrict const e)
+	struct dlist *const dl/*!=NULL*/,
+	struct dlist_entry *DLIST_RESTRICT const c/*!=NULL,!=&dl->e*/,
+	struct dlist_entry *DLIST_RESTRICT const e/*!=NULL,!=c*/)
 {
 	return dlist_insert_list_after(dl, c, e, e);
 }
 
 /* insert an entry before the current one */
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_all_args
-A_At(dl, A_Inout)
-A_At(c, A_Inout)
-A_At(e, A_Inout)
-A_Pre_satisfies(&dl->e != e)
-A_Pre_satisfies(c != &dl->e)
-A_Pre_satisfies(c != e)
-A_Ret_never_null
-A_Ret_range(==,dl)
-A_Ret_valid
-#endif
 static inline struct dlist *dlist_insert_before(
-	struct dlist *A_Restrict const dl,
-	struct dlist_entry *A_Restrict const c,
-	struct dlist_entry *A_Restrict const e)
+	struct dlist *const dl/*!=NULL*/,
+	struct dlist_entry *DLIST_RESTRICT const c/*!=NULL,!=&dl->e*/,
+	struct dlist_entry *DLIST_RESTRICT const e/*!=NULL,!=c*/)
 {
 	return dlist_insert_list_before(dl, c, e, e);
 }
 
 /* remove a list of linked entries from the list */
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_all_args
-A_At(dl, A_Inout)
-A_At(os, A_In)
-A_At(oe, A_In)
-A_Pre_satisfies(&dl->e != os)
-A_Pre_satisfies(&dl->e != oe)
-A_Ret_never_null
-A_Ret_range(==,dl)
-A_Ret_valid
-#endif
 static inline struct dlist *dlist_remove_list(
-	struct dlist *A_Restrict const dl,
-	struct dlist_entry *const os/*==oe?*/,
-	struct dlist_entry *const oe)
+	struct dlist *const dl/*!=NULL*/,
+	struct dlist_entry *const os/*!=NULL,==oe?*/,
+	struct dlist_entry *const oe/*!=NULL,==os?*/)
 {
 	(void)dlist_check_non_circular(dl);
 	DLIST_ASSERT_PTRS(&dl->e != os);
@@ -739,8 +479,8 @@ static inline struct dlist *dlist_remove_list(
 	dlist_entry_check_non_circular(dl, os);
 	dlist_entry_check_non_circular(dl, oe);
 	{
-		struct dlist_entry *A_Restrict const n = oe->next;
-		struct dlist_entry *A_Restrict const p = os->prev;
+		struct dlist_entry *DLIST_RESTRICT const n = oe->next;
+		struct dlist_entry *DLIST_RESTRICT const p = os->prev;
 		DLIST_ASSERT_PTRS(n != p);
 		DLIST_ASSERT_PTRS(n != os);
 		DLIST_ASSERT_PTRS(n != oe);
@@ -761,38 +501,18 @@ static inline struct dlist *dlist_remove_list(
 }
 
 /* remove an entry from the list */
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_all_args
-A_At(dl, A_Inout)
-A_At(oe, A_In)
-A_Pre_satisfies(&dl->e != oe)
-A_Ret_never_null
-A_Ret_range(==,dl)
-A_Ret_valid
-#endif
 static inline struct dlist *dlist_remove(
-	struct dlist *A_Restrict const dl,
-	struct dlist_entry *A_Restrict const oe)
+	struct dlist *const dl/*!=NULL*/,
+	struct dlist_entry *const oe/*!=NULL*/)
 {
 	return dlist_remove_list(dl, oe, oe);
 }
 
 /* restore previously removed/replaced sub-list */
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_all_args
-A_At(dl, A_Inout)
-A_At(os, A_In)
-A_At(oe, A_In)
-A_Pre_satisfies(&dl->e != os)
-A_Pre_satisfies(&dl->e != oe)
-A_Ret_never_null
-A_Ret_range(==,dl)
-A_Ret_valid
-#endif
 static inline struct dlist *dlist_restore_list_(
-	struct dlist *A_Restrict const dl,
-	struct dlist_entry *const os/*==oe?*/,
-	struct dlist_entry *const oe)
+	struct dlist *const dl/*!=NULL*/,
+	struct dlist_entry *const os/*!=NULL,==oe?*/,
+	struct dlist_entry *const oe/*!=NULL,==os?*/)
 {
 	(void)dlist_check_non_circular(dl);
 	DLIST_ASSERT_PTRS(&dl->e != os);
@@ -800,8 +520,8 @@ static inline struct dlist *dlist_restore_list_(
 	dlist_entry_check_non_circular(dl, os);
 	dlist_entry_check_non_circular(dl, oe);
 	{
-		struct dlist_entry *A_Restrict const n = oe->next;
-		struct dlist_entry *A_Restrict const p = os->prev;
+		struct dlist_entry *DLIST_RESTRICT const n = oe->next;
+		struct dlist_entry *DLIST_RESTRICT const p = os->prev;
 		DLIST_ASSERT_PTRS(n != p);
 		DLIST_ASSERT_PTRS(n != os);
 		DLIST_ASSERT_PTRS(n != oe);
@@ -821,77 +541,38 @@ static inline struct dlist *dlist_restore_list_(
 	return dl;
 }
 
-/* if there are no entries between os->prev and oe->next in the list,
+/* only if there are no entries between os->prev and oe->next in the list,
   may restore previously removed sub-list */
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_all_args
-A_At(dl, A_Inout)
-A_At(os, A_In)
-A_At(oe, A_In)
-A_Pre_satisfies(&dl->e != os)
-A_Pre_satisfies(&dl->e != oe)
-A_Ret_never_null
-A_Ret_range(==,dl)
-A_Ret_valid
-#endif
 static inline struct dlist *dlist_restore_list(
-	struct dlist *A_Restrict const dl,
-	struct dlist_entry *const os/*==oe?*/,
-	struct dlist_entry *const oe)
+	struct dlist *const dl/*!=NULL*/,
+	struct dlist_entry *const os/*!=NULL,==oe?*/,
+	struct dlist_entry *const oe/*!=NULL,==os?*/)
 {
-	dlist_assert_ptr_(dl);
-	dlist_assert_ptr_(os);
-	dlist_assert_ptr_(oe);
+	DLIST_ASSERT_PTR(dl);
+	DLIST_ASSERT_PTR(os);
+	DLIST_ASSERT_PTR(oe);
 	/* must be no entries between os->prev and oe->next in the list */
-	DLIST_ASSERT((os->prev ? os->prev->next : dl->dlist_first) == oe->next);
-	DLIST_ASSERT((oe->next ? oe->next->prev : dl->dlist_last) == os->prev);
+	DLIST_ASSERT_PTRS((os->prev ? os->prev->next : dl->dlist_first) == oe->next);
+	DLIST_ASSERT_PTRS((oe->next ? oe->next->prev : dl->dlist_last) == os->prev);
 	return dlist_restore_list_(dl, os, oe);
 }
 
-/* if there are no entries between oe->prev and oe->next in the list,
+/* only if there are no entries between oe->prev and oe->next in the list,
   may restore previously removed entry */
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_all_args
-A_At(dl, A_Inout)
-A_At(oe, A_In)
-A_Pre_satisfies(&dl->e != oe)
-A_Ret_never_null
-A_Ret_range(==,dl)
-A_Ret_valid
-#endif
 static inline struct dlist *dlist_restore(
-	struct dlist *A_Restrict const dl,
-	struct dlist_entry *A_Restrict const oe)
+	struct dlist *const dl/*!=NULL*/,
+	struct dlist_entry *const oe/*!=NULL*/)
 {
 	return dlist_restore_list(dl, oe, oe);
 }
 
 /* replace old sub-list in the list with a new one */
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_all_args
-A_At(dl, A_Inout)
-A_At(os, A_In)
-A_At(oe, A_In)
-A_At(s, A_Inout)
-A_At(e, A_Inout)
-A_Pre_satisfies(&dl->e != os)
-A_Pre_satisfies(&dl->e != oe)
-A_Pre_satisfies(&dl->e != s)
-A_Pre_satisfies(&dl->e != e)
-A_Pre_satisfies(os != s)
-A_Pre_satisfies(os != e)
-A_Pre_satisfies(oe != s)
-A_Pre_satisfies(oe != e)
-A_Ret_never_null
-A_Ret_range(==,dl)
-A_Ret_valid
-#endif
 static inline struct dlist *dlist_replace_list(
-	struct dlist *A_Restrict const dl,
-	struct dlist_entry *const os/*==oe?*/,
-	struct dlist_entry *const oe,
-	struct dlist_entry *const s/*==e?*/,
-	struct dlist_entry *const e)
+	struct dlist *const dl/*!=NULL*/,
+	struct dlist_entry *const os/*!=NULL,==oe?*/,
+	struct dlist_entry *const oe/*!=NULL,==os?*/,
+	struct dlist_entry *const s/*!=NULL,==e?*/,
+	struct dlist_entry *const e/*!=NULL,==s?*/)
 {
 	(void)dlist_check_non_circular(dl);
 	DLIST_ASSERT_PTRS(&dl->e != os);
@@ -906,8 +587,8 @@ static inline struct dlist *dlist_replace_list(
 	DLIST_ASSERT_PTRS(oe != s);
 	DLIST_ASSERT_PTRS(oe != e);
 	{
-		struct dlist_entry *A_Restrict const n = oe->next;
-		struct dlist_entry *A_Restrict const p = os->prev;
+		struct dlist_entry *DLIST_RESTRICT const n = oe->next;
+		struct dlist_entry *DLIST_RESTRICT const p = os->prev;
 		DLIST_ASSERT_PTRS(n != p);
 		DLIST_ASSERT_PTRS(n != os);
 		DLIST_ASSERT_PTRS(n != oe);
@@ -934,22 +615,10 @@ static inline struct dlist *dlist_replace_list(
 }
 
 /* replace an old entry in the list with a new one */
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_all_args
-A_At(dl, A_Inout)
-A_At(o, A_In)
-A_At(e, A_Inout)
-A_Pre_satisfies(&dl->e != o)
-A_Pre_satisfies(&dl->e != e)
-A_Pre_satisfies(o != e)
-A_Ret_never_null
-A_Ret_range(==,dl)
-A_Ret_valid
-#endif
 static inline struct dlist *dlist_replace(
-	struct dlist *A_Restrict const dl,
-	struct dlist_entry *A_Restrict const o,
-	struct dlist_entry *A_Restrict const e)
+	struct dlist *const dl/*!=NULL*/,
+	struct dlist_entry *DLIST_RESTRICT const o/*!=NULL*/,
+	struct dlist_entry *DLIST_RESTRICT const e/*!=NULL*/)
 {
 	return dlist_replace_list(dl, o, o, e, e);
 }
@@ -957,59 +626,34 @@ static inline struct dlist *dlist_replace(
 /* move all items from src list to dst list */
 /* note: initializes dst list, it may be not initialized before the call */
 /* note: src list will not be changed, it will still reference moved entries after the call */
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_all_args
-A_At(dst, A_Out)
-A_At(src, A_In)
-A_Pre_satisfies(dst != src)
-#endif
-static inline void dlist_move(
-	struct dlist *A_Restrict const dst/*initialized?*/,
-	const struct dlist *A_Restrict const src)
+static inline struct dlist *dlist_move(
+	struct dlist *DLIST_RESTRICT const dst/*!=NULL,!=src,initialized?*/,
+	const struct dlist *DLIST_RESTRICT const src/*!=NULL,!=dst*/)
 {
 	(void)dlist_check_non_circular(src);
-	dlist_assert_ptr_(dst);
+	DLIST_ASSERT_PTR(dst);
 	DLIST_ASSERT_PTRS(dst != src);
 	dst->dlist_first = src->dlist_first;
 	dst->dlist_last = src->dlist_last;
+	return dst;
 }
 
 /* -------------- circular dlist methods ------------ */
 
 /* check that 'c' is an entry of circular list */
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_all_args
-A_At(c, A_In)
-#endif
-#if (defined(__GNUC__) && (__GNUC__ >= 4)) || \
-  (defined(__clang__) && __clang_major__ > 3 - (__clang_minor__ >= 7))
-#ifdef NDEBUG
-__attribute__ ((pure))
-#endif
-#endif
-static inline void dlist_entry_check_circular(const struct dlist_entry *const c)
+static inline void dlist_entry_check_circular(
+	const struct dlist_entry *const c/*!=NULL*/)
 {
-	dlist_assert_ptr_(c);
+	DLIST_ASSERT_PTR(c);
 	DLIST_ASSERT(c->next && c->prev);
 }
 
 /* insert a list of linked entries after the current entry c of circular list, if c == &dlc->l.e, then at front of the list */
 /* NOTE: caller should set, possibly before the call, s->prev to c */
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_all_args
-A_At(c, A_Inout)
-A_At(s, A_In)
-A_At(e, A_Inout)
-A_Pre_satisfies(c != s)
-A_Pre_satisfies(c != e)
-A_Ret_never_null
-A_Ret_range(==,c)
-A_Ret_valid
-#endif
 static inline struct dlist_entry *dlist_circular_insert_list_after_(
-	struct dlist_entry *const c,
-	struct dlist_entry *const s/*==e?*/,
-	struct dlist_entry *const e)
+	struct dlist_entry *const c/*!=NULL,!=s,!=e*/,
+	struct dlist_entry *const s/*!=NULL,==e?*/,
+	struct dlist_entry *const e/*!=NULL,==s?*/)
 {
 	dlist_entry_check_circular(c);
 	dlist_check_sublist(s, e);
@@ -1030,21 +674,10 @@ static inline struct dlist_entry *dlist_circular_insert_list_after_(
 
 /* insert a list of linked entries before the current entry c of circular list, if c == &dlc->l.e, then at back of the list */
 /* NOTE: caller should set, possibly before the call, e->next to c */
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_all_args
-A_At(c, A_Inout)
-A_At(s, A_In)
-A_At(e, A_Inout)
-A_Pre_satisfies(c != s)
-A_Pre_satisfies(c != e)
-A_Ret_never_null
-A_Ret_range(==,c)
-A_Ret_valid
-#endif
 static inline struct dlist_entry *dlist_circular_insert_list_before_(
-	struct dlist_entry *const c,
-	struct dlist_entry *const s/*==e?*/,
-	struct dlist_entry *const e)
+	struct dlist_entry *const c/*!=NULL,!=s,!=e*/,
+	struct dlist_entry *const s/*!=NULL,==e?*/,
+	struct dlist_entry *const e/*!=NULL,==s?*/)
 {
 	dlist_entry_check_circular(c);
 	dlist_check_sublist(s, e);
@@ -1065,217 +698,110 @@ static inline struct dlist_entry *dlist_circular_insert_list_before_(
 
 /* prepend a list of linked entries at front of circular list */
 /* NOTE: caller should set s->prev to &dlc->l.e, possibly before the call */
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_all_args
-A_At(dlc, A_Inout)
-A_At(s, A_In)
-A_At(e, A_Inout)
-A_Pre_satisfies(&dlc->l.e != s)
-A_Pre_satisfies(&dlc->l.e != e)
-A_Ret_never_null
-A_Ret_range(==,dlc)
-A_Ret_valid
-#endif
 static inline struct dlist_circular *dlist_circular_add_list_front_(
-	struct dlist_circular *A_Restrict const dlc,
-	struct dlist_entry *const s/*==e?*/,
-	struct dlist_entry *const e)
+	struct dlist_circular *const dlc/*!=NULL*/,
+	struct dlist_entry *const s/*!=NULL,==e?*/,
+	struct dlist_entry *const e/*!=NULL,==s?*/)
 {
 	(void)dlist_check_circular(dlc);
 	/*caller should do: s->prev = &dlc->l.e;*/
-	dlist_circular_insert_list_after_(&dlc->l.e, s, e);
+	(void)dlist_circular_insert_list_after_(&dlc->l.e, s, e);
 	return dlc;
 }
 
 /* append a list of linked entries at back of circular list */
 /* NOTE: caller should set e->next to &dlc->l.e, possibly before the call */
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_all_args
-A_At(dlc, A_Inout)
-A_At(s, A_Inout)
-A_At(e, A_In)
-A_Pre_satisfies(&dlc->l.e != s)
-A_Pre_satisfies(&dlc->l.e != e)
-A_Ret_never_null
-A_Ret_range(==,dlc)
-A_Ret_valid
-#endif
 static inline struct dlist_circular *dlist_circular_add_list_back_(
-	struct dlist_circular *A_Restrict const dlc,
-	struct dlist_entry *const s/*==e?*/,
-	struct dlist_entry *const e)
+	struct dlist_circular *const dlc/*!=NULL*/,
+	struct dlist_entry *const s/*!=NULL,==e?*/,
+	struct dlist_entry *const e/*!=NULL,==s?*/)
 {
 	(void)dlist_check_circular(dlc);
 	/*caller should do: e->next = &dlc->l.e;*/
-	dlist_circular_insert_list_before_(&dlc->l.e, s, e);
+	(void)dlist_circular_insert_list_before_(&dlc->l.e, s, e);
 	return dlc;
 }
 
 /* prepend a list of linked entries at front of circular list */
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_all_args
-A_At(dlc, A_Inout)
-A_At(s, A_Inout)
-A_At(e, A_Inout)
-A_Pre_satisfies(&dlc->l.e != s)
-A_Pre_satisfies(&dlc->l.e != e)
-A_Ret_never_null
-A_Ret_range(==,dlc)
-A_Ret_valid
-#endif
 static inline struct dlist_circular *dlist_circular_add_list_front(
-	struct dlist_circular *A_Restrict const dlc,
-	struct dlist_entry *const s/*==e?*/,
-	struct dlist_entry *const e)
+	struct dlist_circular *const dlc/*!=NULL*/,
+	struct dlist_entry *const s/*!=NULL,==e?*/,
+	struct dlist_entry *const e/*!=NULL,==s?*/)
 {
-	dlist_circular_add_list_front_(dlc, s, e);
+	(void)dlist_circular_add_list_front_(dlc, s, e);
 	s->prev = &dlc->l.e; /* dlist_circular_end(dlc) */
 	return dlc;
 }
 
 /* append a list of linked entries at back of circular list */
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_all_args
-A_At(dlc, A_Inout)
-A_At(s, A_Inout)
-A_At(e, A_Inout)
-A_Pre_satisfies(&dlc->l.e != s)
-A_Pre_satisfies(&dlc->l.e != e)
-A_Ret_never_null
-A_Ret_range(==,dlc)
-A_Ret_valid
-#endif
 static inline struct dlist_circular *dlist_circular_add_list_back(
-	struct dlist_circular *A_Restrict const dlc,
-	struct dlist_entry *const s/*==e?*/,
-	struct dlist_entry *const e)
+	struct dlist_circular *const dlc/*!=NULL*/,
+	struct dlist_entry *const s/*!=NULL,==e?*/,
+	struct dlist_entry *const e/*!=NULL,==s?*/)
 {
-	dlist_circular_add_list_back_(dlc, s, e);
+	(void)dlist_circular_add_list_back_(dlc, s, e);
 	e->next = &dlc->l.e; /* dlist_circular_end(dlc) */
 	return dlc;
 }
 
 /* prepend an entry at front of circular list */
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_all_args
-A_At(dlc, A_Inout)
-A_At(e, A_Inout)
-A_Pre_satisfies(&dlc->l.e != e)
-A_Ret_never_null
-A_Ret_range(==,dlc)
-A_Ret_valid
-#endif
 static inline struct dlist_circular *dlist_circular_add_front(
-	struct dlist_circular *A_Restrict const dlc,
-	struct dlist_entry *A_Restrict const e)
+	struct dlist_circular *const dlc/*!=NULL*/,
+	struct dlist_entry *const e/*!=NULL,!=&dlc->l.e*/)
 {
 	return dlist_circular_add_list_front(dlc, e, e);
 }
 
 /* append an entry at back of circular list */
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_all_args
-A_At(dlc, A_Inout)
-A_At(e, A_Inout)
-A_Pre_satisfies(&dlc->l.e != e)
-A_Ret_never_null
-A_Ret_range(==,dlc)
-A_Ret_valid
-#endif
 static inline struct dlist_circular *dlist_circular_add_back(
-	struct dlist_circular *A_Restrict const dlc,
-	struct dlist_entry *A_Restrict const e)
+	struct dlist_circular *const dlc/*!=NULL*/,
+	struct dlist_entry *const e/*!=NULL,!=&dlc->l.e*/)
 {
 	return dlist_circular_add_list_back(dlc, e, e);
 }
 
 /* insert a list of linked entries after the current entry c of circular list, if c == &dlc->e, then at front of the list */
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_all_args
-A_At(c, A_Inout)
-A_At(s, A_Inout)
-A_At(e, A_Inout)
-A_Pre_satisfies(c != s)
-A_Pre_satisfies(c != e)
-A_Ret_never_null
-A_Ret_range(==,c)
-A_Ret_valid
-#endif
 static inline struct dlist_entry *dlist_circular_insert_list_after(
-	struct dlist_entry *A_Restrict const c,
-	struct dlist_entry *const s/*==e?*/,
-	struct dlist_entry *const e)
+	struct dlist_entry *DLIST_RESTRICT const c/*!=NULL*/,
+	struct dlist_entry *const s/*!=NULL,==e?*/,
+	struct dlist_entry *const e/*!=NULL,==s?*/)
 {
-	dlist_circular_insert_list_after_(c, s, e);
+	(void)dlist_circular_insert_list_after_(c, s, e);
 	s->prev = c;
 	return c;
 }
 
 /* insert a list of linked entries before the current entry c of circular list, if c == &dlc->e, then at back of the list */
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_all_args
-A_At(c, A_Inout)
-A_At(s, A_Inout)
-A_At(e, A_Inout)
-A_Pre_satisfies(c != s)
-A_Pre_satisfies(c != e)
-A_Ret_never_null
-A_Ret_range(==,c)
-A_Ret_valid
-#endif
 static inline struct dlist_entry *dlist_circular_insert_list_before(
-	struct dlist_entry *A_Restrict const c,
-	struct dlist_entry *const s/*==e?*/,
-	struct dlist_entry *const e)
+	struct dlist_entry *DLIST_RESTRICT const c/*!=NULL*/,
+	struct dlist_entry *const s/*!=NULL,==e?*/,
+	struct dlist_entry *const e/*!=NULL,==s?*/)
 {
-	dlist_circular_insert_list_before_(c, s, e);
+	(void)dlist_circular_insert_list_before_(c, s, e);
 	e->next = c;
 	return c;
 }
 
 /* insert an entry after the current entry c of circular list, if c == &dlc->e, then at front of the list */
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_all_args
-A_At(c, A_Inout)
-A_At(e, A_Inout)
-A_Pre_satisfies(c != e)
-A_Ret_never_null
-A_Ret_range(==,c)
-A_Ret_valid
-#endif
 static inline struct dlist_entry *dlist_circular_insert_after(
-	struct dlist_entry *A_Restrict const c,
-	struct dlist_entry *A_Restrict const e)
+	struct dlist_entry *DLIST_RESTRICT const c/*!=NULL,!=e*/,
+	struct dlist_entry *DLIST_RESTRICT const e/*!=NULL,!=c*/)
 {
 	return dlist_circular_insert_list_after(c, e, e);
 }
 
 /* insert an entry before the current entry c of circular list, if c == &dlc->e, then at back of the list */
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_all_args
-A_At(c, A_Inout)
-A_At(e, A_Inout)
-A_Pre_satisfies(c != e)
-A_Ret_never_null
-A_Ret_range(==,c)
-A_Ret_valid
-#endif
 static inline struct dlist_entry *dlist_circular_insert_before(
-	struct dlist_entry *A_Restrict const c,
-	struct dlist_entry *A_Restrict const e)
+	struct dlist_entry *DLIST_RESTRICT const c/*!=NULL,!=e*/,
+	struct dlist_entry *DLIST_RESTRICT const e/*!=NULL,!=c*/)
 {
 	return dlist_circular_insert_list_before(c, e, e);
 }
 
 /* remove a list of linked entries from circular list */
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_all_args
-A_At(os, A_In)
-A_At(oe, A_In)
-#endif
 static inline void dlist_circular_remove_list(
-	struct dlist_entry *const os/*==oe?*/,
-	struct dlist_entry *const oe)
+	struct dlist_entry *const os/*!=NULL,==oe?*/,
+	struct dlist_entry *const oe/*!=NULL,==os?*/)
 {
 	dlist_entry_check_circular(os);
 	dlist_entry_check_circular(oe);
@@ -1293,29 +819,17 @@ static inline void dlist_circular_remove_list(
 }
 
 /* remove an entry from circular list */
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_all_args
-A_At(oe, A_In)
-A_Ret_never_null
-A_Ret_range(==,oe)
-A_Ret_valid
-#endif
 static inline struct dlist_entry *dlist_circular_remove(
-	struct dlist_entry *const oe)
+	struct dlist_entry *const oe/*!=NULL*/)
 {
 	dlist_circular_remove_list(oe, oe);
 	return oe;
 }
 
 /* restore previously removed/replaced sub-list of circular list */
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_all_args
-A_At(os, A_In)
-A_At(oe, A_In)
-#endif
 static inline void dlist_circular_restore_list_(
-	struct dlist_entry *const os/*==oe?*/,
-	struct dlist_entry *const oe)
+	struct dlist_entry *const os/*!=NULL,==oe?*/,
+	struct dlist_entry *const oe/*!=NULL,==os?*/)
 {
 	dlist_entry_check_circular(os);
 	dlist_entry_check_circular(oe);
@@ -1332,58 +846,35 @@ static inline void dlist_circular_restore_list_(
 	}
 }
 
-/* if there are no entries between os->prev and oe->next in circular list,
+/* only if there are no entries between os->prev and oe->next in circular list,
   may restore previously removed sub-list */
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_all_args
-A_At(os, A_In)
-A_At(oe, A_In)
-#endif
 static inline void dlist_circular_restore_list(
-	struct dlist_entry *const os/*==oe?*/,
-	struct dlist_entry *const oe)
+	struct dlist_entry *const os/*!=NULL,==oe?*/,
+	struct dlist_entry *const oe/*!=NULL,==os?*/)
 {
-	dlist_assert_ptr_(os);
-	dlist_assert_ptr_(oe);
+	DLIST_ASSERT_PTR(os);
+	DLIST_ASSERT_PTR(oe);
 	/* must be no entries between os->prev and oe->next in circular list */
-	DLIST_ASSERT(os->prev && os->prev->next == oe->next);
-	DLIST_ASSERT(oe->next && oe->next->prev == os->prev);
+	DLIST_ASSERT_PTRS(os->prev && os->prev->next == oe->next);
+	DLIST_ASSERT_PTRS(oe->next && oe->next->prev == os->prev);
 	dlist_circular_restore_list_(os, oe);
 }
 
-/* if there are no entries between oe->prev and oe->next in circular list,
+/* only if there are no entries between oe->prev and oe->next in circular list,
   may restore previously removed entry */
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_all_args
-A_At(oe, A_In)
-A_Ret_never_null
-A_Ret_range(==,oe)
-A_Ret_valid
-#endif
 static inline struct dlist_entry *dlist_circular_restore(
-	struct dlist_entry *A_Restrict const oe)
+	struct dlist_entry *const oe/*!=NULL*/)
 {
 	dlist_circular_restore_list(oe, oe);
 	return oe;
 }
 
 /* replace old sub-list in circular list with a new one */
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_all_args
-A_At(os, A_In)
-A_At(oe, A_In)
-A_At(s, A_Inout)
-A_At(e, A_Inout)
-A_Pre_satisfies(os != s)
-A_Pre_satisfies(os != e)
-A_Pre_satisfies(oe != s)
-A_Pre_satisfies(oe != e)
-#endif
 static inline void dlist_circular_replace_list(
-	struct dlist_entry *const os/*==oe?*/,
-	struct dlist_entry *const oe,
-	struct dlist_entry *const s/*==e?*/,
-	struct dlist_entry *const e)
+	struct dlist_entry *const os/*!=NULL,==oe?*/,
+	struct dlist_entry *const oe/*!=NULL,==os?*/,
+	struct dlist_entry *const s/*!=NULL,==e?*/,
+	struct dlist_entry *const e/*!=NULL,==s?*/)
 {
 	dlist_entry_check_circular(os);
 	dlist_entry_check_circular(oe);
@@ -1412,15 +903,9 @@ static inline void dlist_circular_replace_list(
 }
 
 /* replace an old entry in circular list with a new one */
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_all_args
-A_At(o, A_In)
-A_At(e, A_Inout)
-A_Pre_satisfies(o != e)
-#endif
 static inline void dlist_circular_replace(
-	struct dlist_entry *A_Restrict const o,
-	struct dlist_entry *A_Restrict const e)
+	struct dlist_entry *DLIST_RESTRICT const o/*!=NULL,!=e*/,
+	struct dlist_entry *DLIST_RESTRICT const e/*!=NULL,!=o*/)
 {
 	dlist_circular_replace_list(o, o, e, e);
 }
@@ -1428,18 +913,13 @@ static inline void dlist_circular_replace(
 /* move all items from src list to dst list */
 /* note: initializes dst list, it may be not initialized before the call */
 /* note: src list, if empty, will be changed so src->dlist_circular_first and src->dlist_circular_last will point to &dst->l.e */
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_all_args
-A_At(dst, A_Out)
-A_At(src, A_Inout)
-A_Pre_satisfies(dst != src)
-#endif
-static inline void dlist_circular_move(
-	struct dlist_circular *A_Restrict const dst/*initialized?*/,
-	struct dlist_circular *A_Restrict const src)
+/* note: if src list is not empty, first and last entries of the list will reference dst list */
+static inline struct dlist_circular *dlist_circular_move(
+	struct dlist_circular *DLIST_RESTRICT const dst/*!=NULL,!=src,initialized?*/,
+	struct dlist_circular *DLIST_RESTRICT const src/*!=NULL,!=dst*/)
 {
 	(void)dlist_check_circular(src);
-	dlist_assert_ptr_(dst);
+	DLIST_ASSERT_PTR(dst);
 	DLIST_ASSERT_PTRS(dst != src);
 	src->dlist_circular_first->prev = &dst->l.e;
 	src->dlist_circular_last->next = &dst->l.e;
@@ -1448,6 +928,7 @@ static inline void dlist_circular_move(
 	  setting src->dlist_circular_last->next to &dst->l.e will set src->dlist_circular_first to &dst->l.e */
 	dst->dlist_circular_first = src->dlist_circular_first;
 	dst->dlist_circular_last = src->dlist_circular_last;
+	return dst;
 }
 
 /* -------------- making sub-list - to add to a list later ------------ */
@@ -1456,23 +937,12 @@ static inline void dlist_circular_move(
    123 + abcd  -> abcd123
    ^h    ^s ^e    ^s       */
 /* returns new head */
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_all_args
-A_At(h, A_Inout)
-A_At(s, A_Inout)
-A_At(e, A_Inout)
-A_Pre_satisfies(s != h)
-A_Pre_satisfies(e != h)
-A_Ret_never_null
-A_Ret_range(==,s)
-A_Ret_valid
-#endif
 static inline struct dlist_entry *dlist_entry_link_list_before(
-	struct dlist_entry *A_Restrict const h,
-	struct dlist_entry *const s/*==e?*/,
-	struct dlist_entry *const e)
+	struct dlist_entry *DLIST_RESTRICT const h/*!=NULL*/,
+	struct dlist_entry *const s/*!=NULL,==e?*/,
+	struct dlist_entry *const e/*!=NULL,==s?*/)
 {
-	dlist_assert_ptr_(h);
+	DLIST_ASSERT_PTR(h);
 	dlist_check_sublist(s, e);
 	DLIST_ASSERT_PTRS(s != h);
 	DLIST_ASSERT_PTRS(e != h);
@@ -1485,23 +955,12 @@ static inline struct dlist_entry *dlist_entry_link_list_before(
    123 + abcd  -> 123abcd
      ^t  ^s ^e          ^e */
 /* returns new tail */
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_all_args
-A_At(t, A_Inout)
-A_At(s, A_Inout)
-A_At(e, A_Inout)
-A_Pre_satisfies(s != t)
-A_Pre_satisfies(e != t)
-A_Ret_never_null
-A_Ret_range(==,e)
-A_Ret_valid
-#endif
 static inline struct dlist_entry *dlist_entry_link_list_after(
-	struct dlist_entry *A_Restrict const t,
-	struct dlist_entry *const s/*==e?*/,
-	struct dlist_entry *const e)
+	struct dlist_entry *DLIST_RESTRICT const t/*!=NULL*/,
+	struct dlist_entry *const s/*!=NULL,==e?*/,
+	struct dlist_entry *const e/*!=NULL,==s?*/)
 {
-	dlist_assert_ptr_(t);
+	DLIST_ASSERT_PTR(t);
 	dlist_check_sublist(s, e);
 	DLIST_ASSERT_PTRS(s != t);
 	DLIST_ASSERT_PTRS(e != t);
@@ -1514,18 +973,9 @@ static inline struct dlist_entry *dlist_entry_link_list_after(
    123 + x  -> x123
    ^h    ^e    ^e    */
 /* returns new head */
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_all_args
-A_At(h, A_Inout)
-A_At(e, A_Inout)
-A_Pre_satisfies(e != h)
-A_Ret_never_null
-A_Ret_range(==,e)
-A_Ret_valid
-#endif
 static inline struct dlist_entry *dlist_entry_link_before(
-	struct dlist_entry *A_Restrict const h,
-	struct dlist_entry *A_Restrict const e)
+	struct dlist_entry *DLIST_RESTRICT const h/*!=NULL,!=e*/,
+	struct dlist_entry *DLIST_RESTRICT const e/*!=NULL,!=h*/)
 {
 	return dlist_entry_link_list_before(h, e, e);
 }
@@ -1534,18 +984,9 @@ static inline struct dlist_entry *dlist_entry_link_before(
    123 + x  -> 123x
      ^t  ^e       ^e */
 /* returns new tail */
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_all_args
-A_At(t, A_Inout)
-A_At(e, A_Inout)
-A_Pre_satisfies(e != t)
-A_Ret_never_null
-A_Ret_range(==,e)
-A_Ret_valid
-#endif
 static inline struct dlist_entry *dlist_entry_link_after(
-	struct dlist_entry *A_Restrict const t,
-	struct dlist_entry *A_Restrict const e)
+	struct dlist_entry *DLIST_RESTRICT const t/*!=NULL,!=e*/,
+	struct dlist_entry *DLIST_RESTRICT const e/*!=NULL,!=t*/)
 {
 	return dlist_entry_link_list_after(t, e, e);
 }
@@ -1565,7 +1006,8 @@ static inline struct dlist_entry *dlist_entry_link_after(
     t->...
   }
 
-  NOTE: if iteration was not interrupted by 'break' - iterator e will be != NULL
+  NOTE: at end of iteration, iterator e will be NULL
+    (if iteration wasn't interrupted by 'break').
 */
 
 /* check that ptr is const if dlist is const */
@@ -1590,38 +1032,34 @@ static inline struct dlist_entry *dlist_entry_link_after(
 
 #define dlist_iterate_delete(dl, e, n) \
 	for (n = dlist_check_non_circular(DLIST_CHECK_CONSTNESS(dl, n))->dlist_first; \
-		n ? ((e = n), (n = n->next), 1) : ((e = NULL), 0);)
+		(NULL != (e = n)) ? (n = n->next), 1 : 0;)
 
 #define dlist_iterate_delete_backward(dl, e, p) \
 	for (p = dlist_check_non_circular(DLIST_CHECK_CONSTNESS(dl, p))->dlist_last; \
-		p ? ((e = p), (p = p->prev), 1) : ((e = NULL), 0);)
+		(NULL != (e = p)) ? (p = p->prev), 1 : 0;)
 
 /* -------------- iterating over entries of circular doubly-linked list ------------ */
 
 #define dlist_circular_iterate(dlc, e) \
 	for (e = dlist_check_circular(DLIST_CIRCULAR_CHECK_CONSTNESS(dlc, e))->dlist_circular_first; \
-		dlist_circular_end(dlc) != e ? 1 : ((e = NULL), 0); e = e->next)
+		(dlist_circular_end(dlc) != e) ? 1 : ((e = NULL), 0); e = e->next)
 
 #define dlist_circular_iterate_backward(dlc, e) \
 	for (e = dlist_check_circular(DLIST_CIRCULAR_CHECK_CONSTNESS(dlc, e))->dlist_circular_last; \
-		dlist_circular_end(dlc) != e ? 1 : ((e = NULL), 0); e = e->prev)
+		(dlist_circular_end(dlc) != e) ? 1 : ((e = NULL), 0); e = e->prev)
 
 /* same as above, but allow to delete an entry referenced by the iterator */
 
 #define dlist_circular_iterate_delete(dlc, e, n) \
 	for (n = dlist_check_circular(DLIST_CIRCULAR_CHECK_CONSTNESS(dlc, n))->dlist_circular_first; \
-		dlist_circular_end(dlc) != n ? ((e = n), (n = n->next), 1) : ((e = NULL), 0);)
+		(dlist_circular_end(dlc) != n) ? (e = n), (n = n->next), 1 : ((e = NULL), 0);)
 
 #define dlist_circular_iterate_delete_backward(dlc, e, p) \
 	for (p = dlist_check_circular(DLIST_CIRCULAR_CHECK_CONSTNESS(dlc, p))->dlist_circular_last; \
-		dlist_circular_end(dlc) != p ? ((e = p), (p = p->prev), 1) : ((e = NULL), 0);)
+		(dlist_circular_end(dlc) != p) ? (e = p), (p = p->prev), 1 : ((e = NULL), 0);)
 
 #ifdef __cplusplus
 }
-#endif
-
-#ifndef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-#undef A_Restrict
 #endif
 
 #endif /* DLIST_H_INCLUDED */
