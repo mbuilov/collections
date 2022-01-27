@@ -34,14 +34,31 @@
 #endif
 #endif
 
+/* PRBTREE_ASSUME - assume condition is always true */
+#ifndef PRBTREE_ASSUME
+#ifdef ASSUME
+#define PRBTREE_ASSUME(cond) ASSUME(cond)
+#elif defined _MSC_VER
+#define PRBTREE_ASSUME(cond) __assume(!!(cond))
+#elif defined __clang_analyzer__
+#define PRBTREE_ASSUME(cond) ((void)(!(cond) ? __builtin_unreachable(), 0 : 1))
+#elif defined __clang__
+#define PRBTREE_ASSUME(cond) __builtin_assume(!!(cond))
+#elif defined __INTEL_COMPILER
+#define PRBTREE_ASSUME(cond) ((void)0) /* ICC compiles calls to __builtin_unreachable() as jumps somewhere... */
+#elif defined __GNUC__ && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 5))
+#define PRBTREE_ASSUME(cond) ((void)(!(cond) ? __builtin_unreachable(), 0 : 1))
+#else
+#define PRBTREE_ASSUME(cond) ((void)0) /* assume condition is always true */
+#endif
+#endif
+
 /* expr - do not compares pointers */
 #ifndef PRBTREE_ASSERT
 #ifdef ASSERT
 #define PRBTREE_ASSERT(expr) ASSERT(expr)
-#elif defined ASSUME
-#define PRBTREE_ASSERT(expr) ASSUME(expr)
 #else
-#define PRBTREE_ASSERT(expr) ((void)(expr))
+#define PRBTREE_ASSERT(expr) PRBTREE_ASSUME(expr)
 #endif
 #endif
 
