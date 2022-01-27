@@ -34,41 +34,14 @@
 #endif
 #endif
 
-/* PCRBTREE_ASSUME - assume condition is always true */
-#ifndef PCRBTREE_ASSUME
-#ifdef ASSUME
-#define PCRBTREE_ASSUME(cond) ASSUME(cond)
-#elif defined _MSC_VER
-#define PCRBTREE_ASSUME(cond) __assume(!!(cond))
-#elif defined __clang_analyzer__
-#define PCRBTREE_ASSUME(cond) ((void)(!(cond) ? __builtin_unreachable(), 0 : 1))
-#elif defined __clang__
-#define PCRBTREE_ASSUME(cond) __builtin_assume(!!(cond))
-#elif defined __INTEL_COMPILER
-#define PCRBTREE_ASSUME(cond) ((void)0) /* ICC compiles calls to __builtin_unreachable() as jumps somewhere... */
-#elif defined __GNUC__ && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 5))
-#define PCRBTREE_ASSUME(cond) ((void)(!(cond) ? __builtin_unreachable(), 0 : 1))
-#else
-#define PCRBTREE_ASSUME(cond) ((void)0) /* assume condition is always true */
-#endif
-#endif
-
 /* expr - do not compares pointers */
 #ifndef PCRBTREE_ASSERT
-#ifdef ASSERT
-#define PCRBTREE_ASSERT(expr) ASSERT(expr)
-#else
-#define PCRBTREE_ASSERT(expr) PCRBTREE_ASSUME(expr)
-#endif
+#define PCRBTREE_ASSERT(expr) BTREE_ASSERT(expr)
 #endif
 
 /* check that pointer is not NULL */
 #ifndef PCRBTREE_ASSERT_PTR
-#ifdef ASSERT_PTR
-#define PCRBTREE_ASSERT_PTR(ptr) ASSERT_PTR(ptr)
-#else
-#define PCRBTREE_ASSERT_PTR(ptr) PCRBTREE_ASSERT(ptr)
-#endif
+#define PCRBTREE_ASSERT_PTR(ptr) BTREE_ASSERT_PTR(ptr)
 #endif
 
 /* expr - may compare pointers for equality */
