@@ -36,6 +36,6 @@ g++ -g -O2 -Iinclude -Wall -Wextra ./prbtree/rbtest.cpp libprbtree.a -o prbtree_
 g++ -g -O2 -Iinclude -Wall -Wextra ./prbtree/rbtest.cpp libprbtree.a -DUSE_PCRBTREE -o pcrbtree_test
 
 or MSVC:
-cl /O2 /Iinclude /Wall .\prbtree\rbtest.cpp /wd4514 /wd4577 /wd4710 /wd4711 /DUSE_STDMAP /Fostdmap_test
-cl /O2 /Iinclude /Wall .\prbtree\rbtest.cpp prbtree.lib /wd4514 /wd4577 /wd4710 /wd4711 /Foprbtree_test
-cl /O2 /Iinclude /Wall .\prbtree\rbtest.cpp prbtree.lib /wd4514 /wd4577 /wd4710 /wd4711 /DUSE_PCRBTREE /Fopcrbtree_test
+cl /O2 /Iinclude /Wall .\prbtree\rbtest.cpp /wd4514 /wd4577 /wd4710 /wd4711 /wd4996 /DUSE_STDMAP /Fostdmap_test
+cl /O2 /Iinclude /Wall .\prbtree\rbtest.cpp prbtree.lib /wd4514 /wd4577 /wd4710 /wd4711 /wd4820 /wd4996 /Foprbtree_test
+cl /O2 /Iinclude /Wall .\prbtree\rbtest.cpp prbtree.lib /wd4514 /wd4577 /wd4710 /wd4711 /wd4820 /wd4996 /DUSE_PCRBTREE /Fopcrbtree_test
