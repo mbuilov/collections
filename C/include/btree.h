@@ -9,13 +9,40 @@
 
 /* btree.h */
 
+/* BTREE_ASSUME - assume condition is always true */
+#ifndef BTREE_ASSUME
+#ifdef ASSUME
+#define BTREE_ASSUME(cond) ASSUME(cond)
+#elif defined _MSC_VER
+#define BTREE_ASSUME(cond) __assume(!!(cond))
+#elif defined __clang_analyzer__
+#define BTREE_ASSUME(cond) ((void)(!(cond) ? __builtin_unreachable(), 0 : 1))
+#elif defined __clang__
+#define BTREE_ASSUME(cond) __builtin_assume(!!(cond))
+#elif defined __INTEL_COMPILER
+#define BTREE_ASSUME(cond) ((void)0) /* ICC compiles calls to __builtin_unreachable() as jumps somewhere... */
+#elif defined __GNUC__ && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 5))
+#define BTREE_ASSUME(cond) ((void)(!(cond) ? __builtin_unreachable(), 0 : 1))
+#else
+#define BTREE_ASSUME(cond) ((void)0) /* assume condition is always true */
+#endif
+#endif
+
+/* expr - do not compares pointers */
 #ifndef BTREE_ASSERT
 #ifdef ASSERT
 #define BTREE_ASSERT(expr) ASSERT(expr)
-#elif defined ASSUME
-#define BTREE_ASSERT(expr) ASSUME(expr)
 #else
-#define BTREE_ASSERT(expr) ((void)(expr))
+#define BTREE_ASSERT(expr) BTREE_ASSUME(expr)
+#endif
+#endif
+
+/* check that pointer is not NULL */
+#ifndef BTREE_ASSERT_PTR
+#ifdef ASSERT_PTR
+#define BTREE_ASSERT_PTR(ptr) ASSERT_PTR(ptr)
+#else
+#define BTREE_ASSERT_PTR(ptr) BTREE_ASSERT(ptr)
 #endif
 #endif
 
@@ -33,15 +60,6 @@ struct btree_node {
 /* left/right leaves */
 #define btree_left  leaves[0]
 #define btree_right leaves[1]
-
-/* check that pointer is not NULL */
-#ifndef BTREE_ASSERT_PTR
-#ifdef ASSERT_PTR
-#define BTREE_ASSERT_PTR(ptr) ASSERT_PTR(ptr)
-#else
-#define BTREE_ASSERT_PTR(ptr) BTREE_ASSERT(ptr)
-#endif
-#endif
 
 #define BTREE_KEY_COMPARATOR1_(a) BTREE_KEY_COMPARATOR1 a
 #define BTREE_KEY_COMPARATOR2_(a) BTREE_KEY_COMPARATOR2 a
