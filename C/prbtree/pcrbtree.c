@@ -7,23 +7,6 @@
 /* pcrbtree.c */
 
 #include "collections_config.h"
-
-#ifndef ASSUME
-#if defined _MSC_VER
-#define ASSUME(cond) __assume(!!(cond))
-#elif defined __clang_analyzer__
-#define ASSUME(cond) ((void)(!(cond) ? __builtin_unreachable(), 0 : 1))
-#elif defined __clang__
-#define ASSUME(cond) __builtin_assume(!!(cond))
-#elif defined __INTEL_COMPILER
-#define ASSUME(cond) ((void)0) /* ICC compiles calls to __builtin_unreachable() as jumps somewhere... */
-#elif defined __GNUC__ && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 5))
-#define ASSUME(cond) ((void)(!(cond) ? __builtin_unreachable(), 0 : 1))
-#else
-#define ASSUME(cond) ((void)0) /* assume condition is always true */
-#endif
-#endif /* ASSUME */
-
 #include "pcrbtree.h"
 
 /* node left/right child flag is stored in the lowest bit of parent pointer */
