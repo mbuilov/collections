@@ -26,14 +26,31 @@
 #endif
 #endif
 
+/* DLIST_ASSUME - assume condition is always true */
+#ifndef DLIST_ASSUME
+#ifdef ASSUME
+#define DLIST_ASSUME(cond) ASSUME(cond)
+#elif defined _MSC_VER
+#define DLIST_ASSUME(cond) __assume(!!(cond))
+#elif defined __clang_analyzer__
+#define DLIST_ASSUME(cond) ((void)(!(cond) ? __builtin_unreachable(), 0 : 1))
+#elif defined __clang__
+#define DLIST_ASSUME(cond) __builtin_assume(!!(cond))
+#elif defined __INTEL_COMPILER
+#define DLIST_ASSUME(cond) ((void)0) /* ICC compiles calls to __builtin_unreachable() as jumps somewhere... */
+#elif defined __GNUC__ && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 5))
+#define DLIST_ASSUME(cond) ((void)(!(cond) ? __builtin_unreachable(), 0 : 1))
+#else
+#define DLIST_ASSUME(cond) ((void)0) /* assume condition is always true */
+#endif
+#endif
+
 /* expr - do not compares pointers */
 #ifndef DLIST_ASSERT
 #ifdef ASSERT
 #define DLIST_ASSERT(expr) ASSERT(expr)
-#elif defined ASSUME
-#define DLIST_ASSERT(expr) ASSUME(expr)
 #else
-#define DLIST_ASSERT(expr) ((void)(expr))
+#define DLIST_ASSERT(expr) DLIST_ASSUME(expr)
 #endif
 #endif
 
