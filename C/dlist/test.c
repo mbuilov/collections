@@ -1,3 +1,8 @@
+/**********************************************************************************
+* Embedded doubly-linked circular list
+* Copyright (C) 2022 Michael M. Builov, https://github.com/mbuilov/collections
+**********************************************************************************/
+
 /* test.c */
 
 #include <stdio.h>
