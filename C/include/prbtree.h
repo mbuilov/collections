@@ -17,7 +17,9 @@
 #define PRBTREE_EXPORTS
 #endif
 
-/* PRBTREE_RESTRICT - annotates pointer pointing to memory that is not writable via other pointers */
+/* PRBTREE_RESTRICT - annotates a pointer though which:
+  - reads may be prefetched,
+  - writes may be delayed */
 #ifndef PRBTREE_RESTRICT
 #ifdef A_Restrict
 #define PRBTREE_RESTRICT A_Restrict

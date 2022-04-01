@@ -17,7 +17,9 @@
 #define PCRBTREE_EXPORTS
 #endif
 
-/* PCRBTREE_RESTRICT - annotates pointer pointing to memory that is not writable via other pointers */
+/* PCRBTREE_RESTRICT - annotates a pointer though which:
+  - reads may be prefetched,
+  - writes may be delayed */
 #ifndef PCRBTREE_RESTRICT
 #ifdef A_Restrict
 #define PCRBTREE_RESTRICT A_Restrict
